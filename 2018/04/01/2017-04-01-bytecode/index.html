@@ -1,0 +1,1026 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next gemini use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=6.0.3" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=6.0.3">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/lights-32x32.png?v=6.0.3">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/lights-16x16.png?v=6.0.3">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=6.0.3" color="#222">
+
+
+
+
+
+
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Gemini',
+    version: '6.0.3',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":true,"scrollpercent":true,"onmobile":false},
+    fancybox: false,
+    fastclick: false,
+    lazyload: false,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    algolia: {
+      applicationID: '41NC33JUJG',
+      apiKey: '7362b84fed21bc83930f198a0927bb82',
+      indexName: 'blog',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+  
+
+
+
+
+  
+  <meta name="keywords" content="字节码," />
+
+
+<meta name="description" content="原文链接: http://www.importnew.com/24088.html 也许你写了无数行的代码，也许你能非常溜的使用高级语言，但是你未必了解那些高级语言的执行过程。例如大行其道的Java。 Java号称是一门“一次编译到处运行”的语言，但是我们对这句话的理解深度又有多少呢？从我们写的java文件到通过编译器编译成java字节码文件（也就是.class文件），这个过程是java编译过程；">
+<meta name="keywords" content="字节码">
+<meta property="og:type" content="article">
+<meta property="og:title" content="一文让你明白Java字节码">
+<meta property="og:url" content="http://governlee.github.io/2018/04/01/2017-04-01-bytecode/index.html">
+<meta property="og:site_name" content="Govern x Lab">
+<meta property="og:description" content="原文链接: http://www.importnew.com/24088.html 也许你写了无数行的代码，也许你能非常溜的使用高级语言，但是你未必了解那些高级语言的执行过程。例如大行其道的Java。 Java号称是一门“一次编译到处运行”的语言，但是我们对这句话的理解深度又有多少呢？从我们写的java文件到通过编译器编译成java字节码文件（也就是.class文件），这个过程是java编译过程；">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="http://upload-images.jianshu.io/upload_images/1986868-ce97d3e55fe919a2.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="http://upload-images.jianshu.io/upload_images/1986868-0993d73277575f75.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="http://upload-images.jianshu.io/upload_images/1986868-5b44e95ff7e30847.jpeg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="http://upload-images.jianshu.io/upload_images/1986868-bc3cf7c4693669fa.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="http://upload-images.jianshu.io/upload_images/1986868-831993b2dc19dd90.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="http://upload-images.jianshu.io/upload_images/1986868-392acfe5fe81eb7b.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="http://upload-images.jianshu.io/upload_images/1986868-7c0ed3c898858129.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="http://upload-images.jianshu.io/upload_images/1986868-44b812e1036aaef0.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="http://upload-images.jianshu.io/upload_images/1986868-596dd13ddcaad809.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="http://upload-images.jianshu.io/upload_images/1986868-d2e8cabf296300fc.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="http://upload-images.jianshu.io/upload_images/1986868-a93b62e38cdf0a4e.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="http://upload-images.jianshu.io/upload_images/1986868-b30b18f2a001dc13.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="http://upload-images.jianshu.io/upload_images/1986868-8b34fdb9961be90e.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:updated_time" content="2018-03-27T13:08:59.996Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="一文让你明白Java字节码">
+<meta name="twitter:description" content="原文链接: http://www.importnew.com/24088.html 也许你写了无数行的代码，也许你能非常溜的使用高级语言，但是你未必了解那些高级语言的执行过程。例如大行其道的Java。 Java号称是一门“一次编译到处运行”的语言，但是我们对这句话的理解深度又有多少呢？从我们写的java文件到通过编译器编译成java字节码文件（也就是.class文件），这个过程是java编译过程；">
+<meta name="twitter:image" content="http://upload-images.jianshu.io/upload_images/1986868-ce97d3e55fe919a2.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+
+
+
+
+
+
+  <link rel="canonical" href="http://governlee.github.io/2018/04/01/2017-04-01-bytecode/"/>
+
+
+
+<script type="text/javascript" id="page.configurations">
+  CONFIG.page = {
+    sidebar: "",
+  };
+</script>
+  <title>一文让你明白Java字节码 | Govern x Lab</title>
+  
+
+
+
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?f6804645172803d5efc7161f04df1d76";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+  <noscript>
+  <style type="text/css">
+    .use-motion .motion-element,
+    .use-motion .brand,
+    .use-motion .menu-item,
+    .sidebar-inner,
+    .use-motion .post-block,
+    .use-motion .pagination,
+    .use-motion .comments,
+    .use-motion .post-header,
+    .use-motion .post-body,
+    .use-motion .collection-title { opacity: initial; }
+
+    .use-motion .logo,
+    .use-motion .site-title,
+    .use-motion .site-subtitle {
+      opacity: initial;
+      top: initial;
+    }
+
+    .use-motion {
+      .logo-line-before i { left: initial; }
+      .logo-line-after i { right: initial; }
+    }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"> <div class="site-brand-wrapper">
+  <div class="site-meta custom-logo">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Govern x Lab</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <h1 class="site-subtitle" itemprop="description">I'm not the only one</h1>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-home"></i> <br />首页</a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-user"></i> <br />关于</a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />标签</a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-th"></i> <br />分类</a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />归档</a>
+        </li>
+      
+
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />搜索</a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  
+  <div class="algolia-popup popup search-popup">
+    <div class="algolia-search">
+      <div class="algolia-search-input-icon">
+        <i class="fa fa-search"></i>
+      </div>
+      <div class="algolia-search-input" id="algolia-search-input"></div>
+    </div>
+
+    <div class="algolia-results">
+      <div id="algolia-stats"></div>
+      <div id="algolia-hits"></div>
+      <div id="algolia-pagination" class="algolia-pagination"></div>
+    </div>
+
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+  </div>
+
+
+
+
+    </div>
+  
+</nav>
+
+
+  
+
+
+
+ </div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://governlee.github.io/2018/04/01/2017-04-01-bytecode/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Govern">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/logo.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Govern x Lab">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">一文让你明白Java字节码</h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-04-01T08:00:00+08:00">2018-04-01</time>
+            
+
+            
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/JDK/" itemprop="url" rel="index"><span itemprop="name">JDK</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>原文链接: <a href="http://www.importnew.com/24088.html" target="_blank" rel="noopener">http://www.importnew.com/24088.html</a></p>
+<p>也许你写了无数行的代码，也许你能非常溜的使用高级语言，但是你未必了解那些高级语言的执行过程。例如大行其道的Java。</p>
+<p>Java号称是一门“一次编译到处运行”的语言，但是我们对这句话的理解深度又有多少呢？从我们写的java文件到通过编译器编译成java字节码文件（也就是.class文件），这个过程是java编译过程；而我们的java虚拟机执行的就是字节码文件。不论该字节码文件来自何方，由哪种编译器编译，甚至是手写字节码文件，只要符合java虚拟机的规范，那么它就能够执行该字节码文件。那么本文主要讲讲java字节码文件相关知识。接下来我们通过具体的Demo来深入理解：</p>
+<h2 id="1-首先我们来写一个java源文件"><a href="#1-首先我们来写一个java源文件" class="headerlink" title="1. 首先我们来写一个java源文件"></a>1. 首先我们来写一个java源文件</h2><p><img src="http://upload-images.jianshu.io/upload_images/1986868-ce97d3e55fe919a2.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt=""></p>
+<p>上面是我们写的一个java程序，很简单，只有一个成员变量a以及一个方法testMethod()。</p>
+<h2 id="2-接下来我们用javac命令或者ide工具将该java源文件编译成java字节码文件。"><a href="#2-接下来我们用javac命令或者ide工具将该java源文件编译成java字节码文件。" class="headerlink" title="2. 接下来我们用javac命令或者ide工具将该java源文件编译成java字节码文件。"></a>2. 接下来我们用javac命令或者ide工具将该java源文件编译成java字节码文件。</h2><p><img src="http://upload-images.jianshu.io/upload_images/1986868-0993d73277575f75.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt=""></p>
+<p>上图是编译好的字节码文件，我们可以看到一堆16进制的字节。如果你使用IDE去打开，也许看到的是已经被反编译的我们所熟悉的java代码，而这才是纯正的字节码，这也是我们今天需要讲的内容重点。</p>
+<p>也许你会对这样一堆字节码感到头疼，不过没关系，我们慢慢试着你看懂它，或许有不一样的收获。在开始之前我们先来看一张图。</p>
+<p><img src="http://upload-images.jianshu.io/upload_images/1986868-5b44e95ff7e30847.jpeg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt=""></p>
+<h2 id="3-1-魔数"><a href="#3-1-魔数" class="headerlink" title="3.1 魔数"></a>3.1 魔数</h2><p>从上面的总览图中我们知道前4个字节表示的是魔数，对应我们Demo的是 0XCAFE BABE。什么是魔数？魔数是用来区分文件类型的一种标志，一般都是用文件的前几个字节来表示。比如0XCAFE BABE表示的是class文件，那么有人会问，文件类型可以通过文件名后缀来判断啊？是的，但是文件名是可以修改的（包括后缀），那么为了保证文件的安全性，<strong>将文件类型写在文件内部来保证不被篡改</strong>。<br>从java的字节码文件类型我们看到，CAFE BABE翻译过来是咖啡宝贝之意，然后再看看java图标。</p>
+<p><img src="http://upload-images.jianshu.io/upload_images/1986868-bc3cf7c4693669fa.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt=""></p>
+<h2 id="3-2-版本号"><a href="#3-2-版本号" class="headerlink" title="3.2 版本号"></a>3.2 版本号</h2><p>我们识别了文件类型之后，接下来要知道版本号。版本号含<strong>主版本号</strong>和<strong>次版本号</strong>，都是各占2个字节。在此Demo种为0X0000 0033。其中前面的0000是次版本号，后面的0033是主版本号。通过进制转换得到的是次版本号为0，主版本号为51。<br>从oracle官方网站我们能够知道，51对应的正式jdk1.7，而其次版本为0，所以该文件的版本为1.7.0。如果需要验证，可以在用java –version命令输出版本号，或者修改编译目标版本–target重新编译，查看编译后的字节码文件版本号是否做了相应的修改。</p>
+<p>至此，我们共了解了前8字节的含义，下面讲讲常量池相关内容。</p>
+<h2 id="3-3-常量池"><a href="#3-3-常量池" class="headerlink" title="3.3 常量池"></a>3.3 常量池</h2><p>紧接着主版本号之后的就是常量池入口。常量池是Class文件中的资源仓库，在接下来的内容中我们会发现很多地方会涉及，如Class Name，Interfaces等。常量池中主要存储2大类常量：<strong>字面量</strong>和<strong>符号引用</strong>。字面量如文本字符串，java中声明为final的常量值等等，而<strong>符号引用包括类和接口的全局限定名，字段的名称和描述符，方法的名称和描述符</strong>。</p>
+<p>为什么需要类和接口的全局限定名呢？系统引用类或者接口的时候不是通过内存地址进行操作吗？这里大家仔细想想，java虚拟机在没有将类加载到内存的时候根本都没有分配内存地址，也就不存在对内存的操作，所以java虚拟机首先需要将类加载到虚拟机中，那么这个过程设计对类的定位（需要加载A包下的B类，不能加载到别的包下面的别的类中），所以需要通过全局限定名来判别唯一性。这就是为什么叫做全局，限定的意思，也就是唯一性。</p>
+<p>在进行具体常量池分析之前，我们先来了解一下常量池的项目类型表：<br><img src="http://upload-images.jianshu.io/upload_images/1986868-831993b2dc19dd90.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt=""></p>
+<p>上面的表中描述了11中数据类型的结构，其实在jdk1.7之后又增加了3种（CONSTANT_MethodHandle_info,CONSTANT_MethodType_info以及CONSTANT_InvokeDynamic_info)。这样算起来一共是14种。接下来我们按照Demo的字节码进行逐一翻译。</p>
+<p>0×0015：由于常量池的数量不固定（n+2），所以需要在常量池的入口处放置一项u2类型的数据代表<strong>常量池数量</strong>。因此该16进制是21，表示有20项常量，索引范围为1~20。明明是21，为何是20呢？因为Class文件格式规定，设计者就讲第0项保留出来了，以备后患。从这里我们知道接下来我们需要翻译出20项常量。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br></pre></td><td class="code"><pre><span class="line">Constant #1 （一共有20个常量，这是第一个，以此类推…）</span><br><span class="line">0x0a-：从常量类型表中我们发现，第一个数据均是u1类型的tag，16进制的0a是十进制的10，对应表中的MethodRef_info。</span><br><span class="line">0x-00 04-：Class_info索引项#4</span><br><span class="line">0x-00 11-：NameAndType索引项#17</span><br><span class="line"></span><br><span class="line">Constant #2</span><br><span class="line">0x-09: FieldRef_info</span><br><span class="line">0×0003 :Class_info索引项#3</span><br><span class="line">0×0012：NameAndType索引项#18</span><br><span class="line"></span><br><span class="line">Constant #3</span><br><span class="line">0×07-: Class_info</span><br><span class="line">0x-00 13-: 全局限定名常量索引为#19</span><br><span class="line"></span><br><span class="line">Constant #4</span><br><span class="line">0x-07 :Class_info</span><br><span class="line">0×0014:全局限定名常量索引为#20</span><br><span class="line"></span><br><span class="line">Constant #5</span><br><span class="line">0×01:Utf-8_info</span><br><span class="line">0x-00 01-:字符串长度为1（选择接下来的一个字节长度转义）</span><br><span class="line">0x-61:”a”(十六进制转ASCII字符)</span><br><span class="line"></span><br><span class="line">Constant #6</span><br><span class="line">0×01:Utf-8_info</span><br><span class="line">0x-00 01：字符串长度为1</span><br><span class="line">0x-49:”I”</span><br><span class="line"></span><br><span class="line">Constant #7</span><br><span class="line">0×01:Utf-8_info</span><br><span class="line">0x-00 06:字符串长度为6</span><br><span class="line">0x-3c 696e 6974 3e-:”&lt;init&gt;”</span><br><span class="line"></span><br><span class="line">Constant #8</span><br><span class="line">0×01 :UTF-8_info</span><br><span class="line">0×0003:字符串长度为3</span><br><span class="line">0×2829 56:”()V”</span><br><span class="line"></span><br><span class="line">Constant #9</span><br><span class="line">0x-01:Utf-8_info</span><br><span class="line">0×0004：字符串长度为4</span><br><span class="line">0x436f 6465:”Code”</span><br><span class="line"></span><br><span class="line">Constant #10</span><br><span class="line">0×01:Utf-8_info</span><br><span class="line">0×00 0f:字符串长度为15</span><br><span class="line">0x4c 696e 654e 756d 6265 7254 6162 6c65:”LineNumberTable”</span><br><span class="line"></span><br><span class="line">Constant #11</span><br><span class="line">ox01: Utf-8_info</span><br><span class="line">0×00 12字符串长度为18</span><br><span class="line">0x-4c 6f63 616c 5661 7269 6162 6c65 5461 626c 65:”LocalVariableTable”</span><br><span class="line"></span><br><span class="line">Constant #12</span><br><span class="line">0×01:Utf-8_info</span><br><span class="line">0×0004 字符串长度为4</span><br><span class="line">0×7468 6973 :”this”</span><br><span class="line"></span><br><span class="line">Constant #13</span><br><span class="line">0×01:Utf-8_info</span><br><span class="line">0x0f:字符串长度为15</span><br><span class="line">0x4c 636f 6d2f 6465 6d6f 2f44 656d 6f3b:”Lcom/demo/Demo;”</span><br><span class="line"></span><br><span class="line">Constant #14</span><br><span class="line">0×01:Utf-8_info</span><br><span class="line">0×00 0a:字符串长度为10</span><br><span class="line">ox74 6573 744d 6574 686f 64:”testMethod”</span><br><span class="line"></span><br><span class="line">Constant #15</span><br><span class="line">0×01:Utf-8_info</span><br><span class="line">0x000a:字符串长度为10</span><br><span class="line">0x536f 7572 6365 4669 6c65 :”SourceFile”</span><br><span class="line"></span><br><span class="line">Constant #16</span><br><span class="line">0×01:Utf-8_info</span><br><span class="line">0×0009:字符串长度为9</span><br><span class="line">0x-44 656d 6f2e 6a61 7661 :”Demo.java”</span><br><span class="line"></span><br><span class="line">Constant #17</span><br><span class="line">0x0c :NameAndType_info</span><br><span class="line">0×0007:字段或者名字名称常量项索引#7</span><br><span class="line">0×0008:字段或者方法描述符常量索引#8</span><br><span class="line"></span><br><span class="line">Constant #18</span><br><span class="line">0x0c:NameAndType_info</span><br><span class="line">0×0005:字段或者名字名称常量项索引#5</span><br><span class="line">0×0006:字段或者方法描述符常量索引#6</span><br><span class="line"></span><br><span class="line">Constant #19</span><br><span class="line">0×01:Utf-8_info</span><br><span class="line">0×00 0d:字符串长度为13</span><br><span class="line">0×63 6f6d 2f64 656d 6f2f 4465 6d6f:”com/demo/Demo”</span><br><span class="line"></span><br><span class="line">Constant #20</span><br><span class="line">0×01:Utf-8_info</span><br><span class="line">0×00 10 :字符串长度为16</span><br><span class="line">0x6a 6176 612f 6c61 6e67 2f4f 626a 6563 74 :”java/lang/Object”</span><br></pre></td></tr></table></figure></p>
+<p>到这里为止我们解析了所有的常量。接下来是解析访问标志位。</p>
+<h2 id="3-4-Access-Flag-访问标志"><a href="#3-4-Access-Flag-访问标志" class="headerlink" title="3.4 Access_Flag 访问标志"></a>3.4 Access_Flag 访问标志</h2><p>访问标志信息包括该Class文件是类还是接口，是否被定义成public，是否是abstract，如果是类，是否被声明成final。通过上面的源代码，我们知道该文件是类并且是public。<br><img src="http://upload-images.jianshu.io/upload_images/1986868-392acfe5fe81eb7b.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt=""></p>
+<p>0x 00 21：是0×0020和0×0001的并集。其中0×0020这个标志值涉及到了字节码指令，后期会有专题对字节码指令进行讲解。期待中……</p>
+<h2 id="3-5-类索引"><a href="#3-5-类索引" class="headerlink" title="3.5 类索引"></a>3.5 类索引</h2><p>类索引用于确定类的全限定名<br>0×00 03 表示引用第3个常量，同时第3个常量引用第19个常量，查找得”com/demo/Demo”。#3.#19</p>
+<h2 id="3-6父类索引"><a href="#3-6父类索引" class="headerlink" title="3.6父类索引"></a>3.6父类索引</h2><p>0×00 04 同理：#4.#20(java/lang/Object)</p>
+<h2 id="3-7-接口索引"><a href="#3-7-接口索引" class="headerlink" title="3.7 接口索引"></a>3.7 接口索引</h2><p>通过java_byte图我们知道，这个接口有2+n个字节，前两个字节表示的是接口数量，后面跟着就是接口的表。我们这个类没有任何接口，所以应该是0000。果不其然，查找字节码文件得到的就是0000。</p>
+<h2 id="3-8-字段表集合"><a href="#3-8-字段表集合" class="headerlink" title="3.8 字段表集合"></a>3.8 字段表集合</h2><p>字段表用于描述类和接口中声明的变量。这里的字段包含了类级别变量以及实例变量，但是不包括方法内部声明的局部变量。<br>同样，接下来就是2+n个字段属性。我们只有一个属性a，按道理应该是0001。查找文件果不其然是0001。<br>那么接下来我们要针对这样的字段进行解析。附上字段表结构图<br><img src="http://upload-images.jianshu.io/upload_images/1986868-7c0ed3c898858129.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt=""></p>
+<p>0×00 02 ：访问标志为private（自行搜索字段访问标志）<br>0×00 05 : 字段名称索引为#5，对应的是”a”<br>0x 00 06 :描述符索引为#6，对应的是”I”<br>0x 00 00 :属性表数量为0，因此没有属性表。<br>tips:一些不太重要的表（字段，方法访问标志表）可以自行搜索，这里就不贴出来了，防止篇幅过大。</p>
+<h2 id="3-9-方法"><a href="#3-9-方法" class="headerlink" title="3.9 方法"></a>3.9 方法</h2><p>我们只有一个方法testMethod，按照道理应该前2个字节是0001。通过查找发现是0×00 02。这是什么原因，这代表着有2个方法呢？且继续看……</p>
+<p><img src="http://upload-images.jianshu.io/upload_images/1986868-44b812e1036aaef0.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt=""></p>
+<p><strong>第1个方法：</strong><br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">0×00 01：访问标志 ACC_PUBLIC，表明该方法是public。（可自行搜索方法访问标志表）</span><br><span class="line">0×00 07：方法名索引为#7，对应的是”&lt;init&gt;”</span><br><span class="line">0×00 08：方法描述符索引为#8，对应的是”()V”</span><br><span class="line">0×00 01：属性表数量为1(一个属性表)</span><br></pre></td></tr></table></figure></p>
+<p>那么这里涉及到了属性表。什么是属性表呢？可以这么理解，它是为了描述一些专有信息的，上面的方法带有一张属性表。所有属性表的结构如下图：</p>
+<p><img src="http://upload-images.jianshu.io/upload_images/1986868-596dd13ddcaad809.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt=""></p>
+<p>一个u2的属性名称索引，一个u2的属性长度加上属性长度的info。<br>虚拟机规范预定义的属性有很多，比如Code，LineNumberTable，LocalVariableTable，SourceFile等等，这个网上可以搜索到。</p>
+<p>按照上面的表结构解析得到下面信息：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">0×0009:名称索引为#9(“Code”)。</span><br><span class="line">0×000 00038：属性长度为56字节。</span><br></pre></td></tr></table></figure></p>
+<p>那么接下来解析一个Code属性表，按照下图解析</p>
+<p><img src="http://upload-images.jianshu.io/upload_images/1986868-d2e8cabf296300fc.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt=""></p>
+<p>前面6个字节（名称索引2字节+属性长度4字节）已经解析过了，所以接下来就是解析剩下的56-6=50字节即可。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">0×00 02 ：max_stack=2</span><br><span class="line">0×00 01 : max_locals=1</span><br><span class="line">0×00 0000 0a : code_length=10</span><br><span class="line">0x2a b700 012a 04b5 0002 b1 : 这是code代码，可以通过虚拟机字节码指令进行查找。</span><br><span class="line">2a=aload_0(将第一个引用变量推送到栈顶)</span><br><span class="line">b7=invokespecial(调用父类构造方法)</span><br><span class="line">00=什么都不做</span><br><span class="line">01 =将null推送到栈顶</span><br><span class="line">2a=同上</span><br><span class="line">04=iconst_1 将int型1推送到栈顶</span><br><span class="line">b5=putfield 为指定的类的实例变量赋值</span><br><span class="line">00= 同上</span><br><span class="line">02=iconst_m1 将int型-1推送栈顶</span><br><span class="line">b1=return 从当前方法返回void</span><br></pre></td></tr></table></figure></p>
+<p>整理，去除无动作指令得到下面<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">0 : aload_0</span><br><span class="line">1 : invokespecial</span><br><span class="line">4 : aload_0</span><br><span class="line">5 : iconst_1</span><br><span class="line">6 : putfield</span><br><span class="line">9 : return</span><br></pre></td></tr></table></figure></p>
+<p>关于虚拟机字节码指令这块内容，后期会继续深入下去…… 目前只需要了解即可。接下来顺着Code属性表继续解析下去:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">0×00 00 : exception_table_length=0</span><br><span class="line">0×00 02 : attributes_count=2(Code属性表内部还含有2个属性表)</span><br><span class="line">0×00 0a: 第一个属性表是”LineNumberTable”</span><br></pre></td></tr></table></figure></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">0×00 0000 0a : “属性长度为10″</span><br><span class="line">0×00 02 ：line_number_table_length=2</span><br></pre></td></tr></table></figure>
+<p>line_number_table是一个数量为line_number_table_length，类型为line_number_info的集合，line_number_info表包括了start_pc和line_number两个u2类型的数据项，前者是字节码行号，后者是Java源码行号<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">0×00 00 : start_pc =0</span><br><span class="line">0×00 03 : end_pc =3</span><br><span class="line">0×00 04 : start_pc=4</span><br><span class="line">0×00 04 : end_pc=4</span><br></pre></td></tr></table></figure></p>
+<p>0×00 0b 第二个属性表是：”LocalVariableTable”</p>
+<p><img src="http://upload-images.jianshu.io/upload_images/1986868-a93b62e38cdf0a4e.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt=""></p>
+<p><img src="http://upload-images.jianshu.io/upload_images/1986868-b30b18f2a001dc13.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt=""><br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">0×00 0000 0c：属性长度为12</span><br><span class="line">0×00 01 : local_variable_table_length=1</span><br><span class="line">然后按照local_variable_info表结构进行解析：</span><br><span class="line">0×00 00 : start_pc=0</span><br><span class="line">0×00 0a：length=10</span><br><span class="line">0x000c : name_index=”this”</span><br><span class="line">0x000d : descriptor_index #13 (“Lcom/demo/Demo”)</span><br><span class="line">0000 index=0</span><br></pre></td></tr></table></figure></p>
+<p>——-到这里第一个方法就解析完成了——-</p>
+<p>Method(init) 有1个属性Code表 和 2个属性表（LineNumberTable ，LocalVariableTable）接下来解析第二个方法。</p>
+<p><strong>第2个方法：</strong><br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line">0×00 04：”protected”</span><br><span class="line">0×00 0e: #14（”testMethod”）</span><br><span class="line">0×00 08 : “()V”</span><br><span class="line">0×0001 ： 属性数量=1</span><br><span class="line">0×0009 ：”Code”</span><br><span class="line">0×0000 002b 属性长度为43</span><br><span class="line"></span><br><span class="line">//解析一个Code表</span><br><span class="line">0000 :max_stack =0</span><br><span class="line">0001 : max_local =1</span><br><span class="line">0000 0001 : code_length =1</span><br><span class="line">0xb1 : return(该方法返回void)</span><br><span class="line">0×0000 异常表长度=0</span><br><span class="line">0×0002 属性表长度为2</span><br><span class="line"></span><br><span class="line">//第一个属性表</span><br><span class="line">0x000a : #10，LineNumberTable</span><br><span class="line">0×0000 0006 : 属性长度为6</span><br><span class="line">0×0001 : line_number_length = 1</span><br><span class="line">0×0000 : start_pc =0</span><br><span class="line">0×0008 : end_pc =8</span><br><span class="line"></span><br><span class="line">//第二个属性表</span><br><span class="line">0x000b : #11 ，LocalVariableTable</span><br><span class="line">0×0000 000c : 属性长度为12</span><br><span class="line">0×0001 : local_variable_table_length =1</span><br><span class="line">0×0000 :start_pc = 0</span><br><span class="line">0×0001: length = 1</span><br><span class="line">0x000c : name_index =#12 “this”</span><br><span class="line">0x000d : 描述索引#13 “Lcom/demo/Demo;”</span><br><span class="line">0000 index=0</span><br></pre></td></tr></table></figure></p>
+<p>到这里为止，方法解析都完成了，回过头看看顶部解析顺序图，我们接下来就要解析Attributes了。</p>
+<h2 id="3-10-Attribute"><a href="#3-10-Attribute" class="headerlink" title="3.10 Attribute"></a>3.10 Attribute</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">0×0001 ：同样的，表示有1个Attributes了。</span><br><span class="line">0x000f : #15(“SourceFile”)</span><br><span class="line">0×0000 0002 attribute_length=2</span><br><span class="line">0×0010 : sourcefile_index = #16(“Demo.java”)</span><br></pre></td></tr></table></figure>
+<p>SourceFile属性用来记录生成该Class文件的源码文件名称。</p>
+<h2 id="4-另话"><a href="#4-另话" class="headerlink" title="4. 另话"></a>4. 另话</h2><p>其实，我们写了这么多确实很麻烦，不过这种过程自己体验一遍的所获所得还是不同的。现在，使用java自带的反编译器来解析字节码文件。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">javap -verbose Demo //不用带后缀.class</span><br></pre></td></tr></table></figure></p>
+<p><img src="http://upload-images.jianshu.io/upload_images/1986868-8b34fdb9961be90e.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt=""></p>
+<h2 id="5-总结"><a href="#5-总结" class="headerlink" title="5. 总结"></a>5. 总结</h2><p>到此为止，讲解完成了class文件的解析，这样以后我们也能看懂字节码文件了。了解class文件的结构对后面进一步了解虚拟机执行引擎非常重要，所以这是基础并重要的一步。</p>
+
+      
+    </div>
+
+    
+      
+
+
+    
+
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/字节码/" rel="tag"># 字节码</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2018/03/23/2018-03-23-javacode-to-bytecode/" rel="next" title="从Java源代码到字节码">
+                <i class="fa fa-chevron-left"></i> 从Java源代码到字节码
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2018/04/11/2018-04-11-interrupt/" rel="prev" title="interrupt()到底意味着什么?">
+                interrupt()到底意味着什么? <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+  
+    <div class="comments" id="comments">
+      <div id="lv-container" data-id="city" data-uid="MTAyMC8zNDA5NS8xMDYzMw=="></div>
+    </div>
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image"
+                src="/images/logo.jpg"
+                alt="Govern" />
+            
+              <p class="site-author-name" itemprop="name">Govern</p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          
+            <nav class="site-state motion-element">
+              
+                <div class="site-state-item site-state-posts">
+                
+                  <a href="/archives/">
+                
+                    <span class="site-state-item-count">98</span>
+                    <span class="site-state-item-name">日志</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-categories">
+                  <a href="/categories/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">20</span>
+                    <span class="site-state-item-name">分类</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-tags">
+                  <a href="/tags/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">39</span>
+                    <span class="site-state-item-name">标签</span>
+                  </a>
+                </div>
+              
+            </nav>
+          
+
+          
+
+          
+
+          
+          
+
+          
+          
+
+          
+            
+          
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#1-首先我们来写一个java源文件"><span class="nav-number">1.</span> <span class="nav-text">1. 首先我们来写一个java源文件</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-接下来我们用javac命令或者ide工具将该java源文件编译成java字节码文件。"><span class="nav-number">2.</span> <span class="nav-text">2. 接下来我们用javac命令或者ide工具将该java源文件编译成java字节码文件。</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-1-魔数"><span class="nav-number">3.</span> <span class="nav-text">3.1 魔数</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-2-版本号"><span class="nav-number">4.</span> <span class="nav-text">3.2 版本号</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-3-常量池"><span class="nav-number">5.</span> <span class="nav-text">3.3 常量池</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-4-Access-Flag-访问标志"><span class="nav-number">6.</span> <span class="nav-text">3.4 Access_Flag 访问标志</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-5-类索引"><span class="nav-number">7.</span> <span class="nav-text">3.5 类索引</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-6父类索引"><span class="nav-number">8.</span> <span class="nav-text">3.6父类索引</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-7-接口索引"><span class="nav-number">9.</span> <span class="nav-text">3.7 接口索引</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-8-字段表集合"><span class="nav-number">10.</span> <span class="nav-text">3.8 字段表集合</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-9-方法"><span class="nav-number">11.</span> <span class="nav-text">3.9 方法</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-10-Attribute"><span class="nav-number">12.</span> <span class="nav-text">3.10 Attribute</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#4-另话"><span class="nav-number">13.</span> <span class="nav-text">4. 另话</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#5-总结"><span class="nav-number">14.</span> <span class="nav-text">5. 总结</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+        <div class="back-to-top">
+          <i class="fa fa-arrow-up"></i>
+          
+            <span id="scrollpercent"><span>0</span>%</span>
+          
+        </div>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; 2012 &mdash; <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Govern</span>
+
+  
+
+  
+</div>
+
+
+  
+
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" rel="external nofollow" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" rel="external nofollow" href="https://github.com/theme-next/hexo-theme-next">NexT.Gemini</a> v6.0.3</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=6.0.3"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=6.0.3"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=6.0.3"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=6.0.3"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=6.0.3"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=6.0.3"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=6.0.3"></script>
+
+
+
+  
+
+
+
+
+
+
+
+  
+    <script type="text/javascript">
+      (function(d, s) {
+        var j, e = d.getElementsByTagName(s)[0];
+        if (typeof LivereTower === 'function') { return; }
+        j = d.createElement(s);
+        j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+        j.async = true;
+        e.parentNode.insertBefore(j, e);
+      })(document, 'script');
+    </script>
+  
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+  
+  
+  
+  <link rel="stylesheet" href="/lib/algolia-instant-search/instantsearch.min.css">
+
+  
+  
+  <script src="/lib/algolia-instant-search/instantsearch.min.js"></script>
+  
+
+  <script src="/js/src/algolia-search.js?v=6.0.3"></script>
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+  
+  
+  
+  <script src="/lib/bookmark/bookmark.min.js?v=1.0"></script>
+  <script type="text/javascript">
+  
+    bookmark.scrollToMark('auto', "#more");
+  
+  </script>
+
+
+</body>
+</html>

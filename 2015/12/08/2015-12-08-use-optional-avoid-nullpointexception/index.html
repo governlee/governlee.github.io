@@ -1,0 +1,1055 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next gemini use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=6.0.3" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=6.0.3">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/lights-32x32.png?v=6.0.3">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/lights-16x16.png?v=6.0.3">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=6.0.3" color="#222">
+
+
+
+
+
+
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Gemini',
+    version: '6.0.3',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":true,"scrollpercent":true,"onmobile":false},
+    fancybox: false,
+    fastclick: false,
+    lazyload: false,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    algolia: {
+      applicationID: '41NC33JUJG',
+      apiKey: '7362b84fed21bc83930f198a0927bb82',
+      indexName: 'blog',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+  
+
+
+
+
+  
+  <meta name="keywords" content="Java语言,Java8," />
+
+
+<meta name="description" content="原文链接: http://weishu.me/2015/12/08/use-optional-avoid-nullpointexception/ 笔记  原文是Oracle官网上的文章，译者翻译得很好。看完能基本了解Java8中Optional的基本用法，当然前提是需要对lambda已有一定的了解。看完文章，我的疑问是Optional是否支持IOC框架的依赖注入？网上查阅了一下,发现Spring4">
+<meta name="keywords" content="Java语言,Java8">
+<meta property="og:type" content="article">
+<meta property="og:title" content="[译]厌倦了NullPointException？Optional拯救你！">
+<meta property="og:url" content="http://governlee.github.io/2015/12/08/2015-12-08-use-optional-avoid-nullpointexception/index.html">
+<meta property="og:site_name" content="Govern x Lab">
+<meta property="og:description" content="原文链接: http://weishu.me/2015/12/08/use-optional-avoid-nullpointexception/ 笔记  原文是Oracle官网上的文章，译者翻译得很好。看完能基本了解Java8中Optional的基本用法，当然前提是需要对lambda已有一定的了解。看完文章，我的疑问是Optional是否支持IOC框架的依赖注入？网上查阅了一下,发现Spring4">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="http://7sbqce.com1.z0.glb.clouddn.com/blog2015-12-9-1.gif">
+<meta property="og:image" content="http://7sbqce.com1.z0.glb.clouddn.com/blog2015-12-9-2.gif">
+<meta property="og:image" content="http://7sbqce.com1.z0.glb.clouddn.com/blog2015-12-9-3.gif">
+<meta property="og:image" content="http://7sbqce.com1.z0.glb.clouddn.com/blog2015-12-9-4.gif">
+<meta property="og:updated_time" content="2018-03-07T12:34:16.266Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="[译]厌倦了NullPointException？Optional拯救你！">
+<meta name="twitter:description" content="原文链接: http://weishu.me/2015/12/08/use-optional-avoid-nullpointexception/ 笔记  原文是Oracle官网上的文章，译者翻译得很好。看完能基本了解Java8中Optional的基本用法，当然前提是需要对lambda已有一定的了解。看完文章，我的疑问是Optional是否支持IOC框架的依赖注入？网上查阅了一下,发现Spring4">
+<meta name="twitter:image" content="http://7sbqce.com1.z0.glb.clouddn.com/blog2015-12-9-1.gif">
+
+
+
+
+
+
+  <link rel="canonical" href="http://governlee.github.io/2015/12/08/2015-12-08-use-optional-avoid-nullpointexception/"/>
+
+
+
+<script type="text/javascript" id="page.configurations">
+  CONFIG.page = {
+    sidebar: "",
+  };
+</script>
+  <title>[译]厌倦了NullPointException？Optional拯救你！ | Govern x Lab</title>
+  
+
+
+
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?f6804645172803d5efc7161f04df1d76";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+  <noscript>
+  <style type="text/css">
+    .use-motion .motion-element,
+    .use-motion .brand,
+    .use-motion .menu-item,
+    .sidebar-inner,
+    .use-motion .post-block,
+    .use-motion .pagination,
+    .use-motion .comments,
+    .use-motion .post-header,
+    .use-motion .post-body,
+    .use-motion .collection-title { opacity: initial; }
+
+    .use-motion .logo,
+    .use-motion .site-title,
+    .use-motion .site-subtitle {
+      opacity: initial;
+      top: initial;
+    }
+
+    .use-motion {
+      .logo-line-before i { left: initial; }
+      .logo-line-after i { right: initial; }
+    }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"> <div class="site-brand-wrapper">
+  <div class="site-meta custom-logo">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Govern x Lab</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <h1 class="site-subtitle" itemprop="description">I'm not the only one</h1>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-home"></i> <br />首页</a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-user"></i> <br />关于</a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />标签</a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-th"></i> <br />分类</a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />归档</a>
+        </li>
+      
+
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />搜索</a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  
+  <div class="algolia-popup popup search-popup">
+    <div class="algolia-search">
+      <div class="algolia-search-input-icon">
+        <i class="fa fa-search"></i>
+      </div>
+      <div class="algolia-search-input" id="algolia-search-input"></div>
+    </div>
+
+    <div class="algolia-results">
+      <div id="algolia-stats"></div>
+      <div id="algolia-hits"></div>
+      <div id="algolia-pagination" class="algolia-pagination"></div>
+    </div>
+
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+  </div>
+
+
+
+
+    </div>
+  
+</nav>
+
+
+  
+
+
+
+ </div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://governlee.github.io/2015/12/08/2015-12-08-use-optional-avoid-nullpointexception/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Govern">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/logo.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Govern x Lab">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">[译]厌倦了NullPointException？Optional拯救你！</h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2015-12-08T08:00:00+08:00">2015-12-08</time>
+            
+
+            
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/JDK/" itemprop="url" rel="index"><span itemprop="name">JDK</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>原文链接: <a href="http://weishu.me/2015/12/08/use-optional-avoid-nullpointexception/" target="_blank" rel="noopener">http://weishu.me/2015/12/08/use-optional-avoid-nullpointexception/</a></p>
+<h2 id="笔记"><a href="#笔记" class="headerlink" title="笔记"></a>笔记</h2><blockquote>
+<p> 原文是Oracle官网上的文章，译者翻译得很好。看完能基本了解Java8中Optional的基本用法，当然前提是需要对lambda已有一定的了解。看完文章，我的疑问是Optional是否支持IOC框架的依赖注入？网上查阅了一下,发现Spring4.x 已经能完美支持Optional。</p>
+</blockquote>
+<p>
+
+</p><h2 id="正文"><a href="#正文" class="headerlink" title="正文"></a>正文</h2><blockquote>
+<p>I call it my billion-dollar mistake. It was the invention of the null reference in 1965. I couldn’t resist the temptation to put in a null reference, simply because it was so easy to implement.<br>—Tony Hoare</p>
+</blockquote>
+<p>有人说，当你处理过了空指针异常才真正成为一个Java开发者。抛开玩笑话不谈，空指针确实是很多bug的根源。Java SE 8引入了一个新的叫做java.util.Optional 的类来缓解这个问题。</p>
+<p>我们首先看看空指针有什么危险，Computer是一个嵌套的对象，如图：  </p>
+<p><center><br><img src="http://7sbqce.com1.z0.glb.clouddn.com/blog2015-12-9-1.gif" alt="Computer对象"><br>  <div><span>Comtuper对象</span></div><br></center></p>
+<p></p><p><br>下面的代码有什么潜在的问题呢？<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">String version = computer.getSoundcard().getUSB().getVersion();</span><br></pre></td></tr></table></figure></p>
+<p>貌似可行，但是，很多电脑（比如 Raspberry Pi）并没有Soundcard，因此调用getSoundcard会发生什么？毫无疑问，结果自然是在运行时给你抛出一个NullPointException，然后终止程序的执行。</p>
+<p>如何避免上面的空指针异常呢？一般的做法就是在调用方法之前进行检测：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">String version = <span class="string">"UNKNOWN"</span>;</span><br><span class="line"><span class="keyword">if</span>(computer != <span class="keyword">null</span>)&#123;</span><br><span class="line">  Soundcard soundcard = computer.getSoundcard();</span><br><span class="line">  <span class="keyword">if</span>(soundcard != <span class="keyword">null</span>)&#123;</span><br><span class="line">    USB usb = soundcard.getUSB();</span><br><span class="line">    <span class="keyword">if</span>(usb != <span class="keyword">null</span>)&#123;</span><br><span class="line">      version = usb.getVersion();</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>但是，上面嵌套if检测的代码确实不怎么好看。但是没办法，我们需要很多这样死板的没什么意义的代码来避免碰到NullPointException。更恼火的是，这部分代码成了我们业务逻辑的一部分，还降低了代码的可读性。</p>
+<p>万一我们忘记对某个可能为null的对象进行非空检测怎么办？使用null来说明某个值缺失是一种错误的方式, 下文将说明这个问题并给出更好的解决办法。</p>
+<p>先看看别的编程语言是如何处理这个问题的。</p>
+<h2 id="Null的替代物"><a href="#Null的替代物" class="headerlink" title="Null的替代物"></a>Null的替代物</h2><p>Grovvy语言有一个?.的操作符，可以安全地处理潜在可能的空引用（C#即将包含这个特性，Java7曾被建议引入这个但是并没有发布。）它是这么用的：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">String version = computer?.getSoundcard()?.getUSB()?.getVersion();</span><br></pre></td></tr></table></figure></p>
+<p>如果getSoundcard(),getUSB(),getVersion任意一个返回null，变量version就被赋值为null，不需要额外的复杂的嵌套检测。更好的是，Grovvy还有一个Elvis操作符:?:，可以给类似上面的表达式提供默认值。下面的表达式如果?. 返回了null那么变量version会被赋值为”UNKNOW”:<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">String version = computer?.getSoundcard()?.getUSB()?.getVersion() ?: <span class="string">"UNKNOWN"</span>;</span><br></pre></td></tr></table></figure></p>
+<p>其他的一些函数式编程语言，比如Haskell, Scala，使用了一种别的方式。Haskell有一个Maybe型态，这个型态代表了一种有可选值的类型。Maybe形态的值可能包含一个给定类型的值或者是Nothing(译者注：代表没有值)，完全没有空指针的概念。Scala有一种类似的叫做Option[T]的东西来代表类型T的某一个值存在或者没有。因此，你必须显式检测这个值是否存在，如果不存在就不能使用任何Option类型的操作符；这样由于Scala的类型系统，你永远也不会忘记对于空指针的检测。<br>貌似有点扯远了，那么，Java8给我们提供了什么呢？  </p>
+<h2 id="果壳里的Optional"><a href="#果壳里的Optional" class="headerlink" title="果壳里的Optional"></a>果壳里的Optional</h2><p>受到Haskell和Scala的启发，Java8引入了一个叫做java.util.Optional<t>的类，这一个包含一个可选值的类型，你可以把它当作包含单个值的容器——这个容器要么包含一个值要么什么都没有，如下图：<br><img src="http://7sbqce.com1.z0.glb.clouddn.com/blog2015-12-9-2.gif" alt=""></t></p>
+<div style="text-align:center"><b>Optional表示</b></div>
+
+<p>我们在数据模型里面引入Optional：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">Computer</span> </span>&#123;</span><br><span class="line">  <span class="keyword">private</span> Optional&lt;Soundcard&gt; soundcard;  </span><br><span class="line">  <span class="function"><span class="keyword">public</span> Optional&lt;Soundcard&gt; <span class="title">getSoundcard</span><span class="params">()</span> </span>&#123; ... &#125;</span><br><span class="line">  ...</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">Soundcard</span> </span>&#123;</span><br><span class="line">  <span class="keyword">private</span> Optional&lt;USB&gt; usb;</span><br><span class="line">  <span class="function"><span class="keyword">public</span> Optional&lt;USB&gt; <span class="title">getUSB</span><span class="params">()</span> </span>&#123; ... &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">USB</span></span>&#123;</span><br><span class="line">  <span class="function"><span class="keyword">public</span> String <span class="title">getVersion</span><span class="params">()</span></span>&#123; ... &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>用上面的代码，我们一眼就可以看出来一个computer有没有soundcard（他们是optioal，可选的），更进一步，一个声卡也有一个可选的USB端口；新的模型能清晰地反映出一个给定的值是有可能不存在的。这种做法在某些库里面也存在，比如Guava(译：Java5之后就可以使用，不过有局限)</p>
+<p>我们能用Optional对象干什么？Optional对象包含了一些方法来显式地处理某个值是存在还是缺失，Optional类强制你思考值不存在的情况，这样就能避免潜在的空指针异常。</p>
+<p>值得一提的是，设计Optional类的目的并不是完全取代null, 它的目的是设计更易理解的API。通过Optional，可以从方法签名就知道这个函数有可能返回一个缺失的值，这样强制你处理这些缺失值的情况。</p>
+<h2 id="Optional的正确打开方式"><a href="#Optional的正确打开方式" class="headerlink" title="Optional的正确打开方式"></a>Optional的正确打开方式</h2><p>废话扯了这么多，来点实际的例子吧！首先来看看如何使用Optional类来实现传统的空指针检测：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">String name = computer.flatMap(Computer::getSoundcard)</span><br><span class="line">                          .flatMap(Soundcard::getUSB)</span><br><span class="line">                          .map(USB::getVersion)</span><br><span class="line">                          .orElse(<span class="string">"UNKNOWN"</span>);</span><br></pre></td></tr></table></figure></p>
+<blockquote>
+<p>如果无法理解这段代码，可以复习Java8的lambda和方法引用,见<a href="http://www.oracle.com/technetwork/articles/java/architect-lambdas-part1-2080972.html" target="_blank" rel="noopener">Java8 Lambdas</a> 以及stream pipelining概念,见<a href="http://www.oraclejavamagazine-digital.com/javamagazine_open/20140304#pg51" target="_blank" rel="noopener">Processing Data with Java SE 8 Steams</a></p>
+</blockquote>
+<h3 id="创建Optional对象"><a href="#创建Optional对象" class="headerlink" title="创建Optional对象"></a>创建Optional对象</h3><p>如何创建Optional对象呢，有下面几种方式：</p>
+<ol>
+<li><p>空的Optional</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Optional&lt;Soundcard&gt; sc = Optional.empty();</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>包含非空值的Optional</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">SoundCard soundcard = <span class="keyword">new</span> Soundcard();</span><br><span class="line">Optional&lt;Soundcard&gt; sc = Optional.of(soundcard);</span><br></pre></td></tr></table></figure>
+</li>
+</ol>
+<p>一旦soundcard是null，这段代码会立即抛出一个NullPointException（而不是等你以后你访问这个空的soundcard对象的时候)</p>
+<ol>
+<li>可能为空的Optional<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Optional&lt;Soundcard&gt; sc = Optional.ofNullable(soundcard);</span><br></pre></td></tr></table></figure>
+</li>
+</ol>
+<p>如果soundcard是null那么这个Optional将会是empty.</p>
+<h3 id="值存在的时候进行进一步的操作"><a href="#值存在的时候进行进一步的操作" class="headerlink" title="值存在的时候进行进一步的操作"></a>值存在的时候进行进一步的操作</h3><p>现在你有了一个Optional对象，你可以显式地处理值存在或者不存在的情况，再也不用想这样如履薄冰地进行空指针检测了：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">SoundCard soundcard = ...;</span><br><span class="line"><span class="keyword">if</span>(soundcard != <span class="keyword">null</span>)&#123;</span><br><span class="line">  System.out.println(soundcard);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>现在，可以使用ifPresent()方法，如下：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">Optional&lt;Soundcard&gt; soundcard = ...;</span><br><span class="line">soundcard.ifPresent(System.out::println);</span><br></pre></td></tr></table></figure></p>
+<p>现在，你再也不用显示地进行非空检测了，类型系统帮你干了这件事。如果Optional是empty,上面的代码就不会执行打印了。</p>
+<p>你也可以使用isPresent()方法检查某个值是否存在，另外，get 方法可以返回Optional容器里面包含的那个对象，如果没有这个对象，get方法会立即抛出一个NoSuchElementException，这两个方法可以结合起来：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span>(soundcard.isPresent())&#123;</span><br><span class="line">  System.out.println(soundcard.get());</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>但是，并不提倡这样使用Optional。（这么做跟null检测有什么区别？），下面有一些惯用手法，我们来看一下。</p>
+<h3 id="默认值和默认操作"><a href="#默认值和默认操作" class="headerlink" title="默认值和默认操作"></a>默认值和默认操作</h3><p>在某个操作返回空的时候给出一个默认值也是一个典型的场景，通常的做法是使用三目运算符(?):<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">Soundcard soundcard = maybeSoundcard != <span class="keyword">null</span> ?</span><br><span class="line">            maybeSoundcard : <span class="keyword">new</span> Soundcard(<span class="string">"basic_sound_card"</span>);</span><br></pre></td></tr></table></figure></p>
+<p>如果你想在空值的时候抛出一个异常，可以使用ifElseThrow方法：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">Soundcard soundcard =</span><br><span class="line">  maybeSoundCard.orElseThrow(IllegalStateException::<span class="keyword">new</span>);</span><br></pre></td></tr></table></figure></p>
+<h3 id="使用filter过滤特定值"><a href="#使用filter过滤特定值" class="headerlink" title="使用filter过滤特定值"></a>使用filter过滤特定值</h3><p>很多时候你需要调用某个对象的方法并且检查它的一些属性。例如：你可能需要检测一个USB的端口是否是一个特定的版本；如果需要避免空指针异常，通畅的方式是检测非空然后调用getVersion方法，如下：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">USB usb = ...;</span><br><span class="line"><span class="keyword">if</span>(usb != <span class="keyword">null</span> &amp;&amp; <span class="string">"3.0"</span>.equals(usb.getVersion()))&#123;</span><br><span class="line">  System.out.println(<span class="string">"ok"</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>使用Optional的filter可以这么干：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">Optional&lt;USB&gt; maybeUSB = ...;</span><br><span class="line">maybeUSB.filter(usb -&gt; <span class="string">"3.0"</span>.equals(usb.getVersion())</span><br><span class="line">                    .ifPresent(() -&gt; System.out.println(<span class="string">"ok"</span>));</span><br></pre></td></tr></table></figure></p>
+<p>filter方法带有一个Predicate的参数，如果Optional容器里面的对象存在并且满足这个predicate,那么filter返回那个对象，否则就返回empty的Optional。（跟Stream接口的filter类似）</p>
+<h3 id="使用map转换值"><a href="#使用map转换值" class="headerlink" title="使用map转换值"></a>使用map转换值</h3><p>另外一个比较常见的场景是需要从某个对象里面提取出特定的值。例如：从一个Soundcard对象里面取出一个USB对象然后检测这个usb对象是否是正确的版本。通常可以这么写：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span>(soundcard != <span class="keyword">null</span>)&#123;</span><br><span class="line">  USB usb = soundcard.getUSB();</span><br><span class="line">  <span class="keyword">if</span>(usb != <span class="keyword">null</span> &amp;&amp; <span class="string">"3.0"</span>.equals(usb.getVersion())&#123;</span><br><span class="line">    System.out.println(<span class="string">"ok"</span>);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>使用Optional的map方法，如下：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Optional&lt;USB&gt; usb = maybeSoundcard.map(Soundcard::getUSB);</span><br></pre></td></tr></table></figure></p>
+<p>Optional容器里面的值被某个函数（这里是USB的方法引用）作为参数“转换”了，如果Optional是empty那么就什么也不会发生。<br>结合使用map和filter可以检测某个声卡是否有USB 3.0的接口：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">maybeSoundcard.map(Soundcard::getUSB)</span><br><span class="line">      .filter(usb -&gt; <span class="string">"3.0"</span>.equals(usb.getVersion())</span><br><span class="line">      .ifPresent(() -&gt; System.out.println(<span class="string">"ok"</span>));</span><br></pre></td></tr></table></figure></p>
+<p>现在我们的代码看起来比较像是在描述问题了！而且没有任何非空检测，太酷了！</p>
+<h3 id="使用flatMap级联Optional"><a href="#使用flatMap级联Optional" class="headerlink" title="使用flatMap级联Optional"></a>使用flatMap级联Optional</h3><p>我们已经有一些常见的模式可以通过Optional重构了，那么我们如何用一种安全的方式重构下面的代码呢？<br>结合使用map和filter可以检测某个声卡是否有USB 3.0的接口：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">String version = computer.getSoundcard().getUSB().getVersion();</span><br></pre></td></tr></table></figure></p>
+<p>上面的代码都是从一个对象里面取出另外一个对象， 这不正是上文介绍的map吗？我们改写Computer模型对象，让它拥有一个Optional<soundcard>和一个Optional<usb>，然后就可以把代码改成这样：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">String version = computer.map(Computer::getSoundcard)</span><br><span class="line">                  .map(Soundcard::getUSB)</span><br><span class="line">                  .map(USB::getVersion)</span><br><span class="line">                  .orElse(<span class="string">"UNKNOWN"</span>);</span><br></pre></td></tr></table></figure></usb></soundcard></p>
+<p>但是，这段代码并不能通过编译。为什么？</p>
+<p>computer变量类型是Optional<computer>，因此它调用map方法没有任何问题；但是，getSoundcard()方法的返回类型是Optional<soundcard>这意味着map操作结果的类型是Optional&lt;Optional<soundcard>&gt;,因此getUsb这个调用是非法的：外面的那个Optional包含的值是另外一个Optional，自然就没有getUsb方法，下图是这个调用的结构：</soundcard></soundcard></computer></p>
+<p><center><br><img src="http://7sbqce.com1.z0.glb.clouddn.com/blog2015-12-9-3.gif" alt=""><br>    <div><span>two level Optional</span></div><br></center></p>
+<p></p><p><br>如何解决这个问题呢？Optional类提供了一个flapMap的方法。这个方法可以对一个Optional使用一个函数转换为一个Optional然后把结果（两个Optional)flatten为一个单个Optional，下图给出了map和flatMap的区别：</p>
+<p><center><br><img src="http://7sbqce.com1.z0.glb.clouddn.com/blog2015-12-9-4.gif" alt=""><br>    <div><span>map and flatMap</span></div><br></center></p>
+<p></p><p><br>用flatMap重写我们的代码：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">String version = computer.flatMap(Computer::getSoundcard)</span><br><span class="line">                   .flatMap(Soundcard::getUSB)</span><br><span class="line">                   .map(USB::getVersion)</span><br><span class="line">                   .orElse(<span class="string">"UNKNOWN"</span>);</span><br></pre></td></tr></table></figure></p>
+<p>第一个flatMap确保返回一个Optioan<soundcard>而不是Optional&lt;&lt;Optional<soundcard>&gt;，第二个flatMap确保返回一个Optional<usb>；接着第三次调用着需要一个map即可，因为getVersion返回一个String而非Optional方法。</usb></soundcard></soundcard></p>
+<p>Cool！现在我们可以抛弃痛苦的嵌套非空检测了，使用Optional可以写出声明式的，更可读的代码，并且永远不会有空指针异常！</p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>本文介绍了如何使用Java SE 8的java.util.Optional<t>。Optional的目的不是替换你代码里面的每个null，它可以帮助你设计出更好的API，使用者通过方法签名就能知道是否有一个可选的值。另外，Optional通过强迫主动处理空指针情况，可以保护代码不出现NullPointException。</t></p>
+<h2 id="译后感"><a href="#译后感" class="headerlink" title="译后感"></a>译后感</h2><p>嵌套的非空检测确实是个很头大的问题，虽然有一些静态代码检测工具可以检测到这些异常，但是这样无聊的检测代码很是让人失望。Java 8引入的Optional确实可以部分缓解这部分问题；但是依然存在局限性，比如，如果某个特定的方法调用出了别的运行时异常怎么办？对于?Haskell Maybe Monad只吸收了一部分，不过已经很不错了，期待什么时候能引入Grovvy的?.操作符，在处理空指针问题上，?.更加简洁有力。</p>
+<p>Optional虽好，但是Java 8目前并不普及，Android 就不用想了。虽然有<a href="https://github.com/orfjackal/retrolambda" target="_blank" rel="noopener">retrolambda</a>项目支持在Java 6里面使用lambda，但是它更多地是提供了语法糖：  </p>
+<ol>
+<li>lambda的实现使用的是匿名内部类而不是invokedynamic, 见<a href="http://www.infoq.com/cn/articles/Java-8-Lambdas-A-Peek-Under-the-Hood" target="_blank" rel="noopener">深入探索Java 8 Lambda表达式</a></li>
+<li>方法引用是lambda的语法糖，实现相同</li>
+<li>接口默认方法实际上给接口生成了一个抽象方法，然后给所有接口的实现者添加了这个默认实现</li>
+<li><p>接口静态方法，实际上把静态方法放在另外一个类里面，然后把所有对接口静态方法的调用更换为对新生成类里面方法的调用  </p>
+<p>鉴于以上种种原因，在生产环境基本上不可能使用retrolambda了，大型系统还是老实一点吧。</p>
+<p>虽然Grava项目也有一个Optional类，但是没有函数式接口，我们所能做的不过是把if (obj == null)替换为if (opt.isPresend())罢了；虽说能提高类型安全性，但是还是得写一堆shit一样的嵌套检测。</p>
+<p>对于Android开发，想使用这个是没有希望了。但愿Kotlin能给我们惊喜。</p>
+</li>
+</ol>
+<h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><p>  Chapter 9, “Optional: a better alternative to null,” from Java 8 in Action: Lambdas, Streams, and Functional-style Programming<br>  “Monadic Java“ by Mario Fusco<br>  Processing Data with Java SE 8 Streams</p>
+<h2 id="致谢"><a href="#致谢" class="headerlink" title="致谢"></a>致谢</h2><p>  Thanks to Alan Mycroft and Mario Fusco for going through the adventure of writing Java 8 in Action: Lambdas, Streams, and Functional-style Programming with me.</p>
+<h2 id="关于作者"><a href="#关于作者" class="headerlink" title="关于作者"></a>关于作者</h2><p>  Raoul-Gabriel Urma (@raoulUK) is currently completing a PhD in computer science at the University of Cambridge, where he does research in programming languages. He’s a coauthor of the upcoming book Java 8 in Action: Lambdas, Streams, and Functional-style Programming, published by Manning. He is also a regular speaker at major Java conferences (for example, Devoxx and Fosdem) and an instructor. In addition, he has worked at several well-known companies—including Google’s Python team, Oracle’s Java Platform group, eBay, and Goldman Sachs—as well as for several startup projects.</p>
+<p>  原文：<a href="http://www.oracle.com/technetwork/articles/java/java8-optional-2175753.html" target="_blank" rel="noopener">http://www.oracle.com/technetwork/articles/java/java8-optional-2175753.html</a></p>
+
+      
+    </div>
+
+    
+      
+
+
+    
+
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/Java语言/" rel="tag"># Java语言</a>
+          
+            <a href="/tags/Java8/" rel="tag"># Java8</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2015/11/27/2015-11-27-Lambda/" rel="next" title="深入探索Java 8 Lambda表达式">
+                <i class="fa fa-chevron-left"></i> 深入探索Java 8 Lambda表达式
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2016/01/12/2016-01-23-jvm-theory-8/" rel="prev" title="Java虚拟机原理：(八) JVM类加载器机制与类加载过程">
+                Java虚拟机原理：(八) JVM类加载器机制与类加载过程 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+  
+    <div class="comments" id="comments">
+      <div id="lv-container" data-id="city" data-uid="MTAyMC8zNDA5NS8xMDYzMw=="></div>
+    </div>
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image"
+                src="/images/logo.jpg"
+                alt="Govern" />
+            
+              <p class="site-author-name" itemprop="name">Govern</p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          
+            <nav class="site-state motion-element">
+              
+                <div class="site-state-item site-state-posts">
+                
+                  <a href="/archives/">
+                
+                    <span class="site-state-item-count">98</span>
+                    <span class="site-state-item-name">日志</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-categories">
+                  <a href="/categories/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">20</span>
+                    <span class="site-state-item-name">分类</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-tags">
+                  <a href="/tags/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">39</span>
+                    <span class="site-state-item-name">标签</span>
+                  </a>
+                </div>
+              
+            </nav>
+          
+
+          
+
+          
+
+          
+          
+
+          
+          
+
+          
+            
+          
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#笔记"><span class="nav-number">1.</span> <span class="nav-text">笔记</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#正文"><span class="nav-number">2.</span> <span class="nav-text">正文</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Null的替代物"><span class="nav-number">3.</span> <span class="nav-text">Null的替代物</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#果壳里的Optional"><span class="nav-number">4.</span> <span class="nav-text">果壳里的Optional</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Optional的正确打开方式"><span class="nav-number">5.</span> <span class="nav-text">Optional的正确打开方式</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#创建Optional对象"><span class="nav-number">5.1.</span> <span class="nav-text">创建Optional对象</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#值存在的时候进行进一步的操作"><span class="nav-number">5.2.</span> <span class="nav-text">值存在的时候进行进一步的操作</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#默认值和默认操作"><span class="nav-number">5.3.</span> <span class="nav-text">默认值和默认操作</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#使用filter过滤特定值"><span class="nav-number">5.4.</span> <span class="nav-text">使用filter过滤特定值</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#使用map转换值"><span class="nav-number">5.5.</span> <span class="nav-text">使用map转换值</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#使用flatMap级联Optional"><span class="nav-number">5.6.</span> <span class="nav-text">使用flatMap级联Optional</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#总结"><span class="nav-number">6.</span> <span class="nav-text">总结</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#译后感"><span class="nav-number">7.</span> <span class="nav-text">译后感</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#参考"><span class="nav-number">8.</span> <span class="nav-text">参考</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#致谢"><span class="nav-number">9.</span> <span class="nav-text">致谢</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#关于作者"><span class="nav-number">10.</span> <span class="nav-text">关于作者</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+        <div class="back-to-top">
+          <i class="fa fa-arrow-up"></i>
+          
+            <span id="scrollpercent"><span>0</span>%</span>
+          
+        </div>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; 2012 &mdash; <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Govern</span>
+
+  
+
+  
+</div>
+
+
+  
+
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" rel="external nofollow" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" rel="external nofollow" href="https://github.com/theme-next/hexo-theme-next">NexT.Gemini</a> v6.0.3</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=6.0.3"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=6.0.3"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=6.0.3"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=6.0.3"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=6.0.3"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=6.0.3"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=6.0.3"></script>
+
+
+
+  
+
+
+
+
+
+
+
+  
+    <script type="text/javascript">
+      (function(d, s) {
+        var j, e = d.getElementsByTagName(s)[0];
+        if (typeof LivereTower === 'function') { return; }
+        j = d.createElement(s);
+        j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+        j.async = true;
+        e.parentNode.insertBefore(j, e);
+      })(document, 'script');
+    </script>
+  
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+  
+  
+  
+  <link rel="stylesheet" href="/lib/algolia-instant-search/instantsearch.min.css">
+
+  
+  
+  <script src="/lib/algolia-instant-search/instantsearch.min.js"></script>
+  
+
+  <script src="/js/src/algolia-search.js?v=6.0.3"></script>
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+  
+  
+  
+  <script src="/lib/bookmark/bookmark.min.js?v=1.0"></script>
+  <script type="text/javascript">
+  
+    bookmark.scrollToMark('auto', "#more");
+  
+  </script>
+
+
+</body>
+</html>

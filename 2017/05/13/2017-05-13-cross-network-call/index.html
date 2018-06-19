@@ -1,0 +1,1019 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next gemini use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=6.0.3" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=6.0.3">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/lights-32x32.png?v=6.0.3">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/lights-16x16.png?v=6.0.3">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=6.0.3" color="#222">
+
+
+
+
+
+
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Gemini',
+    version: '6.0.3',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":true,"scrollpercent":true,"onmobile":false},
+    fancybox: false,
+    fastclick: false,
+    lazyload: false,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    algolia: {
+      applicationID: '41NC33JUJG',
+      apiKey: '7362b84fed21bc83930f198a0927bb82',
+      indexName: 'blog',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+  
+
+
+
+
+  
+  <meta name="keywords" content="架构师之路," />
+
+
+<meta name="description" content="转自: 架构师之路第三方接口挂掉，我们的服务会受影响么？ 一、缘起与大坑很多时候，业务需要跨公网调用一个第三方服务提供的接口，为了避免每个调用方都依赖于第三方服务，往往会抽象一个服务：  解除调用方与第三方接口的耦合 当第三方的接口变动时，只有服务需要修改，而不是所有调用方均修改  此时接口调用流程是什么样的呢？ 如上图1-4所述：1）业务调用方调用内部service（2）内部service跨公网">
+<meta name="keywords" content="架构师之路">
+<meta property="og:type" content="article">
+<meta property="og:title" content="跨公网调用的大坑与架构优化方案">
+<meta property="og:url" content="http://governlee.github.io/2017/05/13/2017-05-13-cross-network-call/index.html">
+<meta property="og:site_name" content="Govern x Lab">
+<meta property="og:description" content="转自: 架构师之路第三方接口挂掉，我们的服务会受影响么？ 一、缘起与大坑很多时候，业务需要跨公网调用一个第三方服务提供的接口，为了避免每个调用方都依赖于第三方服务，往往会抽象一个服务：  解除调用方与第三方接口的耦合 当第三方的接口变动时，只有服务需要修改，而不是所有调用方均修改  此时接口调用流程是什么样的呢？ 如上图1-4所述：1）业务调用方调用内部service（2）内部service跨公网">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="http://mmbiz.qpic.cn/mmbiz_png/YrezxckhYOxzCNyDkKOF244jRWibGVAzNzzpI9u4Q9BTte7CXelDRsMYPiclmXtuPz44fFX0NibySLdatHeOhgCow/640?wx_fmt=png&tp=webp&wxfrom=5&wx_lazy=1">
+<meta property="og:image" content="http://mmbiz.qpic.cn/mmbiz_png/YrezxckhYOxzCNyDkKOF244jRWibGVAzNbrraV4PaI6iaialJWk7wQrdOxibqDicvuysb7zTzSkrKlk8vcaMia3fufng/640?wx_fmt=png&tp=webp&wxfrom=5&wx_lazy=1">
+<meta property="og:image" content="http://mmbiz.qpic.cn/mmbiz_png/YrezxckhYOxzCNyDkKOF244jRWibGVAzNeOMgQbXFmzNBXGMyVNSNJER7J325vMic95bIW9jRJK4WD3g3k5qUqgA/640?wx_fmt=png&tp=webp&wxfrom=5&wx_lazy=1">
+<meta property="og:image" content="http://mmbiz.qpic.cn/mmbiz_png/YrezxckhYOxzCNyDkKOF244jRWibGVAzN9d6hX9u1ZZqic41SqDKH3kQ5VPZcgRmkGicsbevM9tfuYibfVFwJYgVNA/640?wx_fmt=png&tp=webp&wxfrom=5&wx_lazy=1">
+<meta property="og:image" content="http://mmbiz.qpic.cn/mmbiz_png/YrezxckhYOxzCNyDkKOF244jRWibGVAzNL77MxR4gfS6ggq7wymMn0iaPwnuv5iaePskicicB9OgC0p9TnjtPBwoZGA/640?wx_fmt=png&tp=webp&wxfrom=5&wx_lazy=1">
+<meta property="og:updated_time" content="2018-04-21T09:59:45.067Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="跨公网调用的大坑与架构优化方案">
+<meta name="twitter:description" content="转自: 架构师之路第三方接口挂掉，我们的服务会受影响么？ 一、缘起与大坑很多时候，业务需要跨公网调用一个第三方服务提供的接口，为了避免每个调用方都依赖于第三方服务，往往会抽象一个服务：  解除调用方与第三方接口的耦合 当第三方的接口变动时，只有服务需要修改，而不是所有调用方均修改  此时接口调用流程是什么样的呢？ 如上图1-4所述：1）业务调用方调用内部service（2）内部service跨公网">
+<meta name="twitter:image" content="http://mmbiz.qpic.cn/mmbiz_png/YrezxckhYOxzCNyDkKOF244jRWibGVAzNzzpI9u4Q9BTte7CXelDRsMYPiclmXtuPz44fFX0NibySLdatHeOhgCow/640?wx_fmt=png&tp=webp&wxfrom=5&wx_lazy=1">
+
+
+
+
+
+
+  <link rel="canonical" href="http://governlee.github.io/2017/05/13/2017-05-13-cross-network-call/"/>
+
+
+
+<script type="text/javascript" id="page.configurations">
+  CONFIG.page = {
+    sidebar: "",
+  };
+</script>
+  <title>跨公网调用的大坑与架构优化方案 | Govern x Lab</title>
+  
+
+
+
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?f6804645172803d5efc7161f04df1d76";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+  <noscript>
+  <style type="text/css">
+    .use-motion .motion-element,
+    .use-motion .brand,
+    .use-motion .menu-item,
+    .sidebar-inner,
+    .use-motion .post-block,
+    .use-motion .pagination,
+    .use-motion .comments,
+    .use-motion .post-header,
+    .use-motion .post-body,
+    .use-motion .collection-title { opacity: initial; }
+
+    .use-motion .logo,
+    .use-motion .site-title,
+    .use-motion .site-subtitle {
+      opacity: initial;
+      top: initial;
+    }
+
+    .use-motion {
+      .logo-line-before i { left: initial; }
+      .logo-line-after i { right: initial; }
+    }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"> <div class="site-brand-wrapper">
+  <div class="site-meta custom-logo">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Govern x Lab</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <h1 class="site-subtitle" itemprop="description">I'm not the only one</h1>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-home"></i> <br />首页</a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-user"></i> <br />关于</a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />标签</a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-th"></i> <br />分类</a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />归档</a>
+        </li>
+      
+
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />搜索</a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  
+  <div class="algolia-popup popup search-popup">
+    <div class="algolia-search">
+      <div class="algolia-search-input-icon">
+        <i class="fa fa-search"></i>
+      </div>
+      <div class="algolia-search-input" id="algolia-search-input"></div>
+    </div>
+
+    <div class="algolia-results">
+      <div id="algolia-stats"></div>
+      <div id="algolia-hits"></div>
+      <div id="algolia-pagination" class="algolia-pagination"></div>
+    </div>
+
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+  </div>
+
+
+
+
+    </div>
+  
+</nav>
+
+
+  
+
+
+
+ </div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://governlee.github.io/2017/05/13/2017-05-13-cross-network-call/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Govern">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/logo.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Govern x Lab">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">跨公网调用的大坑与架构优化方案</h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-05-13T08:00:00+08:00">2017-05-13</time>
+            
+
+            
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/架构/" itemprop="url" rel="index"><span itemprop="name">架构</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p><strong>转自: 架构师之路</strong><br>第三方接口挂掉，我们的服务会受影响么？</p>
+<h2 id="一、缘起与大坑"><a href="#一、缘起与大坑" class="headerlink" title="一、缘起与大坑"></a>一、缘起与大坑</h2><p>很多时候，业务需要跨公网调用一个第三方服务提供的接口，为了避免每个调用方都依赖于第三方服务，往往会抽象一个服务：</p>
+<ul>
+<li>解除调用方与第三方接口的耦合</li>
+<li>当第三方的接口变动时，只有服务需要修改，而不是所有调用方均修改</li>
+</ul>
+<p><strong>此时接口调用流程是什么样的呢？</strong><br><img src="http://mmbiz.qpic.cn/mmbiz_png/YrezxckhYOxzCNyDkKOF244jRWibGVAzNzzpI9u4Q9BTte7CXelDRsMYPiclmXtuPz44fFX0NibySLdatHeOhgCow/640?wx_fmt=png&amp;tp=webp&amp;wxfrom=5&amp;wx_lazy=1" alt=""></p>
+<p>如上图1-4所述：<br>1）业务调用方调用内部service<br>（2）内部service跨公网调用第三方接口<br>（3）第三方接口返回结果给内部service<br>（4）内部service返回结果给业务调用方</p>
+<p>这个过程存在什么潜在的大坑呢？</p>
+<p><img src="http://mmbiz.qpic.cn/mmbiz_png/YrezxckhYOxzCNyDkKOF244jRWibGVAzNbrraV4PaI6iaialJWk7wQrdOxibqDicvuysb7zTzSkrKlk8vcaMia3fufng/640?wx_fmt=png&amp;tp=webp&amp;wxfrom=5&amp;wx_lazy=1" alt=""></p>
+<p>内部服务可能对上游业务提供了很多服务接口，当有一个接口跨公网第三方调用超时时，可能导致所有接口都不可用，即使大部分接口不依赖于跨公网第三方调用。</p>
+<p><strong>为什么会出现这种情况呢？</strong></p>
+<p>内部服务对业务方提供的<strong>N个接口，会共用服务容器内的工作线程</strong>（假设有100个工作线程）。</p>
+<p>假设这N个接口的某个接口跨公网依赖于第三方的接口，发生了网络抖动，或者接口超时（不妨设超时时间为5秒）。</p>
+<p>潜台词是，<strong>这个工作线程会被占用5秒钟，然后超时返回业务调用方</strong>。</p>
+<p>假设这个请求的吞吐量为20qps，言下之意，很短的时间内，<strong>所有的100个工作线程都会被卡在这个第三方超时等待上</strong>，而其他N-1个原本没有问题的接口，也得不到工作线程处理。</p>
+<p>跨公网调用的稳定性优化，是本文要讨论的问题。</p>
+<h2 id="二、异步代理法"><a href="#二、异步代理法" class="headerlink" title="二、异步代理法"></a>二、异步代理法</h2><p><strong>业务场景</strong>：通过OpenID实时获取微信用户基本信息<br><strong>解决方案</strong>：<font color="orange">增加一个代理，向服务屏蔽究竟是“本地实时”还是“异步远程”去获取返回结果</font></p>
+<p><img src="http://mmbiz.qpic.cn/mmbiz_png/YrezxckhYOxzCNyDkKOF244jRWibGVAzNeOMgQbXFmzNBXGMyVNSNJER7J325vMic95bIW9jRJK4WD3g3k5qUqgA/640?wx_fmt=png&amp;tp=webp&amp;wxfrom=5&amp;wx_lazy=1" alt=""></p>
+<p><strong>本地实时流程</strong>如上图1-5：<br>（1）业务调用方调用内部service<br>（2）内部service调用异步代理service<br>（3）异步代理service通过OpenID在本地拿取数据<br>（4）异步代理service将数据返回内部service<br>（5）内部service返回结果给业务调用方</p>
+<p><strong>异步远程流程</strong>如上图6-8粗箭头的部分：<br>（6）异步代理service定期跨公网调用微信服务<br>（7）微信服务返回数据<br>（8）刷新本地数据</p>
+<p><strong>优点</strong>：公网抖动，第三方接口超时，不影响内部接口调用</p>
+<p><strong>不足</strong>：本地返回的不是最新数据（很多业务可以接受数据延时）</p>
+<p>有时候，内部service和异步代理service可以合成一个service</p>
+<h2 id="三、第三方接口备份与切换法"><a href="#三、第三方接口备份与切换法" class="headerlink" title="三、第三方接口备份与切换法"></a>三、第三方接口备份与切换法</h2><p><strong>业务场景</strong>：调用第三方短信网关，或者电子合同等<br><strong>解决方案</strong>：同时使用（或者备份）多个第三方服务</p>
+<p><img src="http://mmbiz.qpic.cn/mmbiz_png/YrezxckhYOxzCNyDkKOF244jRWibGVAzN9d6hX9u1ZZqic41SqDKH3kQ5VPZcgRmkGicsbevM9tfuYibfVFwJYgVNA/640?wx_fmt=png&amp;tp=webp&amp;wxfrom=5&amp;wx_lazy=1" alt=""><br>流程如上图1-4：<br>（1）业务调用方调用内部service<br>（2）内部service调用第一个三方接口<br>（3）超时后，调用第二个备份服务，未来都直接调用备份服务，直到超时的服务恢复<br>（4）内部service返回结果给业务调用方</p>
+<p>优点：公网抖动，第三方接口超时，不影响内部接口调用（初期少数几个请求会超时）</p>
+<p>不足：不是所有公网调用都能够像短息网关，电子合同服务一样有备份接口的，像微信、支付宝等就只此一家</p>
+<h2 id="四、异步调用法"><a href="#四、异步调用法" class="headerlink" title="四、异步调用法"></a>四、异步调用法</h2><p><strong>业务场景</strong>：本地结果，同步第三方服务，例如用户在58到家平台下单，58到家平台需要通知平台商家为用户提供服务<br><strong>解决方案</strong>：本地调用成功就返回成功，异步调用第三方接口同步数据（和异步代理有微小差别）</p>
+<p><img src="http://mmbiz.qpic.cn/mmbiz_png/YrezxckhYOxzCNyDkKOF244jRWibGVAzNL77MxR4gfS6ggq7wymMn0iaPwnuv5iaePskicicB9OgC0p9TnjtPBwoZGA/640?wx_fmt=png&amp;tp=webp&amp;wxfrom=5&amp;wx_lazy=1" alt=""></p>
+<p><strong>本地流程</strong>如上图1-3：<br>（1）业务调用方调用内部service<br>（2）内部service写本地数据<br>（3）内部service返回结果给业务调用方成功</p>
+<p><strong>异步流程</strong>如上图4-5粗箭头的部分：<br>（4）异步service定期将本地数据取出（或者通知也行，实时性好）<br>（5）异步调用第三方接口同步数据</p>
+<p>优点：公网抖动，第三方接口超时，不影响内部接口调用</p>
+<p>不足：不是所有业务场景都可以异步同步数据</p>
+<h2 id="五、总结"><a href="#五、总结" class="headerlink" title="五、总结"></a>五、总结</h2><p><strong>跨公网调用第三方</strong>，可能存在的问题：  </p>
+<ul>
+<li>公网抖动，第三方服务不稳定，影响自身服务  </li>
+<li><strong>一个接口超时，占住工作线程，影响其他接口</strong></li>
+</ul>
+<p>降低影响的<strong>优化方案</strong>：  </p>
+<ul>
+<li>增大工作线程数</li>
+<li>降低超时时间</li>
+<li>服务垂直拆分</li>
+</ul>
+<p>业务需求决定技术方案，结合业务的解决方案：  </p>
+<ul>
+<li><strong>业务能接受旧数据</strong>：读取本地数据，异步代理定期更新数据</li>
+<li>有多个第三方服务提供商：多个第三方互备</li>
+<li>向第三方同步数据：本地写成功就算成功，异步向第三方同步数据</li>
+</ul>
+<p>希望第三方的服务挂掉，不再影响大家的服务。</p>
+<p>这个锅，我们不背。</p>
+
+      
+    </div>
+
+    
+      
+
+
+    
+
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/架构师之路/" rel="tag"># 架构师之路</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2017/05/10/2017-05-10-pull-message/" rel="next" title="系统通知，居然有人使用拉取？">
+                <i class="fa fa-chevron-left"></i> 系统通知，居然有人使用拉取？
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2017/05/17/2017-05-17-dns/" rel="prev" title="DNS在架构设计中的巧用">
+                DNS在架构设计中的巧用 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+  
+    <div class="comments" id="comments">
+      <div id="lv-container" data-id="city" data-uid="MTAyMC8zNDA5NS8xMDYzMw=="></div>
+    </div>
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image"
+                src="/images/logo.jpg"
+                alt="Govern" />
+            
+              <p class="site-author-name" itemprop="name">Govern</p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          
+            <nav class="site-state motion-element">
+              
+                <div class="site-state-item site-state-posts">
+                
+                  <a href="/archives/">
+                
+                    <span class="site-state-item-count">98</span>
+                    <span class="site-state-item-name">日志</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-categories">
+                  <a href="/categories/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">20</span>
+                    <span class="site-state-item-name">分类</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-tags">
+                  <a href="/tags/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">39</span>
+                    <span class="site-state-item-name">标签</span>
+                  </a>
+                </div>
+              
+            </nav>
+          
+
+          
+
+          
+
+          
+          
+
+          
+          
+
+          
+            
+          
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#一、缘起与大坑"><span class="nav-number">1.</span> <span class="nav-text">一、缘起与大坑</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#二、异步代理法"><span class="nav-number">2.</span> <span class="nav-text">二、异步代理法</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#三、第三方接口备份与切换法"><span class="nav-number">3.</span> <span class="nav-text">三、第三方接口备份与切换法</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#四、异步调用法"><span class="nav-number">4.</span> <span class="nav-text">四、异步调用法</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#五、总结"><span class="nav-number">5.</span> <span class="nav-text">五、总结</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+        <div class="back-to-top">
+          <i class="fa fa-arrow-up"></i>
+          
+            <span id="scrollpercent"><span>0</span>%</span>
+          
+        </div>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; 2012 &mdash; <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Govern</span>
+
+  
+
+  
+</div>
+
+
+  
+
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" rel="external nofollow" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" rel="external nofollow" href="https://github.com/theme-next/hexo-theme-next">NexT.Gemini</a> v6.0.3</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=6.0.3"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=6.0.3"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=6.0.3"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=6.0.3"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=6.0.3"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=6.0.3"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=6.0.3"></script>
+
+
+
+  
+
+
+
+
+
+
+
+  
+    <script type="text/javascript">
+      (function(d, s) {
+        var j, e = d.getElementsByTagName(s)[0];
+        if (typeof LivereTower === 'function') { return; }
+        j = d.createElement(s);
+        j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+        j.async = true;
+        e.parentNode.insertBefore(j, e);
+      })(document, 'script');
+    </script>
+  
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+  
+  
+  
+  <link rel="stylesheet" href="/lib/algolia-instant-search/instantsearch.min.css">
+
+  
+  
+  <script src="/lib/algolia-instant-search/instantsearch.min.js"></script>
+  
+
+  <script src="/js/src/algolia-search.js?v=6.0.3"></script>
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+  
+  
+  
+  <script src="/lib/bookmark/bookmark.min.js?v=1.0"></script>
+  <script type="text/javascript">
+  
+    bookmark.scrollToMark('auto', "#more");
+  
+  </script>
+
+
+</body>
+</html>

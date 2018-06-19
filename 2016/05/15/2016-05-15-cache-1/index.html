@@ -1,0 +1,997 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next gemini use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=6.0.3" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=6.0.3">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/lights-32x32.png?v=6.0.3">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/lights-16x16.png?v=6.0.3">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=6.0.3" color="#222">
+
+
+
+
+
+
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Gemini',
+    version: '6.0.3',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":true,"scrollpercent":true,"onmobile":false},
+    fancybox: false,
+    fastclick: false,
+    lazyload: false,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    algolia: {
+      applicationID: '41NC33JUJG',
+      apiKey: '7362b84fed21bc83930f198a0927bb82',
+      indexName: 'blog',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+  
+
+
+
+
+  
+  <meta name="keywords" content="缓存," />
+
+
+<meta name="description" content="缓存真的有效？真的。嗯，根据计算机访问数据经常会呈现出的局部性原理。局部性原理又包括空间局部性和时间局部性。空间局部性就是说，计算机访问数据，而其存储在邻近的数据也经常会被访问。时间局部性就是说，在相对的一小段时间内，计算机经常会访问相同的数据。实际中是怎么运用局部性原理的呢，比如说，计算机从硬盘中读块，计算机不会只读你要的特定块，附近的快很有可能接下来要被访问，他会把这些块也一起预读出来。接下来">
+<meta name="keywords" content="缓存">
+<meta property="og:type" content="article">
+<meta property="og:title" content="缓存之旅(一)">
+<meta property="og:url" content="http://governlee.github.io/2016/05/15/2016-05-15-cache-1/index.html">
+<meta property="og:site_name" content="Govern x Lab">
+<meta property="og:description" content="缓存真的有效？真的。嗯，根据计算机访问数据经常会呈现出的局部性原理。局部性原理又包括空间局部性和时间局部性。空间局部性就是说，计算机访问数据，而其存储在邻近的数据也经常会被访问。时间局部性就是说，在相对的一小段时间内，计算机经常会访问相同的数据。实际中是怎么运用局部性原理的呢，比如说，计算机从硬盘中读块，计算机不会只读你要的特定块，附近的快很有可能接下来要被访问，他会把这些块也一起预读出来。接下来">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="http://o79rgqboc.bkt.clouddn.com/blog_CacheClientSideAllTheThings.jpg">
+<meta property="og:image" content="http://o79rgqboc.bkt.clouddn.com/blog_%E5%AD%98%E5%82%A8%E5%99%A8%E5%B1%B1.png">
+<meta property="og:image" content="http://o79rgqboc.bkt.clouddn.com/blog_linuxCache.jpg">
+<meta property="og:image" content="http://o79rgqboc.bkt.clouddn.com/blog_pageCacheBufferCache.jpg">
+<meta property="og:updated_time" content="2018-02-28T14:43:15.033Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="缓存之旅(一)">
+<meta name="twitter:description" content="缓存真的有效？真的。嗯，根据计算机访问数据经常会呈现出的局部性原理。局部性原理又包括空间局部性和时间局部性。空间局部性就是说，计算机访问数据，而其存储在邻近的数据也经常会被访问。时间局部性就是说，在相对的一小段时间内，计算机经常会访问相同的数据。实际中是怎么运用局部性原理的呢，比如说，计算机从硬盘中读块，计算机不会只读你要的特定块，附近的快很有可能接下来要被访问，他会把这些块也一起预读出来。接下来">
+<meta name="twitter:image" content="http://o79rgqboc.bkt.clouddn.com/blog_CacheClientSideAllTheThings.jpg">
+
+
+
+
+
+
+  <link rel="canonical" href="http://governlee.github.io/2016/05/15/2016-05-15-cache-1/"/>
+
+
+
+<script type="text/javascript" id="page.configurations">
+  CONFIG.page = {
+    sidebar: "",
+  };
+</script>
+  <title>缓存之旅(一) | Govern x Lab</title>
+  
+
+
+
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?f6804645172803d5efc7161f04df1d76";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+  <noscript>
+  <style type="text/css">
+    .use-motion .motion-element,
+    .use-motion .brand,
+    .use-motion .menu-item,
+    .sidebar-inner,
+    .use-motion .post-block,
+    .use-motion .pagination,
+    .use-motion .comments,
+    .use-motion .post-header,
+    .use-motion .post-body,
+    .use-motion .collection-title { opacity: initial; }
+
+    .use-motion .logo,
+    .use-motion .site-title,
+    .use-motion .site-subtitle {
+      opacity: initial;
+      top: initial;
+    }
+
+    .use-motion {
+      .logo-line-before i { left: initial; }
+      .logo-line-after i { right: initial; }
+    }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"> <div class="site-brand-wrapper">
+  <div class="site-meta custom-logo">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Govern x Lab</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <h1 class="site-subtitle" itemprop="description">I'm not the only one</h1>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-home"></i> <br />首页</a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-user"></i> <br />关于</a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />标签</a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-th"></i> <br />分类</a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />归档</a>
+        </li>
+      
+
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />搜索</a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  
+  <div class="algolia-popup popup search-popup">
+    <div class="algolia-search">
+      <div class="algolia-search-input-icon">
+        <i class="fa fa-search"></i>
+      </div>
+      <div class="algolia-search-input" id="algolia-search-input"></div>
+    </div>
+
+    <div class="algolia-results">
+      <div id="algolia-stats"></div>
+      <div id="algolia-hits"></div>
+      <div id="algolia-pagination" class="algolia-pagination"></div>
+    </div>
+
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+  </div>
+
+
+
+
+    </div>
+  
+</nav>
+
+
+  
+
+
+
+ </div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://governlee.github.io/2016/05/15/2016-05-15-cache-1/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Govern">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/logo.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Govern x Lab">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">缓存之旅(一)</h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2016-05-15T08:00:00+08:00">2016-05-15</time>
+            
+
+            
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/架构/" itemprop="url" rel="index"><span itemprop="name">架构</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h1 id="缓存真的有效？"><a href="#缓存真的有效？" class="headerlink" title="缓存真的有效？"></a>缓存真的有效？</h1><p>真的。嗯，根据计算机访问数据经常会呈现出的局部性原理。局部性原理又包括空间局部性和时间局部性。空间局部性就是说，计算机访问数据，而其存储在邻近的数据也经常会被访问。时间局部性就是说，在相对的一小段时间内，计算机经常会访问相同的数据。实际中是怎么运用局部性原理的呢，比如说，计算机从硬盘中读块，计算机不会只读你要的特定块，附近的快很有可能接下来要被访问，他会把这些块也一起预读出来。接下来要读附近的快的时候，就不需要再访问硬盘了。这样，运用局部性原理就减少了访问磁盘的次数。附近的块就被缓存了起来，加快了运行速度。</p>
+<h1 id="缓存什么？"><a href="#缓存什么？" class="headerlink" title="缓存什么？"></a>缓存什么？</h1><p>所有处理需要相对较长时间的内容都可以缓存，比如说，将图像显示到屏幕上，图像解码相对于渲染所需时间较长，我们就会缓存图像解码。再比如，客户端从服务器获取数据相对计算所需时间较长，我们就会缓存从服务器获取的数据。这样最终达到速度匹配，让整个处理过程中，没有哪步处理时间太长。</p>
+<p>若想理解缓存，莫过于动手实现一个缓存。下面就以最常见的，客户端从服务器获取数据为引子，来聊一聊缓存。</p>
+<p>当然，我们很想在客户端缓存下服务器端所有的东西。<br><img src="http://o79rgqboc.bkt.clouddn.com/blog_CacheClientSideAllTheThings.jpg" alt=""></p>
+<p>但我们知道缓存下所有东西必定不可能，不仅你没有那么大的存储器，而且缓存会大大增加你编程的复杂性，所以缓存必定就是一个trade-Off的存在，权衡各种利弊，无法量化的时候甚至就靠直觉和经验了。好，我们有了一个Basic Idea，如何开始呢？</p>
+<p>缓存这个用空间换时间的概念存在着计算机的各个领域，cpu、操作系统、计算机网络、数据库。从这些领域我们可以借鉴他们是如何实现缓存的，然后再来考虑实现自己的缓存。缓存是分层次的，下面是计算机缓存山<br><img src="http://o79rgqboc.bkt.clouddn.com/blog_%E5%AD%98%E5%82%A8%E5%99%A8%E5%B1%B1.png" alt=""></p>
+<p>每一层实际上都可以看做下一层的高速缓存，从山顶到山脚，计算机访问到的时间递增，而每一层的物理硬件造价递减，cpu计算数据先从山顶开始找数据，如果本层没有找到就去下层找，每向下找一层，找的层数越多，计算所需的时间自然就越多。</p>
+<h1 id="如何找到对应的缓存？"><a href="#如何找到对应的缓存？" class="headerlink" title="如何找到对应的缓存？"></a>如何找到对应的缓存？</h1><p>索引+映射。为缓存的内容增加一个索引。对于cpu运算的数据，索引是按地址划分出来的，对于应用层来说索引就是缓存的key值。索引可以分为一对一相联、组相联、全相联。索引构成了一个的集合，缓存构成另一个集合，这两个集合之间有映射关系，直接从索引集合查找就可以找到对应的缓存了。那为什么不直接从缓存集合找呢？假设缓存容量有4KB，每个缓存大小为16B，那么一共有256个缓存。缓存的索引范围就是0到255，索引集合占256B。如果从索引集合查找，只需遍历256B的空间，从缓存集合查找需要遍历4KB的空间，明显索引集合可以加快查找的速度。这也就是为什么用一个小的空间去映射大的空间。</p>
+<h1 id="cpu缓存策略"><a href="#cpu缓存策略" class="headerlink" title="cpu缓存策略"></a>cpu缓存策略</h1><p>cpu在寄存器中计算数据，而数据存储在内存中，由于cpu和内存之间的性能差距逐渐增大，系统设计者在cpu和内存之间插入了3层的高速缓存。高速缓存有三个层级，就是整个计算机缓存系统的一个小缩影。</p>
+<p>缓存涉及到，读操作、写操作和层级之间如何协调、缓存容量满了后的淘汰算法。淘汰下面会讲，这里关注一下读写操作和层级之间的协调。</p>
+<p>高速缓存的读很简单，先从高层读数据，如果缓存命中了就返回数据。如果不命中就去低层读，如果从低层命中，返回数据的同时将低层的数据写入高层。</p>
+<p>高速缓存的写复杂一点，先直接向高层写入数据，但是何时向低层写入呢？一种是直写（write-through），就是立即向低层写入。另一种是写回（write-back），等到算法淘汰的时候再向底层写入。直写实现起来简单，但是每次写入都会有更多的总线流量。第二种，减少了总线流量，增加了复杂度，他必须为每个缓存对象保存是否修改（dirty位），即是否写入低层。向低层写，时间消耗主要在访问的时间上，每次写的量多少，差别不大。高速缓存就是使用的写回，Mongo也是写回。本文推荐缓存使用写回。</p>
+<h1 id="抽象块"><a href="#抽象块" class="headerlink" title="抽象块"></a>抽象块</h1><p>理解操作系统的缓存策略之前，有一个重要的概念就是抽象块。抽象块呢，主要就在抽象两字上。而抽象主要的目的是为了隐藏不同层次的细节。比如，硬盘传输数据给内存，硬盘传输的是一个块（block），这个块就是对于硬盘的抽象，硬盘要想找到数据，必须进行磁盘的旋转和寻道，内存根本不关心，硬盘旋转了几圈还是数据在那条道上，内存只关心数据是什么，所以，硬盘只给内存一个块（block），硬盘向内存隐藏如何存取的细节。同样的思想也在网络五层协议中，每层都给高层或底层一个“块”(实际上叫包，packet)，本层不关心其他层的细节，本层直接在块上头部和尾部加上自己层做的事，然后传给高层或者低层，应用层管本层的块叫报文，传输层叫报文段，网络层叫数据报。</p>
+<h1 id="操作系统缓存策略"><a href="#操作系统缓存策略" class="headerlink" title="操作系统缓存策略"></a>操作系统缓存策略</h1><p>在操作系统中，硬盘给内存的抽象块就是页（page）。从磁盘上读取页导致的I/O是很耗时间的，所以页就被缓存在内存中，这就是页的缓存。操作系统调用文件系统就使用这种页缓存。简单来说，内存中的页也就成了文件系统的缓存。</p>
+<p>接下来看一下linux的cache<br><img src="http://o79rgqboc.bkt.clouddn.com/blog_linuxCache.jpg" alt=""></p>
+<p>图中主要有三个关键部分，内存管理系统、虚拟文件系统（VFS）、文件系统，页实际上将他们联系在一起，文件系统负责将页从硬盘读出或写入硬盘，虚拟文件系统负责将页传递给内存管理系统和从内存管理系统接收页，内存负责管理页的分配或回收和置换策略。内存管理系统如何管理就是我们需要关注的。</p>
+<p>页表不一定只映虚拟页，还有可能是文件本身，这样就相当于将文件直接载入了内存，直接访问内存就直接访问文件了，这个过程叫mmap(Memory Map)。MongDB使用的就是mmap，详见:<a href="https://docs.mongodb.org/manual/faq/storage/" target="_blank" rel="noopener">https://docs.mongodb.org/manual/faq/storage/</a></p>
+<p>linux的文件cache分为page cache和buffer cache。实际上，一个page cache对应多个buffer cache。<br><img src="http://o79rgqboc.bkt.clouddn.com/blog_pageCacheBufferCache.jpg" alt=""></p>
+<p>这两个东西容易傻傻分不清楚，将他们分开很有必要。首先，page cache和buffer cache在不同层次。page cache在vfs和内存管理系统数据交换，这一文件系统逻辑层次上。而buffer cache在具体文件系统，这一文件系统物理层次上。其次page cache和buffer cache不是为了同一个目的，page cache就是页，作为文件系统在内存上的缓存。buffer cache是缓冲区，读写磁盘的时候为了减少I/O的数量，攒齐一定量的数据再写和攒齐一定数量读出的数据再返回。</p>
+<p>如何取出页的物理地址。他会先看虚拟页是否有映射物理页，如果有映射，就直接返回，如果没有映射，就会发生缺页中断。将相应的物理页缓存在内存，并与虚拟页映射。再进行一次查找，这次查找虚拟页就会映射物理页。但是，内存容量有限，不能让所有物理页都缓存，需要用算法淘汰掉不需要的物理页。</p>
+<p>FIFO：先进先出算法，每次淘汰掉停留时间最长的算法，这种算法并不常用，因为他很可能淘汰掉经常使用的页面。</p>
+<p>LRU(Least Recently Used)：选择最近一段时间内未使用过的页面置换掉。这种算法非常优秀，但是操作系统实现它还需要硬件支持，实现起来相当费时，所以又涌现了很多模仿LRU的算法，更加实用，NRU、NFU、2Q、MQ、Clock等。</p>
+<h1 id="数据库缓存策略"><a href="#数据库缓存策略" class="headerlink" title="数据库缓存策略"></a>数据库缓存策略</h1><p>和操作系统缓存策略相似，数据库将块缓存在内存上，叫做缓冲区（buffer），由缓存区管理器管理，大多数数据库使用的算法为近似LRU算法。</p>
+<p>数据库缓存为了在崩溃后，也要保持一致性，有时会将块强制写回，有时会限制块的写回。</p>
+<h1 id="让Idea不仅仅是Idea"><a href="#让Idea不仅仅是Idea" class="headerlink" title="让Idea不仅仅是Idea"></a>让Idea不仅仅是Idea</h1><p>现在着手实现一个缓存，根据具体缓存的东西，我们可以有不同的策略，在不同的语言下，有不同的实现方式，不过，思想是一致的。</p>
+<p>我们实际能调用的缓存只有两个层级，内存和硬盘。那么就实现一个二级缓存。</p>
+<p>首先，我们选择一个内存缓存的数据结构，最简单的就是对哈希表的封装—字典，拥有常数级别的查询复杂度。但是如果要再加上淘汰算法，字典的复杂度就不理想了。而iOS中有系统级已实现好的NSCache，但是其效率不高，虽说提供了更多的功能，但你也可以自己实现这些功能。本文推荐大家使用LinkedHashMap，等到下文聊到淘汰算法的时候会细讲。最终，根据你要存储的内容、复杂性和性能之间的权衡，选择不同的实现方式。</p>
+<p>首先，我们选择一个内存缓存的数据结构，最简单的就是对哈希表的封装—字典，拥有常数级别的查询复杂度。但是如果要再加上淘汰算法，字典的复杂度就不理想了。而iOS中有系统级已实现好的NSCache，但是其效率不高，虽说提供了更多的功能，但你也可以自己实现这些功能。本文推荐大家使用LinkedHashMap，等到下文聊到淘汰算法的时候会细讲。最终，根据你要存储的内容、复杂性和性能之间的权衡，选择不同的实现方式。</p>
+<p>我们还要确定缓存的容量，这个容量可以是缓存内容的数量或者是缓存内容的大小。取决于你实现的方式，内存中缓存的容量是不容易确定的，如果你计算出容量要花费很长的时间，那么就不要去计算，缓存本来目的就是省时间，如果要花费很长时间去做额外操作，那么就得不偿失了。</p>
+<p>读写和两层的同步，直接参照高速缓存的思想就可以了，并且建议使用写回。什么时候写回，你可以通过两个指标来触发写回，一个是还未写回的数量和两次发生写回的时间间隔。这两个指标是或的关系，任意一个达标，都可以触发写回。每次写入缓存的时候，检查一下未写回的数量，如果超标了就写回。再用一个计时器，每隔一个时间间隔触发写回。还有当app将要退出的时候也要写回。</p>
+<p>淘汰的算法呢，幸运的是应用层，实现LRU很简单。只要用一个上文提到的LinkedHashMap就可以了，java中有系统实现的LinkedHashMap可以参考。先用一个链表来实现最近最少使用，每次插入数据，插入到表头，读取数据也把数据插入到表头，删除数据从表尾删除，越常用的会越靠近表头，表尾就是最不常用的了。但是，链表查询复杂度是线性的，搞不好要访问的数据在表尾，就得遍历一次表。解决这个问题就是引入哈希表。利用哈希表常数级的查询复杂度。最后才叫做linkedHashMap。</p>
+<p>注意多线程！缓存时常在多线程上进行操作，那么共享变量就一定要加锁。建议内存缓存使用自旋锁，磁盘缓存使用信号量。自旋锁，会一直询问锁是否开了，会占用大量的资源，只适合等待时间很短就能进行的操作。信号量会在问完是否开以后，睡眠一段时间，更适合长时间等待的操作。</p>
+
+      
+    </div>
+
+    
+      
+
+
+    
+
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/缓存/" rel="tag"># 缓存</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2016/03/06/2018-03-06-linux-command/" rel="next" title="Linux 实用命令(持续更新)">
+                <i class="fa fa-chevron-left"></i> Linux 实用命令(持续更新)
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2016/08/10/2016-08-10-service/" rel="prev" title="互联网架构为什么要做服务化？">
+                互联网架构为什么要做服务化？ <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+  
+    <div class="comments" id="comments">
+      <div id="lv-container" data-id="city" data-uid="MTAyMC8zNDA5NS8xMDYzMw=="></div>
+    </div>
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image"
+                src="/images/logo.jpg"
+                alt="Govern" />
+            
+              <p class="site-author-name" itemprop="name">Govern</p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          
+            <nav class="site-state motion-element">
+              
+                <div class="site-state-item site-state-posts">
+                
+                  <a href="/archives/">
+                
+                    <span class="site-state-item-count">98</span>
+                    <span class="site-state-item-name">日志</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-categories">
+                  <a href="/categories/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">20</span>
+                    <span class="site-state-item-name">分类</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-tags">
+                  <a href="/tags/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">39</span>
+                    <span class="site-state-item-name">标签</span>
+                  </a>
+                </div>
+              
+            </nav>
+          
+
+          
+
+          
+
+          
+          
+
+          
+          
+
+          
+            
+          
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#缓存真的有效？"><span class="nav-number">1.</span> <span class="nav-text">缓存真的有效？</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#缓存什么？"><span class="nav-number">2.</span> <span class="nav-text">缓存什么？</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#如何找到对应的缓存？"><span class="nav-number">3.</span> <span class="nav-text">如何找到对应的缓存？</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#cpu缓存策略"><span class="nav-number">4.</span> <span class="nav-text">cpu缓存策略</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#抽象块"><span class="nav-number">5.</span> <span class="nav-text">抽象块</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#操作系统缓存策略"><span class="nav-number">6.</span> <span class="nav-text">操作系统缓存策略</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#数据库缓存策略"><span class="nav-number">7.</span> <span class="nav-text">数据库缓存策略</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#让Idea不仅仅是Idea"><span class="nav-number">8.</span> <span class="nav-text">让Idea不仅仅是Idea</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+        <div class="back-to-top">
+          <i class="fa fa-arrow-up"></i>
+          
+            <span id="scrollpercent"><span>0</span>%</span>
+          
+        </div>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; 2012 &mdash; <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Govern</span>
+
+  
+
+  
+</div>
+
+
+  
+
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" rel="external nofollow" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" rel="external nofollow" href="https://github.com/theme-next/hexo-theme-next">NexT.Gemini</a> v6.0.3</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=6.0.3"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=6.0.3"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=6.0.3"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=6.0.3"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=6.0.3"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=6.0.3"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=6.0.3"></script>
+
+
+
+  
+
+
+
+
+
+
+
+  
+    <script type="text/javascript">
+      (function(d, s) {
+        var j, e = d.getElementsByTagName(s)[0];
+        if (typeof LivereTower === 'function') { return; }
+        j = d.createElement(s);
+        j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+        j.async = true;
+        e.parentNode.insertBefore(j, e);
+      })(document, 'script');
+    </script>
+  
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+  
+  
+  
+  <link rel="stylesheet" href="/lib/algolia-instant-search/instantsearch.min.css">
+
+  
+  
+  <script src="/lib/algolia-instant-search/instantsearch.min.js"></script>
+  
+
+  <script src="/js/src/algolia-search.js?v=6.0.3"></script>
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+  
+  
+  
+  <script src="/lib/bookmark/bookmark.min.js?v=1.0"></script>
+  <script type="text/javascript">
+  
+    bookmark.scrollToMark('auto', "#more");
+  
+  </script>
+
+
+</body>
+</html>

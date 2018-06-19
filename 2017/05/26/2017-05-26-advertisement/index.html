@@ -1,0 +1,1044 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next gemini use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=6.0.3" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=6.0.3">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/lights-32x32.png?v=6.0.3">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/lights-16x16.png?v=6.0.3">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=6.0.3" color="#222">
+
+
+
+
+
+
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Gemini',
+    version: '6.0.3',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":true,"scrollpercent":true,"onmobile":false},
+    fancybox: false,
+    fastclick: false,
+    lazyload: false,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    algolia: {
+      applicationID: '41NC33JUJG',
+      apiKey: '7362b84fed21bc83930f198a0927bb82',
+      indexName: 'blog',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+  
+
+
+
+
+  
+  <meta name="keywords" content="架构师之路,广告系统," />
+
+
+<meta name="description" content="转自： 架构师之路 很多朋友估计没有做过这一块，争取最简洁的语言描述清楚。 一、业务简述 从业务上看，整个智能广告系统，主要分为： 1）业务端：广告主的广告后台 2）展现端：用户实际访问的页面 业务端，广告主主要有两类行为： 1）广告设置行为：例如设置投放计划，设置地域，类别，关键字，竞价等 2）效果查看行为：例如广告展示次数是多少，广告点击次数是多少等 展现端，用户主要也有两类行为： 1）站点浏">
+<meta name="keywords" content="架构师之路,广告系统">
+<meta property="og:type" content="article">
+<meta property="og:title" content="互联网智能广告系统简易流程与架构 ">
+<meta property="og:url" content="http://governlee.github.io/2017/05/26/2017-05-26-advertisement/index.html">
+<meta property="og:site_name" content="Govern x Lab">
+<meta property="og:description" content="转自： 架构师之路 很多朋友估计没有做过这一块，争取最简洁的语言描述清楚。 一、业务简述 从业务上看，整个智能广告系统，主要分为： 1）业务端：广告主的广告后台 2）展现端：用户实际访问的页面 业务端，广告主主要有两类行为： 1）广告设置行为：例如设置投放计划，设置地域，类别，关键字，竞价等 2）效果查看行为：例如广告展示次数是多少，广告点击次数是多少等 展现端，用户主要也有两类行为： 1）站点浏">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="http://mmbiz.qpic.cn/mmbiz/YrezxckhYOyibgqU1ghRj2UnSXyd7EBK4bIicxicMjVBg0YxmkiaNdbdkkBBhj1H3TUxgdONG4QOYYHwFXAnrsc4HQ/640?tp=webp&wxfrom=5&wx_lazy=1">
+<meta property="og:image" content="http://mmbiz.qpic.cn/mmbiz/YrezxckhYOyibgqU1ghRj2UnSXyd7EBK4bIicxicMjVBg0YxmkiaNdbdkkBBhj1H3TUxgdONG4QOYYHwFXAnrsc4HQ/640?tp=webp&wxfrom=5&wx_lazy=1">
+<meta property="og:updated_time" content="2018-04-02T13:46:26.973Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="互联网智能广告系统简易流程与架构 ">
+<meta name="twitter:description" content="转自： 架构师之路 很多朋友估计没有做过这一块，争取最简洁的语言描述清楚。 一、业务简述 从业务上看，整个智能广告系统，主要分为： 1）业务端：广告主的广告后台 2）展现端：用户实际访问的页面 业务端，广告主主要有两类行为： 1）广告设置行为：例如设置投放计划，设置地域，类别，关键字，竞价等 2）效果查看行为：例如广告展示次数是多少，广告点击次数是多少等 展现端，用户主要也有两类行为： 1）站点浏">
+<meta name="twitter:image" content="http://mmbiz.qpic.cn/mmbiz/YrezxckhYOyibgqU1ghRj2UnSXyd7EBK4bIicxicMjVBg0YxmkiaNdbdkkBBhj1H3TUxgdONG4QOYYHwFXAnrsc4HQ/640?tp=webp&wxfrom=5&wx_lazy=1">
+
+
+
+
+
+
+  <link rel="canonical" href="http://governlee.github.io/2017/05/26/2017-05-26-advertisement/"/>
+
+
+
+<script type="text/javascript" id="page.configurations">
+  CONFIG.page = {
+    sidebar: "",
+  };
+</script>
+  <title>互联网智能广告系统简易流程与架构  | Govern x Lab</title>
+  
+
+
+
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?f6804645172803d5efc7161f04df1d76";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+  <noscript>
+  <style type="text/css">
+    .use-motion .motion-element,
+    .use-motion .brand,
+    .use-motion .menu-item,
+    .sidebar-inner,
+    .use-motion .post-block,
+    .use-motion .pagination,
+    .use-motion .comments,
+    .use-motion .post-header,
+    .use-motion .post-body,
+    .use-motion .collection-title { opacity: initial; }
+
+    .use-motion .logo,
+    .use-motion .site-title,
+    .use-motion .site-subtitle {
+      opacity: initial;
+      top: initial;
+    }
+
+    .use-motion {
+      .logo-line-before i { left: initial; }
+      .logo-line-after i { right: initial; }
+    }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"> <div class="site-brand-wrapper">
+  <div class="site-meta custom-logo">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Govern x Lab</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <h1 class="site-subtitle" itemprop="description">I'm not the only one</h1>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-home"></i> <br />首页</a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-user"></i> <br />关于</a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />标签</a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-th"></i> <br />分类</a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />归档</a>
+        </li>
+      
+
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />搜索</a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  
+  <div class="algolia-popup popup search-popup">
+    <div class="algolia-search">
+      <div class="algolia-search-input-icon">
+        <i class="fa fa-search"></i>
+      </div>
+      <div class="algolia-search-input" id="algolia-search-input"></div>
+    </div>
+
+    <div class="algolia-results">
+      <div id="algolia-stats"></div>
+      <div id="algolia-hits"></div>
+      <div id="algolia-pagination" class="algolia-pagination"></div>
+    </div>
+
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+  </div>
+
+
+
+
+    </div>
+  
+</nav>
+
+
+  
+
+
+
+ </div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://governlee.github.io/2017/05/26/2017-05-26-advertisement/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Govern">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/logo.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Govern x Lab">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">互联网智能广告系统简易流程与架构 </h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-05-26T08:00:00+08:00">2017-05-26</time>
+            
+
+            
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/架构/" itemprop="url" rel="index"><span itemprop="name">架构</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p><strong>转自： 架构师之路</strong></p>
+<p>很多朋友估计没有做过这一块，争取最简洁的语言描述清楚。</p>
+<h2 id="一、业务简述"><a href="#一、业务简述" class="headerlink" title="一、业务简述"></a>一、业务简述</h2><p><img src="http://mmbiz.qpic.cn/mmbiz/YrezxckhYOyibgqU1ghRj2UnSXyd7EBK4bIicxicMjVBg0YxmkiaNdbdkkBBhj1H3TUxgdONG4QOYYHwFXAnrsc4HQ/640?tp=webp&amp;wxfrom=5&amp;wx_lazy=1" alt=""></p>
+<p>从业务上看，整个智能广告系统，主要分为：</p>
+<p>1）<strong>业务端</strong>：广告主的广告后台</p>
+<p>2）<strong>展现端</strong>：用户实际访问的页面</p>
+<p>业务端，<strong>广告主</strong>主要有两类行为：</p>
+<p>1）<strong>广告设置行为</strong>：例如设置投放计划，设置地域，类别，关键字，竞价等</p>
+<p>2）<strong>效果查看行为</strong>：例如广告展示次数是多少，广告点击次数是多少等</p>
+<p>展现端，<strong>用户</strong>主要也有两类行为：</p>
+<p>1）<strong>站点浏览行为</strong>：用户浏览实际的信息，此时广告系统决定出广告主的什么广告</p>
+<p>2）<strong>广告点击行为</strong>：此时广告系统会对广告主进行扣费</p>
+<h2 id="二、业务流程"><a href="#二、业务流程" class="headerlink" title="二、业务流程"></a>二、业务流程</h2><p>下面通过一个的例子，让业务流程更直观。</p>
+<p><strong>步骤一：广告主在业务端投递广告</strong></p>
+<p>广告主登录业务端后台，进行设置：</p>
+<p>今日投放地域是“北京-上地”</p>
+<p>投放类别是“租房”</p>
+<p>定向人群为“女”，“30岁以下”</p>
+<p>需要推广的广告内容是他发布的一条“房屋出租”的帖子</p>
+<p>竞价设置的是0.2元</p>
+<p>单日预算是20元</p>
+<p>这些数据，当然通过业务端存储到了数据层，即数据库和缓存里。</p>
+<p><strong>步骤二：用户来到了网站，进入了“北京-上地-租房”类别，广告初筛实施</strong></p>
+<p>用户产生了平台浏览行为，网站除了展示自然内容，还要展示广告内容。被展现的广告不能太离谱，太离谱用户也不会点击。</p>
+<p><img src="http://mmbiz.qpic.cn/mmbiz/YrezxckhYOyibgqU1ghRj2UnSXyd7EBK4bIicxicMjVBg0YxmkiaNdbdkkBBhj1H3TUxgdONG4QOYYHwFXAnrsc4HQ/640?tp=webp&amp;wxfrom=5&amp;wx_lazy=1" alt=""></p>
+<p>合适的广告，必须符合“<strong>语义相关性</strong>”，即基础检索属性（广告属性）必须符合（广告能否满足用户的需求，满足了点击率才高），这个工作是通过<strong>BS-basic search</strong>检索服务完成的。</p>
+<p>BS从数据层检索到“北京-上地-租房”的广告帖子。</p>
+<p><strong>步骤三：用户属性与广告主属性匹配，广告精筛实施</strong></p>
+<p>步骤二中，基础属性初筛了以后，要进行更深层次的<strong>策略筛选（用户能否满足广告的需求）</strong>，此例中，广告主的精准需求为：</p>
+<p>用户性别为“女”</p>
+<p>用户年龄为“30岁以下”</p>
+<p>用户访问IP是“北京”</p>
+<p>系统将初筛出来的M条广告和用户属性进行匹配筛选，又过滤掉了一部分，最后剩余N条待定广告，这些广告既<strong>满足用户的需求（初筛），这些用户也满足广告主的需求（精筛）</strong>，后者是在<strong>AS-advanced search</strong>策略服务完成的。</p>
+<p><strong>步骤四：综合排序，并返回Top X的广告</strong></p>
+<p>经过步骤2和步骤3的初筛和精筛之后，待选的N条广告既能满足用户当前的需求，用户亦能满足广告主的筛选需求，但实际情况是，广告位只有3个，怎么办呢？就需要我们对N条广告进行综合打分排序（<strong>满足平台的需求</strong>，广告平台要多赚钱嘛）。</p>
+<p>打分排序的依据是什么呢？<br>有人说按照<font color="orange">竞价排序bid</font>，出价高的打分高（这是大家对百度最大的误解，百度是cpc收费）</p>
+<p>有人说按照<font color="orange">CTR点击率排序</font>，CTR高的点的人多（百度的kpi指标可不是pv）</p>
+<p>出价高，但没人点击，广告平台没有收益；点击率高，但出价低，广告平台还是没有收益。<strong>最终应该按照广告的出价与CTR的乘积作为综合打分排序的依据，bid * CTR</strong>。</p>
+<p>既然bid<em>CTR是所有广告综合打分的依据，且出价bid又是广告主事先设定好的，那么实际上，<em>*广告排序问题的核心又转向了广告CTR的预测</em></em>，CTR预测是推荐系统、广告系统、搜索系统里非常重要的一部分，是一个工程，算法，业务三方结合的问题，本文就不展开讨论了。</p>
+<p>无论如何，N条广告，根据bid*预估CTR进行综合打分排序后，返回了打分最高的3个广告（广告位只有3个）。</p>
+<p>有些系统没有第二步骤用户属性过滤，而是将用户属性因素考虑到综合排序中。</p>
+<p><strong>步骤五：展现端展示了广告，用户点击了广告</strong></p>
+<p>展示了广告后，<strong>展现端js会上报广告展示日志</strong>，有部分用户点击了广告，服务端会记录点击日志，这些日志可以作为广告算法实施的数据源，同时，他们经过统计分析之后，会被展示给广告主，让他们能够看到自己广告的展示信息，点击信息。</p>
+<p>这些日志（一般会实施AB测），也是算法效果好坏评估的重要依据，根据效果逐步优化改进算法。</p>
+<p><strong>步骤六：对广告主进行扣费</strong></p>
+<p>用户既然点击了广告，平台就要对投放广告的广告主进行扣费了，扣费前当然要经过反作弊系统的过滤（主要是恶意点击），扣费后信息会实时反映到数据层，费用扣光后，广告就要从数据层下线。</p>
+<h2 id="三、系统综述"><a href="#三、系统综述" class="headerlink" title="三、系统综述"></a>三、系统综述</h2><p>聊完业务流程，再来看系统架构，任何脱离业务的架构设计都是耍流氓。</p>
+<p>从系统分层架构上看，智能广告系统分为三层：</p>
+<ul>
+<li>站点层：用户和广告主直接面向的网站站点</li>
+<li><p>服务层：为了实现智能广告的业务逻辑，提供的通用服务，此处又主要分为<strong>四大类服务</strong>：</p>
+<p>策略服务BS：实施广告策略，综合排序</p>
+<p>检索服务AS：语义相关性检索</p>
+<p>计费服务：用户点击广告时进行扣费</p>
+<p>反作弊服务：不是每次点击都扣费，要经过反作弊，去除恶意点击（相对独立，未在架构图中画出）</p>
+</li>
+<li><p>数据层：用户数据，广告数据，竞价数据，日志数据等等等等</p>
+</li>
+</ul>
+<h2 id="四、总结"><a href="#四、总结" class="headerlink" title="四、总结"></a>四、总结</h2><p>智能广告系统的业务流程与系统架构：</p>
+<ol>
+<li><p><strong>广告主投放与设置广告</strong></p>
+</li>
+<li><p><strong>用户访问平台，展现合适广告</strong></p>
+<p> 通过 <strong>广告属性 </strong>，进行“语义相关性”初筛，通过BS完成</p>
+<p> 通过 <strong>用户属性 </strong>，出价信息，点击率预测信息，进行综合打分排序筛选，通过AS完成</p>
+</li>
+<li><p>记录展现日志，点击日志，进行扣费</p>
+</li>
+</ol>
+<p>广告是展现，是一个：</p>
+<ul>
+<li>广告满足用户需求（初筛）</li>
+<li>用户满足广告需求（精筛）</li>
+<li>平台利益最大化（bid*CTR综合排序）</li>
+</ul>
+<p>的过程</p>
+<p>广告的排序不是由出价(bid)决定的，而是由<font color="orange">出价(bid)*点击率(ctr)</font>决定的。</p>
+<p>点击率(ctr)是一个未来将要发生的行为，智能广告系统的核心与难点是<font color="orange">点击率预测</font>。</p>
+
+      
+    </div>
+
+    
+      
+
+
+    
+
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/架构师之路/" rel="tag"># 架构师之路</a>
+          
+            <a href="/tags/广告系统/" rel="tag"># 广告系统</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2017/05/17/2017-05-17-dns/" rel="next" title="DNS在架构设计中的巧用">
+                <i class="fa fa-chevron-left"></i> DNS在架构设计中的巧用
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2017/06/16/2017-07-20-abstract-queued-synchronizer-1/" rel="prev" title="一行一行源码分析清楚AbstractQueuedSynchronizer(一)">
+                一行一行源码分析清楚AbstractQueuedSynchronizer(一) <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+  
+    <div class="comments" id="comments">
+      <div id="lv-container" data-id="city" data-uid="MTAyMC8zNDA5NS8xMDYzMw=="></div>
+    </div>
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image"
+                src="/images/logo.jpg"
+                alt="Govern" />
+            
+              <p class="site-author-name" itemprop="name">Govern</p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          
+            <nav class="site-state motion-element">
+              
+                <div class="site-state-item site-state-posts">
+                
+                  <a href="/archives/">
+                
+                    <span class="site-state-item-count">98</span>
+                    <span class="site-state-item-name">日志</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-categories">
+                  <a href="/categories/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">20</span>
+                    <span class="site-state-item-name">分类</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-tags">
+                  <a href="/tags/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">39</span>
+                    <span class="site-state-item-name">标签</span>
+                  </a>
+                </div>
+              
+            </nav>
+          
+
+          
+
+          
+
+          
+          
+
+          
+          
+
+          
+            
+          
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#一、业务简述"><span class="nav-number">1.</span> <span class="nav-text">一、业务简述</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#二、业务流程"><span class="nav-number">2.</span> <span class="nav-text">二、业务流程</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#三、系统综述"><span class="nav-number">3.</span> <span class="nav-text">三、系统综述</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#四、总结"><span class="nav-number">4.</span> <span class="nav-text">四、总结</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+        <div class="back-to-top">
+          <i class="fa fa-arrow-up"></i>
+          
+            <span id="scrollpercent"><span>0</span>%</span>
+          
+        </div>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; 2012 &mdash; <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Govern</span>
+
+  
+
+  
+</div>
+
+
+  
+
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" rel="external nofollow" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" rel="external nofollow" href="https://github.com/theme-next/hexo-theme-next">NexT.Gemini</a> v6.0.3</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=6.0.3"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=6.0.3"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=6.0.3"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=6.0.3"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=6.0.3"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=6.0.3"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=6.0.3"></script>
+
+
+
+  
+
+
+
+
+
+
+
+  
+    <script type="text/javascript">
+      (function(d, s) {
+        var j, e = d.getElementsByTagName(s)[0];
+        if (typeof LivereTower === 'function') { return; }
+        j = d.createElement(s);
+        j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+        j.async = true;
+        e.parentNode.insertBefore(j, e);
+      })(document, 'script');
+    </script>
+  
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+  
+  
+  
+  <link rel="stylesheet" href="/lib/algolia-instant-search/instantsearch.min.css">
+
+  
+  
+  <script src="/lib/algolia-instant-search/instantsearch.min.js"></script>
+  
+
+  <script src="/js/src/algolia-search.js?v=6.0.3"></script>
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+  
+  
+  
+  <script src="/lib/bookmark/bookmark.min.js?v=1.0"></script>
+  <script type="text/javascript">
+  
+    bookmark.scrollToMark('auto', "#more");
+  
+  </script>
+
+
+</body>
+</html>

@@ -1,0 +1,1050 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next gemini use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=6.0.3" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=6.0.3">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/lights-32x32.png?v=6.0.3">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/lights-16x16.png?v=6.0.3">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=6.0.3" color="#222">
+
+
+
+
+
+
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Gemini',
+    version: '6.0.3',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":true,"scrollpercent":true,"onmobile":false},
+    fancybox: false,
+    fastclick: false,
+    lazyload: false,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    algolia: {
+      applicationID: '41NC33JUJG',
+      apiKey: '7362b84fed21bc83930f198a0927bb82',
+      indexName: 'blog',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+  
+
+
+
+
+  
+  <meta name="keywords" content="字节码," />
+
+
+<meta name="description" content="原文链接: https://segmentfault.com/a/1190000008606277 前言随着Android开发技术不断被推到新的高度，对于Android程序员来讲越来越需要具备一些对深入的基础性的技术的理解，比如说Java汇编指令。不然，可能很难深入理解一些时下的新框架、新技术，盲目一味追新也会越来越感乏力。 本文既不求照本宣科，亦不求炫技或著文立说，仅力图以最简明、最形象生动的方">
+<meta name="keywords" content="字节码">
+<meta property="og:type" content="article">
+<meta property="og:title" content="大话+图说：Java字节码指令——只为让你懂">
+<meta property="og:url" content="http://governlee.github.io/2017/03/07/2017-03-07-bytecode/index.html">
+<meta property="og:site_name" content="Govern x Lab">
+<meta property="og:description" content="原文链接: https://segmentfault.com/a/1190000008606277 前言随着Android开发技术不断被推到新的高度，对于Android程序员来讲越来越需要具备一些对深入的基础性的技术的理解，比如说Java汇编指令。不然，可能很难深入理解一些时下的新框架、新技术，盲目一味追新也会越来越感乏力。 本文既不求照本宣科，亦不求炫技或著文立说，仅力图以最简明、最形象生动的方">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="https://segmentfault.com/img/bVKgZ0?w=1596&h=1558">
+<meta property="og:image" content="https://segmentfault.com/img/bVKgZ1?w=802&h=692(">
+<meta property="og:image" content="https://segmentfault.com/img/bVKg0h?w=764&h=311">
+<meta property="og:image" content="https://segmentfault.com/img/bVKg0z?w=922&h=70">
+<meta property="og:image" content="https://sfault-image.b0.upaiyun.com/103/660/1036609234-58becee4713ee">
+<meta property="og:image" content="https://segmentfault.com/img/bVKg0V?w=387&h=433">
+<meta property="og:image" content="https://sfault-image.b0.upaiyun.com/339/569/3395697666-58becf342f97e">
+<meta property="og:image" content="https://sfault-image.b0.upaiyun.com/235/669/2356691623-58becf4f1aa1e">
+<meta property="og:image" content="https://sfault-image.b0.upaiyun.com/162/253/1622532775-58becf6a14a1b">
+<meta property="og:image" content="https://sfault-image.b0.upaiyun.com/100/297/1002973962-58becfe52be69">
+<meta property="og:image" content="https://sfault-image.b0.upaiyun.com/420/716/4207167346-58bed00331544">
+<meta property="og:image" content="https://sfault-image.b0.upaiyun.com/790/620/79062021-58bed0592369e">
+<meta property="og:updated_time" content="2018-03-27T13:08:59.995Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="大话+图说：Java字节码指令——只为让你懂">
+<meta name="twitter:description" content="原文链接: https://segmentfault.com/a/1190000008606277 前言随着Android开发技术不断被推到新的高度，对于Android程序员来讲越来越需要具备一些对深入的基础性的技术的理解，比如说Java汇编指令。不然，可能很难深入理解一些时下的新框架、新技术，盲目一味追新也会越来越感乏力。 本文既不求照本宣科，亦不求炫技或著文立说，仅力图以最简明、最形象生动的方">
+<meta name="twitter:image" content="https://segmentfault.com/img/bVKgZ0?w=1596&h=1558">
+
+
+
+
+
+
+  <link rel="canonical" href="http://governlee.github.io/2017/03/07/2017-03-07-bytecode/"/>
+
+
+
+<script type="text/javascript" id="page.configurations">
+  CONFIG.page = {
+    sidebar: "",
+  };
+</script>
+  <title>大话+图说：Java字节码指令——只为让你懂 | Govern x Lab</title>
+  
+
+
+
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?f6804645172803d5efc7161f04df1d76";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+  <noscript>
+  <style type="text/css">
+    .use-motion .motion-element,
+    .use-motion .brand,
+    .use-motion .menu-item,
+    .sidebar-inner,
+    .use-motion .post-block,
+    .use-motion .pagination,
+    .use-motion .comments,
+    .use-motion .post-header,
+    .use-motion .post-body,
+    .use-motion .collection-title { opacity: initial; }
+
+    .use-motion .logo,
+    .use-motion .site-title,
+    .use-motion .site-subtitle {
+      opacity: initial;
+      top: initial;
+    }
+
+    .use-motion {
+      .logo-line-before i { left: initial; }
+      .logo-line-after i { right: initial; }
+    }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"> <div class="site-brand-wrapper">
+  <div class="site-meta custom-logo">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Govern x Lab</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <h1 class="site-subtitle" itemprop="description">I'm not the only one</h1>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-home"></i> <br />首页</a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-user"></i> <br />关于</a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />标签</a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-th"></i> <br />分类</a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />归档</a>
+        </li>
+      
+
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />搜索</a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  
+  <div class="algolia-popup popup search-popup">
+    <div class="algolia-search">
+      <div class="algolia-search-input-icon">
+        <i class="fa fa-search"></i>
+      </div>
+      <div class="algolia-search-input" id="algolia-search-input"></div>
+    </div>
+
+    <div class="algolia-results">
+      <div id="algolia-stats"></div>
+      <div id="algolia-hits"></div>
+      <div id="algolia-pagination" class="algolia-pagination"></div>
+    </div>
+
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+  </div>
+
+
+
+
+    </div>
+  
+</nav>
+
+
+  
+
+
+
+ </div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://governlee.github.io/2017/03/07/2017-03-07-bytecode/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Govern">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/logo.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Govern x Lab">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">大话+图说：Java字节码指令——只为让你懂</h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-03-07T08:00:00+08:00">2017-03-07</time>
+            
+
+            
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/JDK/" itemprop="url" rel="index"><span itemprop="name">JDK</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>原文链接: <a href="https://segmentfault.com/a/1190000008606277" target="_blank" rel="noopener">https://segmentfault.com/a/1190000008606277</a></p>
+<h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>随着Android开发技术不断被推到新的高度，对于Android程序员来讲越来越需要具备一些对深入的基础性的技术的理解，比如说Java汇编指令。不然，可能很难深入理解一些时下的新框架、新技术，盲目一味追新也会越来越感乏力。</p>
+<p>本文既不求照本宣科，亦不求炫技或著文立说，仅力图以最简明、最形象生动的方式，结合例子与实战，让小白也能搞懂这门看似复杂的技术概念。</p>
+<h2 id="单刀直入"><a href="#单刀直入" class="headerlink" title="单刀直入"></a>单刀直入</h2><p>闲言碎语不要讲，先表一表，什么是Java汇编指令？简而言之，Java汇编指令就是Java虚拟机能够听得懂、可执行的指令，也可以说是Java代码的<strong>最小执行单元</strong>。<br>有点Java基础的人一定都知道，javac命令会将Java源文件编译成字节码文件，也就是.class文件，里面就包含了大量的汇编指令。因此可以将javac命令理解为一个翻译命令，将源文件翻译成虚拟机可以执行的指令。<br>那么最直观的探究方法莫过于直接对比一下翻译前后的内容。<br>具体如何对比呢？就不得不用到Java为我们一直默默提供的一项利器，javap命令，它可以解析字节码，将字节码内部逻辑以可读的方式呈现出来。为了紧贴实战，我们直接在新建的Android工程里，写这样一个Activity类，里面包含几个由简单到复杂的方法和一个名为name的字段：</p>
+<p><img src="https://segmentfault.com/img/bVKgZ0?w=1596&amp;h=1558" alt=""></p>
+<p>如图，以上方法，复杂度由低到高依次为：getName&lt;setName&lt;gotoBrowser&lt;staticMethod&lt;onCreate，后面我也会按照这个顺序解读其字节码指令的执行逻辑。<br>下面我们编译工程，然后在下图所示的目录找到该类的字节码文件：</p>
+<p><img src="https://segmentfault.com/img/bVKgZ1?w=802&amp;h=692(" alt=""></p>
+<p>cd到这个路径下，运行万能的javap命令：<code>javap -v -p MainActivity</code>，就可以观看到翻译版的Java字节码的胴体了！这里的 -v 意思是啰嗦模式，会输出全面的字节码信息，而 -p 是指涵盖所有成员。原字节码信息输出内容较多，基于本文的目标，取其一方法的内容，整理如下图：</p>
+<p><strong>方法1，getName()：</strong></p>
+<p><img src="https://segmentfault.com/img/bVKg0h?w=764&amp;h=311" alt=""></p>
+<p>这个getName的方法应该是再简单不过的Java代码，翻译成字节码后也变成了三行，我们先来简单推理一下：第一句，aload_0不知所云，索性略过；第二行，getfield应该可以读懂，后面这个#2似乎是他的参数（实际上是对常量池的引用），//后面注释的内容是javap给我们加上的，意思应该是#2的指向是”Field name:Ljava/lang/String;”这个内容。<br>所以getfield这一行就是取出name这个字段喽，so easy。areturn肯定就是return的意思，a的含义也先略过不表。总之就是取出name字段然后return喽。</p>
+<p>那么现在的问题就是aload_0是什么意思了，看似多余，但仔细思考一下，似乎之前给getfield指令传入了“Field name:Ljava/lang/String;”这样一个并不完整的参数，其后半部分的“Ljava/lang/String;”仅仅表示这个name字段的类型是String，也就是说，整个参数里没有说是取的谁的name字段啊！究竟是get谁的feild呢？</p>
+<blockquote>
+<p>由此可以想到：aload操作一定是在为getfield指令准备了一个主体。</p>
+</blockquote>
+<p>实际上，再结合下面的局部变量表，<strong>aload_0中的0正是局部变量表里的Slot 0的含义</strong>。意思是将局部变量表里的Slot 0的东西压入<strong>操作数栈</strong>，这个Slot 0里的东西name正是this，也就是MainActivity的实例，即getfield的主体。</p>
+<p><img src="https://segmentfault.com/img/bVKg0z?w=922&amp;h=70" alt=""></p>
+<h2 id="大戏上演"><a href="#大戏上演" class="headerlink" title="大戏上演"></a>大戏上演</h2><p>好了，对于小白同学有些陌生的概念来了，啥是操作数栈？啥是局部变量表？<br>其实这两个东西理解好了，关于虚拟机指令就懂了一大半了。<br>那么，不妨删繁就简，由易入难，先讲一个这样的故事，故事起名叫：</p>
+<p><strong>Java方法之创世纪</strong></p>
+<p>话说Jvm大帝是神之旨意的履行者（Jvm大帝就是虚拟机，神就是开发者，神之旨意是开发者写好并编译后的字节码…），当Jvm大帝带领Java世界运行进入了一个新的方法后，会为这个方法在栈内存大陆上创造两个重要的领域：局部变量表和操作数栈。</p>
+<p>要有栈。要有表。神说。</p>
+<p>依照神之旨意，jvm大帝创造的局部变量表里一般会包含<strong>this指针</strong>（针对实例方法，静态方法当然无此）、<strong>方法的所有传入参数</strong>和<strong>方法中所开辟的本地变量</strong>。</p>
+<p>那么操作数栈是干嘛用的呢？</p>
+<p>我们再引入另外一个比喻，如果把运行Java方法理解为拍戏，那么局部变量表里的各个局部变量就是这部戏的核心主角，或者说领衔主演，而操作数栈正是这部戏的舞台。所谓操作数栈搭台，局部变量唱戏，是也。那么aload_0就是告诉Jvm导演（大帝已沦落为导演），请0号演员this同志登台（压栈），演后边的本子。<br>当然了，这个比喻并不完全恰当，因为操作数栈并不是“舞台”的结构，而是栈的结构。但是这个比喻可以很好地说明局部变量表和操作数栈之间的关系，以及aload_0的作用。</p>
+<p>下面我们用一张图来演示一下getName这个小剧本桥段所导演的故事：</p>
+<p><img src="https://sfault-image.b0.upaiyun.com/103/660/1036609234-58becee4713ee" alt=""></p>
+<p>好吧这部剧虽然短的可怜，但已经基本把指令、操作数栈和局部变量表三者的关系演绎了出来。<br>值得注意的是，getfield这条指令对操作数栈进行了复合操作，其流程可以示意如下图：</p>
+<p><img src="https://segmentfault.com/img/bVKg0V?w=387&amp;h=433" alt=""></p>
+<p>后面我们将要接触到的许多指令都如此，指令内部执行了<strong>弹出—&gt;处理—&gt;压回</strong>的流程。<br>下面我们就来分析一个相对复杂一点的方法，setName(String)，如下图：</p>
+<p><img src="https://sfault-image.b0.upaiyun.com/339/569/3395697666-58becf342f97e" alt=""></p>
+<p>这里我们看到，变化主要有，指令多了一行，多进行了一次aload，getfield变成了putfield，areturn变成了return，仅此而已。另外领衔主演也就是局部变量表里多了一位，也就是方法的传入参数name字符串对象了。其情节如下：</p>
+<p><img src="https://sfault-image.b0.upaiyun.com/235/669/2356691623-58becf4f1aa1e" alt=""></p>
+<p>这里，putfield只弹出栈内的操作数，而没有向操作数栈压回任何数据，而且执行putfield之前，栈内元素的位置也必须符合<strong>“值在上，主体在下”</strong>要求。</p>
+<p>而最后的return仅表示方法结束，而不会像areturn一样返回栈顶元素。这也印证了setName(String)方法没有返回参数。</p>
+<h2 id="融会贯通"><a href="#融会贯通" class="headerlink" title="融会贯通"></a>融会贯通</h2><p>相信有了以上的讲解，大家对指令、操作数栈、局部变量表三者的运作关系有了一定认识，为了后边能够分析更复杂的方法，这里必须概括性地讲解一下更多的Jvm汇编指令。虽然Jvm汇编指令非常多，但其实常用的不外乎几个类别，先从这几个常用类别入手理解，便可渐入佳境。</p>
+<p>关于Java汇编指令的分类，可以从两个维度进行：一是<strong>指令的功能</strong>，二是<strong>指令操作的数据类型</strong>。我们先从功能说起，指令主要可以分为如下几类：</p>
+<ol>
+<li><p><strong>存储和加载类指令</strong>：主要包括load系列指令、store系列指令和ldc、push系列指令，主要用于在局部变量表、操作数栈和常量池三者之间进行数据调度；（关于常量池前面没有特别讲解，这个也很简单，顾名思义，就是这个池子里放着各种常量，好比片场的道具库）</p>
+</li>
+<li><p><strong>对象操作指令（创建与读写访问）</strong>：比如我们刚刚的putfield和getfield就属于读写访问的指令，此外还有putstatic/getstatic，还有new系列指令，以及instanceof等指令。</p>
+</li>
+<li><p><strong>操作数栈管理指令</strong>：如pop和dup，他们只对操作数栈进行操作。</p>
+</li>
+<li><p><strong>类型转换指令和运算指令</strong>：如add/div/l2i等系列指令，实际上这类指令一般也只对操作数栈进行操作。</p>
+</li>
+<li><p><strong>控制跳转指令</strong>：这类里包含常用的if系列指令以及goto类指令。</p>
+</li>
+<li><p><strong>方法调用和返回指令</strong>：主要包括invoke系列指令和return系列指令。这类指令也意味这一个方法空间的开辟和结束，即invoke会唤醒一个新的java方法小宇宙（新的栈和局部变量表），而return则意味着这个宇宙的结束回收。</p>
+</li>
+</ol>
+<p>如下图，展示了各类指令的作用：</p>
+<p><img src="https://sfault-image.b0.upaiyun.com/162/253/1622532775-58becf6a14a1b" alt=""></p>
+<p>a对应<strong>对象</strong>，表示指令操作对象性数据，比如aload和astore、areturn等等。</p>
+<p>i对应<strong>整形</strong>。也就有iload，istore等i系列指令。</p>
+<p>f对应浮点型。l对应long，b对应byte，d对应double，c对应char。</p>
+<p>另外地，ia对应int array，aa对应object array，da对应double array。不在一一赘述。</p>
+<p>了解了以上内容，我们再去看最后几个方法，应该就会容易理解很多了。</p>
+<p>下面我们就直捣黄龙gotoBrowser这个方法：</p>
+<p><img src="https://sfault-image.b0.upaiyun.com/100/297/1002973962-58becfe52be69" alt=""></p>
+<p>这个过程简单解读如下：</p>
+<ol>
+<li><p>new一个Intent对象（在堆内存中开辟空间），并将其引用入栈；</p>
+</li>
+<li><p>dup复制栈顶的刚刚放入的引用，再次压栈，这时栈里有两个重复的内容，深度为2；</p>
+</li>
+<li><p>从常量池取出“android.intent.action.View”这个字符串（对象引用）压栈，此时栈深度为3；</p>
+</li>
+<li><p>弹出栈顶的两个对象，调用弹出的第二个对象的<init>方法，栈深度为1；</init></p>
+</li>
+<li><p>将此时栈顶引用弹出并存储到局部变量中（slot 2），此时栈就清空了，深度0；</p>
+</li>
+</ol>
+<p>后面的就相对简单了，读者可以尝试自己解读。再看这个包含if跳转的方法staticMethod：</p>
+<p><img src="https://sfault-image.b0.upaiyun.com/420/716/4207167346-58bed00331544" alt=""></p>
+<p>如上图，图中已经说明的比较全面了，不再赘述。值得一提的是，Java的这种基于栈结构的汇编指令，在设计上有一种非常简洁的美感，指令与指令之间并没有较重的依赖，每条指令仅仅与操作数栈等领域内的数据发生关系，充满着某种平衡与秩序感。因此也必须注意，几乎每条指令的运行都有其前提，比如在invokevirtual或invokespecial指令执行前，必须保证操作数栈内提前按顺序压入好所需的操作数，否则就会发生问题。</p>
+<h2 id="后话"><a href="#后话" class="headerlink" title="后话"></a>后话</h2><p>另外，本文为了尽可能地简明生动、直入核心，简化了很多概念和细节，读者须知实际情况的更为复杂。但相信在理解了本文以后，就可以抓住Java汇编指令的核心理念，也就算扣开虚拟机学习的大门并可以开始读书精进了。下面盗图一张（后有出处），可作拓展：</p>
+<p><img src="https://sfault-image.b0.upaiyun.com/790/620/79062021-58bed0592369e" alt=""></p>
+
+      
+    </div>
+
+    
+      
+
+
+    
+
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/字节码/" rel="tag"># 字节码</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2017/02/15/2017-08-21-oom/" rel="next" title="线上服务内存OOM问题定位三板斧">
+                <i class="fa fa-chevron-left"></i> 线上服务内存OOM问题定位三板斧
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2017/03/09/2017-05-18-session/" rel="prev" title="10w定时任务，如何高效触发超时">
+                10w定时任务，如何高效触发超时 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+  
+    <div class="comments" id="comments">
+      <div id="lv-container" data-id="city" data-uid="MTAyMC8zNDA5NS8xMDYzMw=="></div>
+    </div>
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image"
+                src="/images/logo.jpg"
+                alt="Govern" />
+            
+              <p class="site-author-name" itemprop="name">Govern</p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          
+            <nav class="site-state motion-element">
+              
+                <div class="site-state-item site-state-posts">
+                
+                  <a href="/archives/">
+                
+                    <span class="site-state-item-count">98</span>
+                    <span class="site-state-item-name">日志</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-categories">
+                  <a href="/categories/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">20</span>
+                    <span class="site-state-item-name">分类</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-tags">
+                  <a href="/tags/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">39</span>
+                    <span class="site-state-item-name">标签</span>
+                  </a>
+                </div>
+              
+            </nav>
+          
+
+          
+
+          
+
+          
+          
+
+          
+          
+
+          
+            
+          
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#前言"><span class="nav-number">1.</span> <span class="nav-text">前言</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#单刀直入"><span class="nav-number">2.</span> <span class="nav-text">单刀直入</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#大戏上演"><span class="nav-number">3.</span> <span class="nav-text">大戏上演</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#融会贯通"><span class="nav-number">4.</span> <span class="nav-text">融会贯通</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#后话"><span class="nav-number">5.</span> <span class="nav-text">后话</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+        <div class="back-to-top">
+          <i class="fa fa-arrow-up"></i>
+          
+            <span id="scrollpercent"><span>0</span>%</span>
+          
+        </div>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; 2012 &mdash; <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Govern</span>
+
+  
+
+  
+</div>
+
+
+  
+
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" rel="external nofollow" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" rel="external nofollow" href="https://github.com/theme-next/hexo-theme-next">NexT.Gemini</a> v6.0.3</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=6.0.3"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=6.0.3"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=6.0.3"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=6.0.3"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=6.0.3"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=6.0.3"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=6.0.3"></script>
+
+
+
+  
+
+
+
+
+
+
+
+  
+    <script type="text/javascript">
+      (function(d, s) {
+        var j, e = d.getElementsByTagName(s)[0];
+        if (typeof LivereTower === 'function') { return; }
+        j = d.createElement(s);
+        j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+        j.async = true;
+        e.parentNode.insertBefore(j, e);
+      })(document, 'script');
+    </script>
+  
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+  
+  
+  
+  <link rel="stylesheet" href="/lib/algolia-instant-search/instantsearch.min.css">
+
+  
+  
+  <script src="/lib/algolia-instant-search/instantsearch.min.js"></script>
+  
+
+  <script src="/js/src/algolia-search.js?v=6.0.3"></script>
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+  
+  
+  
+  <script src="/lib/bookmark/bookmark.min.js?v=1.0"></script>
+  <script type="text/javascript">
+  
+    bookmark.scrollToMark('auto', "#more");
+  
+  </script>
+
+
+</body>
+</html>

@@ -1,0 +1,1037 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next gemini use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=6.0.3" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=6.0.3">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/lights-32x32.png?v=6.0.3">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/lights-16x16.png?v=6.0.3">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=6.0.3" color="#222">
+
+
+
+
+
+
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Gemini',
+    version: '6.0.3',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":true,"scrollpercent":true,"onmobile":false},
+    fancybox: false,
+    fastclick: false,
+    lazyload: false,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    algolia: {
+      applicationID: '41NC33JUJG',
+      apiKey: '7362b84fed21bc83930f198a0927bb82',
+      indexName: 'blog',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+  
+
+
+
+
+  
+  <meta name="keywords" content="架构师之路,多线程," />
+
+
+<meta name="description" content="转自: 架构师之路 一、缘起Web-Server通常有个配置，最大工作线程数，后端服务一般也有个配置，工作线程池的线程数量，这个线程数的配置不同的业务架构师有不同的经验值，有些业务设置为CPU核数的2倍，有些业务设置为CPU核数的8倍，有些业务设置为CPU核数的32倍。 “工作线程数”的设置依据是什么，到底设置为多少能够最大化CPU性能，是本文要讨论的问题。 二、共性认知在进行进一步深入讨论之前，">
+<meta name="keywords" content="架构师之路,多线程">
+<meta property="og:type" content="article">
+<meta property="og:title" content="工作线程数究竟要设置为多少">
+<meta property="og:url" content="http://governlee.github.io/2017/07/08/2017-07-08-work-thread/index.html">
+<meta property="og:site_name" content="Govern x Lab">
+<meta property="og:description" content="转自: 架构师之路 一、缘起Web-Server通常有个配置，最大工作线程数，后端服务一般也有个配置，工作线程池的线程数量，这个线程数的配置不同的业务架构师有不同的经验值，有些业务设置为CPU核数的2倍，有些业务设置为CPU核数的8倍，有些业务设置为CPU核数的32倍。 “工作线程数”的设置依据是什么，到底设置为多少能够最大化CPU性能，是本文要讨论的问题。 二、共性认知在进行进一步深入讨论之前，">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="http://mmbiz.qpic.cn/mmbiz/YrezxckhYOxxdwicwqAoloPIfAMycKW160iciaY0RV9GHHLbOoMyEhj4kAicViaSMZQYxybjzFFIQfSmbRd3oTpQuIA/640?wx_fmt=png&tp=webp&wxfrom=5&wx_lazy=1">
+<meta property="og:image" content="http://mmbiz.qpic.cn/mmbiz/YrezxckhYOxxdwicwqAoloPIfAMycKW16qTYL2nyXku8PkxicFEuJSQCFmwZtZOoOeTicjx4lBdp2TjvRItJInpNQ/640?wx_fmt=png&tp=webp&wxfrom=5&wx_lazy=1">
+<meta property="og:updated_time" content="2018-04-22T10:18:20.768Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="工作线程数究竟要设置为多少">
+<meta name="twitter:description" content="转自: 架构师之路 一、缘起Web-Server通常有个配置，最大工作线程数，后端服务一般也有个配置，工作线程池的线程数量，这个线程数的配置不同的业务架构师有不同的经验值，有些业务设置为CPU核数的2倍，有些业务设置为CPU核数的8倍，有些业务设置为CPU核数的32倍。 “工作线程数”的设置依据是什么，到底设置为多少能够最大化CPU性能，是本文要讨论的问题。 二、共性认知在进行进一步深入讨论之前，">
+<meta name="twitter:image" content="http://mmbiz.qpic.cn/mmbiz/YrezxckhYOxxdwicwqAoloPIfAMycKW160iciaY0RV9GHHLbOoMyEhj4kAicViaSMZQYxybjzFFIQfSmbRd3oTpQuIA/640?wx_fmt=png&tp=webp&wxfrom=5&wx_lazy=1">
+
+
+
+
+
+
+  <link rel="canonical" href="http://governlee.github.io/2017/07/08/2017-07-08-work-thread/"/>
+
+
+
+<script type="text/javascript" id="page.configurations">
+  CONFIG.page = {
+    sidebar: "",
+  };
+</script>
+  <title>工作线程数究竟要设置为多少 | Govern x Lab</title>
+  
+
+
+
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?f6804645172803d5efc7161f04df1d76";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+  <noscript>
+  <style type="text/css">
+    .use-motion .motion-element,
+    .use-motion .brand,
+    .use-motion .menu-item,
+    .sidebar-inner,
+    .use-motion .post-block,
+    .use-motion .pagination,
+    .use-motion .comments,
+    .use-motion .post-header,
+    .use-motion .post-body,
+    .use-motion .collection-title { opacity: initial; }
+
+    .use-motion .logo,
+    .use-motion .site-title,
+    .use-motion .site-subtitle {
+      opacity: initial;
+      top: initial;
+    }
+
+    .use-motion {
+      .logo-line-before i { left: initial; }
+      .logo-line-after i { right: initial; }
+    }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"> <div class="site-brand-wrapper">
+  <div class="site-meta custom-logo">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Govern x Lab</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <h1 class="site-subtitle" itemprop="description">I'm not the only one</h1>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-home"></i> <br />首页</a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-user"></i> <br />关于</a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />标签</a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-th"></i> <br />分类</a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />归档</a>
+        </li>
+      
+
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />搜索</a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  
+  <div class="algolia-popup popup search-popup">
+    <div class="algolia-search">
+      <div class="algolia-search-input-icon">
+        <i class="fa fa-search"></i>
+      </div>
+      <div class="algolia-search-input" id="algolia-search-input"></div>
+    </div>
+
+    <div class="algolia-results">
+      <div id="algolia-stats"></div>
+      <div id="algolia-hits"></div>
+      <div id="algolia-pagination" class="algolia-pagination"></div>
+    </div>
+
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+  </div>
+
+
+
+
+    </div>
+  
+</nav>
+
+
+  
+
+
+
+ </div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://governlee.github.io/2017/07/08/2017-07-08-work-thread/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Govern">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/logo.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Govern x Lab">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">工作线程数究竟要设置为多少</h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-07-08T08:00:00+08:00">2017-07-08</time>
+            
+
+            
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/多线程/" itemprop="url" rel="index"><span itemprop="name">多线程</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p><strong>转自: 架构师之路</strong></p>
+<h2 id="一、缘起"><a href="#一、缘起" class="headerlink" title="一、缘起"></a>一、缘起</h2><p>Web-Server通常有个配置，<strong>最大工作线程数</strong>，后端服务一般也有个配置，<strong>工作线程池的线程数量</strong>，这个线程数的配置不同的业务架构师有不同的经验值，有些业务设置为CPU核数的2倍，有些业务设置为CPU核数的8倍，有些业务设置为CPU核数的32倍。</p>
+<p><strong>“工作线程数”的设置依据是什么，到底设置为多少能够最大化CPU性能</strong>，是本文要讨论的问题。</p>
+<h2 id="二、共性认知"><a href="#二、共性认知" class="headerlink" title="二、共性认知"></a>二、共性认知</h2><p>在进行进一步深入讨论之前，先以提问的方式就一些共性认知达成一致。</p>
+<p><strong>问：工作线程数是不是设置的越大越好？</strong><br>答：肯定不是的</p>
+<ul>
+<li>服务器CPU核数有限，能够同时并发的线程数有限，单核CPU设置10000个工作线程没有意义</li>
+<li>线程切换是有开销的，如果线程切换过于频繁，反而会使性能降低</li>
+</ul>
+<p><strong>问：调用sleep()函数的时候，线程是否一直占用CPU？</strong><br>答：不占用，等待时会把CPU让出来，给其他需要CPU资源的线程使用。</p>
+<p>不止sleep()函数，在进行一些阻塞调用时，例如网络编程中的：</p>
+<ul>
+<li>阻塞accept()，等待客户端连接</li>
+<li>阻塞recv()，等待下游回包<br>都不占用CPU资源。</li>
+</ul>
+<p><strong>问：单核CPU，设置多线程有意义么，是否能提高并发性能？</strong><br>答：即使是单核，使用多线程也是有意义的，大多数情况也能提高并发</p>
+<ul>
+<li>多线程编码可以让代码更加清晰，例如：IO线程收发包，Worker线程进行任务处理，Timeout线程进行超时检测</li>
+<li>如果有一个任务一直占用CPU资源在进行计算，此时增加线程并不能增加并发，例如以下代码会一直占用CPU，并使得CPU占用率达到100%：<br><code>while(1){ i++; }</code></li>
+<li>通常来说，Worker线程一般不会一直占用CPU进行计算，此时即使CPU是单核，增加Worker线程也能够提高并发，因为这个线程在休息的时候，其他的线程可以继续工作</li>
+</ul>
+<h2 id="三、常见服务线程模型"><a href="#三、常见服务线程模型" class="headerlink" title="三、常见服务线程模型"></a>三、常见服务线程模型</h2><p>了解常见的服务线程模型，有助于理解服务并发的原理，一般来说互联网常见的服务线程模型有两种：</p>
+<ul>
+<li>IO线程与工作现场通过任务队列解耦</li>
+<li>纯异步</li>
+</ul>
+<p><strong>IO线程与工作线程通过队列解耦类模型</strong></p>
+<p><img src="http://mmbiz.qpic.cn/mmbiz/YrezxckhYOxxdwicwqAoloPIfAMycKW160iciaY0RV9GHHLbOoMyEhj4kAicViaSMZQYxybjzFFIQfSmbRd3oTpQuIA/640?wx_fmt=png&amp;tp=webp&amp;wxfrom=5&amp;wx_lazy=1" alt=""></p>
+<p>如上图，大部分Web-Server与服务框架都是使用这样的一种“IO线程与Worker线程通过队列解耦”类线程模型：</p>
+<ul>
+<li><strong>有少数几个IO线程监听上游发过来的请求</strong>，并进行收发包（生产者）</li>
+<li><strong>有一个或者多个任务队列</strong>，作为IO线程与Worker线程异步解耦的数据传输通道（临界资源）</li>
+<li><strong>有多个工作线程</strong>执行正真的任务（消费者）</li>
+</ul>
+<p>这个线程模型应用很广，符合大部分场景，这个线程模型的特点是，<strong>工作线程内部是同步阻塞执行任务的</strong>（回想一下tomcat线程中是怎么执行Java程序的，dubbo工作线程中是怎么执行任务的），因此可以<strong>通过增加Worker线程数来增加并发能力</strong>，今天要讨论的重点是“<strong>该模型Worker线程数设置为多少能达到最大的并发</strong>”。</p>
+<p><strong>纯异步线程模型</strong><br>没有阻塞，这种线程模型只需要设置很少的线程数就能够做到很高的吞吐量，该模型的缺点是：</p>
+<ul>
+<li>如果使用单线程模式，难以利用多CPU多核的优势</li>
+<li>程序员更习惯写同步代码，callback的方式对代码的可读性有冲击，对程序员的要求也更高</li>
+<li>框架更复杂，往往需要server端收发组件，server端队列，client端收发组件，client端队列，上下文管理组件，有限状态机组件，超时管理组件的支持</li>
+</ul>
+<p>文章《RPC-client异步收发核心细节？》中有更详细的介绍，however，这个模型不是今天讨论的重点，</p>
+<h2 id="四、工作线程的工作模式"><a href="#四、工作线程的工作模式" class="headerlink" title="四、工作线程的工作模式"></a>四、工作线程的工作模式</h2><p>了解工作线程的工作模式，对量化分析线程数的设置非常有帮助：</p>
+<p><img src="http://mmbiz.qpic.cn/mmbiz/YrezxckhYOxxdwicwqAoloPIfAMycKW16qTYL2nyXku8PkxicFEuJSQCFmwZtZOoOeTicjx4lBdp2TjvRItJInpNQ/640?wx_fmt=png&amp;tp=webp&amp;wxfrom=5&amp;wx_lazy=1" alt=""></p>
+<p>上图是一个典型的工作线程的处理过程，从开始处理start到结束处理end，该任务的处理共有7个步骤：</p>
+<ul>
+<li>从工作队列里拿出任务，进行一些本地初始化计算，例如http协议分析、参数解析、参数校验等</li>
+<li>访问cache拿一些数据</li>
+<li>拿到cache里的数据后，再进行一些本地计算，这些计算和业务逻辑相关</li>
+<li>通过RPC调用下游service再拿一些数据，或者让下游service去处理一些相关的任务</li>
+<li>RPC调用结束后，再进行一些本地计算，怎么计算和业务逻辑相关</li>
+<li>访问DB进行一些数据操作</li>
+<li>操作完数据库之后做一些收尾工作，同样这些收尾工作也是本地计算，和业务逻辑相关</li>
+</ul>
+<p>分析整个处理的时间轴，会发现：</p>
+<ul>
+<li>其中1，3，5，7步骤中（上图中粉色时间轴），线程进行本地业务逻辑计算时需要占用CPU</li>
+<li>而2，4，6步骤中（上图中橙色时间轴），访问cache、service、DB过程中线程处于一个等待结果的状态，不需要占用CPU，进一步的分解，这个<strong>“等待结果”</strong>的时间共分为三部分：<br>2.1）请求在网络上传输到下游的cache、service、DB<br>2.2）下游cache、service、DB进行任务处理<br>2.3）cache、service、DB将报文在网络上传回工作线程</li>
+</ul>
+<h2 id="五、量化分析并合理设置工作线程数"><a href="#五、量化分析并合理设置工作线程数" class="headerlink" title="五、量化分析并合理设置工作线程数"></a>五、量化分析并合理设置工作线程数</h2><p>最后一起来回答工作线程数设置为多少合理的问题。</p>
+<p>通过上面的分析，Worker线程在执行的过程中，<strong>有一部计算时间需要占用CPU，另一部分等待时间不需要占用CPU</strong>，通过量化分析，例如打日志进行统计，可以统计出整个Worker线程执行过程中这<strong>两部分时间的比例</strong>，例如：</p>
+<ul>
+<li>执行计算，占用CPU的时间（粉色时间轴）是100ms</li>
+<li>等待时间，不占用CPU的时间（橙色时间轴）也是100ms</li>
+</ul>
+<p>得到的结果是，这个线程计算和等待的时间是1：1，即有50%的时间在计算（占用CPU），50%的时间在等待（不占用CPU）：</p>
+<ul>
+<li>假设此时是<strong>单核</strong>，则设置为2个工作线程就可以把CPU充分利用起来，让CPU跑到100%</li>
+<li>假设此时是<strong>N核</strong>，则设置为2N个工作现场就可以把CPU充分利用起来，让CPU跑到N*100%</li>
+</ul>
+<h2 id="结论："><a href="#结论：" class="headerlink" title="结论："></a>结论：</h2><p>N核服务器，通过执行业务的单线程分析出本地<strong>计算时间为x，等待时间为y</strong>，则<strong>工作线程数（线程池线程数）设置为 N*(x+y)/x</strong>，能让CPU的利用率最大化。</p>
+<h2 id="经验："><a href="#经验：" class="headerlink" title="经验："></a>经验：</h2><p>一般来说，<strong>非CPU密集型</strong>的业务（加解密、压缩解压缩、搜索排序等业务是CPU密集型的业务），<strong>瓶颈都在后端数据库访问或者RPC调用</strong>，本地CPU计算的时间很少，所以<strong>设置几十或者几百个工作线程</strong>是能够提升吞吐量的。</p>
+
+      
+    </div>
+
+    
+      
+
+
+    
+
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/架构师之路/" rel="tag"># 架构师之路</a>
+          
+            <a href="/tags/多线程/" rel="tag"># 多线程</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2017/06/16/2017-07-20-abstract-queued-synchronizer-1/" rel="next" title="一行一行源码分析清楚AbstractQueuedSynchronizer(一)">
+                <i class="fa fa-chevron-left"></i> 一行一行源码分析清楚AbstractQueuedSynchronizer(一)
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2017/07/09/2017-07-09-websocket/" rel="prev" title="websocket学习整理(一)">
+                websocket学习整理(一) <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+  
+    <div class="comments" id="comments">
+      <div id="lv-container" data-id="city" data-uid="MTAyMC8zNDA5NS8xMDYzMw=="></div>
+    </div>
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image"
+                src="/images/logo.jpg"
+                alt="Govern" />
+            
+              <p class="site-author-name" itemprop="name">Govern</p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          
+            <nav class="site-state motion-element">
+              
+                <div class="site-state-item site-state-posts">
+                
+                  <a href="/archives/">
+                
+                    <span class="site-state-item-count">98</span>
+                    <span class="site-state-item-name">日志</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-categories">
+                  <a href="/categories/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">20</span>
+                    <span class="site-state-item-name">分类</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-tags">
+                  <a href="/tags/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">39</span>
+                    <span class="site-state-item-name">标签</span>
+                  </a>
+                </div>
+              
+            </nav>
+          
+
+          
+
+          
+
+          
+          
+
+          
+          
+
+          
+            
+          
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#一、缘起"><span class="nav-number">1.</span> <span class="nav-text">一、缘起</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#二、共性认知"><span class="nav-number">2.</span> <span class="nav-text">二、共性认知</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#三、常见服务线程模型"><span class="nav-number">3.</span> <span class="nav-text">三、常见服务线程模型</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#四、工作线程的工作模式"><span class="nav-number">4.</span> <span class="nav-text">四、工作线程的工作模式</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#五、量化分析并合理设置工作线程数"><span class="nav-number">5.</span> <span class="nav-text">五、量化分析并合理设置工作线程数</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#结论："><span class="nav-number">6.</span> <span class="nav-text">结论：</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#经验："><span class="nav-number">7.</span> <span class="nav-text">经验：</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+        <div class="back-to-top">
+          <i class="fa fa-arrow-up"></i>
+          
+            <span id="scrollpercent"><span>0</span>%</span>
+          
+        </div>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; 2012 &mdash; <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Govern</span>
+
+  
+
+  
+</div>
+
+
+  
+
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" rel="external nofollow" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" rel="external nofollow" href="https://github.com/theme-next/hexo-theme-next">NexT.Gemini</a> v6.0.3</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=6.0.3"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=6.0.3"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=6.0.3"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=6.0.3"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=6.0.3"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=6.0.3"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=6.0.3"></script>
+
+
+
+  
+
+
+
+
+
+
+
+  
+    <script type="text/javascript">
+      (function(d, s) {
+        var j, e = d.getElementsByTagName(s)[0];
+        if (typeof LivereTower === 'function') { return; }
+        j = d.createElement(s);
+        j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+        j.async = true;
+        e.parentNode.insertBefore(j, e);
+      })(document, 'script');
+    </script>
+  
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+  
+  
+  
+  <link rel="stylesheet" href="/lib/algolia-instant-search/instantsearch.min.css">
+
+  
+  
+  <script src="/lib/algolia-instant-search/instantsearch.min.js"></script>
+  
+
+  <script src="/js/src/algolia-search.js?v=6.0.3"></script>
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+  
+  
+  
+  <script src="/lib/bookmark/bookmark.min.js?v=1.0"></script>
+  <script type="text/javascript">
+  
+    bookmark.scrollToMark('auto', "#more");
+  
+  </script>
+
+
+</body>
+</html>

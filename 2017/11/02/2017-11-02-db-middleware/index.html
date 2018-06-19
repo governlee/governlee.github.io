@@ -1,0 +1,1078 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next gemini use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=6.0.3" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=6.0.3">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/lights-32x32.png?v=6.0.3">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/lights-16x16.png?v=6.0.3">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=6.0.3" color="#222">
+
+
+
+
+
+
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Gemini',
+    version: '6.0.3',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":true,"scrollpercent":true,"onmobile":false},
+    fancybox: false,
+    fastclick: false,
+    lazyload: false,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    algolia: {
+      applicationID: '41NC33JUJG',
+      apiKey: '7362b84fed21bc83930f198a0927bb82',
+      indexName: 'blog',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+  
+
+
+
+
+  
+  <meta name="keywords" content="架构师之路,数据库," />
+
+
+<meta name="description" content="转自: 架构师之路 不少朋友经常会问我以下问题：  58到家有没有使用数据库中间件 使用了什么数据库中间件，是自研，还是第三方 怎么实现的，是基于客户端的中间件，还是基于服务端的中间件 使用中间件后，join/子查询/集函数/事务等问题是怎么解决的 …你是不是也有类似的疑问？  然而，“究竟为什么要引入数据库中间件”却很少有人问及。 “架构师之路”文章思路，以解决“为什么”为优先，借着近期撰写互联">
+<meta name="keywords" content="架构师之路,数据库">
+<meta property="og:type" content="article">
+<meta property="og:title" content="究竟为什么要引入数据库中间件?">
+<meta property="og:url" content="http://governlee.github.io/2017/11/02/2017-11-02-db-middleware/index.html">
+<meta property="og:site_name" content="Govern x Lab">
+<meta property="og:description" content="转自: 架构师之路 不少朋友经常会问我以下问题：  58到家有没有使用数据库中间件 使用了什么数据库中间件，是自研，还是第三方 怎么实现的，是基于客户端的中间件，还是基于服务端的中间件 使用中间件后，join/子查询/集函数/事务等问题是怎么解决的 …你是不是也有类似的疑问？  然而，“究竟为什么要引入数据库中间件”却很少有人问及。 “架构师之路”文章思路，以解决“为什么”为优先，借着近期撰写互联">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="http://s3.51cto.com/oss/201711/03/6eab6441cd6950201382a83983de366d.jpg-wh_651x-s_1837493651.jpg">
+<meta property="og:image" content="http://s4.51cto.com/oss/201711/03/1b5cbf6c72bd35b54050f2a01e10e4d0.jpg">
+<meta property="og:image" content="http://s4.51cto.com/oss/201711/03/02b8560b512448450031d9e92c25824a.jpg">
+<meta property="og:image" content="https://ss.csdn.net/p?https://mmbiz.qpic.cn/mmbiz_png/YrezxckhYOyyxscNQSUmvRjJ9H5ibfnFblouy1ticHFuXlgn4qvicPknk6OOUxiaFaWFqHPgMsXrROtCriaia6vzQSTA/0?wx_fmt=png">
+<meta property="og:image" content="http://s3.51cto.com/oss/201711/03/385f6efdf88c469aec6f1cf8d07bd369.jpg">
+<meta property="og:image" content="http://s1.51cto.com/oss/201711/03/c80f0a76be60e480a09aa96f8d5f566d.jpg">
+<meta property="og:image" content="http://s4.51cto.com/oss/201711/03/208b0f69c344de980add6047a39f4b22.jpg">
+<meta property="og:image" content="http://s2.51cto.com/oss/201711/03/54c10d200f6d84d0c47b8d841dbd0d1d.jpg">
+<meta property="og:image" content="http://s2.51cto.com/oss/201711/03/c38a81ac63d43fa1a14e8a664c3d19c4.jpg">
+<meta property="og:updated_time" content="2018-05-04T01:46:42.258Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="究竟为什么要引入数据库中间件?">
+<meta name="twitter:description" content="转自: 架构师之路 不少朋友经常会问我以下问题：  58到家有没有使用数据库中间件 使用了什么数据库中间件，是自研，还是第三方 怎么实现的，是基于客户端的中间件，还是基于服务端的中间件 使用中间件后，join/子查询/集函数/事务等问题是怎么解决的 …你是不是也有类似的疑问？  然而，“究竟为什么要引入数据库中间件”却很少有人问及。 “架构师之路”文章思路，以解决“为什么”为优先，借着近期撰写互联">
+<meta name="twitter:image" content="http://s3.51cto.com/oss/201711/03/6eab6441cd6950201382a83983de366d.jpg-wh_651x-s_1837493651.jpg">
+
+
+
+
+
+
+  <link rel="canonical" href="http://governlee.github.io/2017/11/02/2017-11-02-db-middleware/"/>
+
+
+
+<script type="text/javascript" id="page.configurations">
+  CONFIG.page = {
+    sidebar: "",
+  };
+</script>
+  <title>究竟为什么要引入数据库中间件? | Govern x Lab</title>
+  
+
+
+
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?f6804645172803d5efc7161f04df1d76";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+  <noscript>
+  <style type="text/css">
+    .use-motion .motion-element,
+    .use-motion .brand,
+    .use-motion .menu-item,
+    .sidebar-inner,
+    .use-motion .post-block,
+    .use-motion .pagination,
+    .use-motion .comments,
+    .use-motion .post-header,
+    .use-motion .post-body,
+    .use-motion .collection-title { opacity: initial; }
+
+    .use-motion .logo,
+    .use-motion .site-title,
+    .use-motion .site-subtitle {
+      opacity: initial;
+      top: initial;
+    }
+
+    .use-motion {
+      .logo-line-before i { left: initial; }
+      .logo-line-after i { right: initial; }
+    }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"> <div class="site-brand-wrapper">
+  <div class="site-meta custom-logo">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Govern x Lab</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <h1 class="site-subtitle" itemprop="description">I'm not the only one</h1>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-home"></i> <br />首页</a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-user"></i> <br />关于</a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />标签</a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-th"></i> <br />分类</a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />归档</a>
+        </li>
+      
+
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />搜索</a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  
+  <div class="algolia-popup popup search-popup">
+    <div class="algolia-search">
+      <div class="algolia-search-input-icon">
+        <i class="fa fa-search"></i>
+      </div>
+      <div class="algolia-search-input" id="algolia-search-input"></div>
+    </div>
+
+    <div class="algolia-results">
+      <div id="algolia-stats"></div>
+      <div id="algolia-hits"></div>
+      <div id="algolia-pagination" class="algolia-pagination"></div>
+    </div>
+
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+  </div>
+
+
+
+
+    </div>
+  
+</nav>
+
+
+  
+
+
+
+ </div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://governlee.github.io/2017/11/02/2017-11-02-db-middleware/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Govern">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/logo.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Govern x Lab">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">究竟为什么要引入数据库中间件?</h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-11-02T08:00:00+08:00">2017-11-02</time>
+            
+
+            
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/架构/" itemprop="url" rel="index"><span itemprop="name">架构</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p><strong>转自: 架构师之路</strong></p>
+<p>不少朋友经常会问我以下问题：</p>
+<ul>
+<li>58到家有没有使用数据库中间件</li>
+<li>使用了什么数据库中间件，是自研，还是第三方</li>
+<li>怎么实现的，是基于客户端的中间件，还是基于服务端的中间件</li>
+<li>使用中间件后，join/子查询/集函数/事务等问题是怎么解决的</li>
+<li>…<br>你是不是也有类似的疑问？</li>
+</ul>
+<p>然而，“究竟为什么要引入数据库中间件”却很少有人问及。 “架构师之路”文章思路，以解决“为什么”为优先，借着近期撰写互联网分层架构系列文章，讲一讲这个核心问题：</p>
+<ul>
+<li>究竟为什么要引入数据库中间件</li>
+</ul>
+<p><img src="http://s3.51cto.com/oss/201711/03/6eab6441cd6950201382a83983de366d.jpg-wh_651x-s_1837493651.jpg" alt=""></p>
+<p>经过连续分层架构演进，<strong>DAO层，基础数据服务化，通用业务服务化，前后端分离之后</strong>，一个业务系统的后端结构如上：</p>
+<ul>
+<li>web-view层通过http接口，从web-data获取json数据（前后端分离）</li>
+<li>web-data层通过RPC接口，从biz-service获取数据（通用业务服务）</li>
+<li>biz-service层通过RPC接口，从base-service获取数据（基础数据服务）</li>
+<li>base-service层通过DAO，从db获取数据（DAO）</li>
+<li>db存储数据</li>
+</ul>
+<p>随着时间的推移，<strong>数据量会越来越大</strong>，base-service通过DAO来访问db的<strong>性能会越来越低，需要开始考虑对db进行水平切</strong>分，一旦db进行水平切分，原来很多SQL可以支持的功能，就需要base-service层来进行特殊处理：</p>
+<ul>
+<li>有些数据需要路由到特定的水平切分库</li>
+<li>有些数据不确定落在哪一个水平切分库，就需要访问所有库</li>
+<li>有些数据需要访问全局的库，拿到数据的全局视野，到service层进行额外处理</li>
+<li>…</li>
+</ul>
+<p>更具体的，对于前台高并发的业务，db水平切分后，有这么几类典型的业务场景及应对方案。特别强调一下，此处应对的是“前台”“高并发”“db水平切分”的场景，对于后台的需求，将通过前台与后台分离的架构处理，不在此处讨论。</p>
+<h2 id="一：partition-key上的单行查询"><a href="#一：partition-key上的单行查询" class="headerlink" title="一：partition key上的单行查询"></a>一：partition key上的单行查询</h2><p>典型场景：通过uid查询user</p>
+<p>场景特点：</p>
+<ul>
+<li>通过<strong>patition key</strong>查询</li>
+<li>每次只返回一行记录</li>
+</ul>
+<p>解决方案：base-service层通过<strong>patition key来进行库路由</strong><br><img src="http://s4.51cto.com/oss/201711/03/1b5cbf6c72bd35b54050f2a01e10e4d0.jpg" alt=""></p>
+<p>如上图：</p>
+<ul>
+<li>user-service底层user库，分库patition key是uid</li>
+<li>uid上的查询，user-service可以直接定位到库</li>
+</ul>
+<h2 id="二、非patition-key上的单行查询"><a href="#二、非patition-key上的单行查询" class="headerlink" title="二、非patition key上的单行查询"></a>二、非patition key上的单行查询</h2><p>典型场景：通过login_name查询user</p>
+<p>场景特点：</p>
+<ul>
+<li>通过非patition key查询</li>
+<li>每次只返回一行记录</li>
+</ul>
+<p>解决方案1：<strong>base-service层访问所有库</strong><br><img src="http://s4.51cto.com/oss/201711/03/02b8560b512448450031d9e92c25824a.jpg" alt=""></p>
+<p>如上图：</p>
+<ul>
+<li>user-service通过login_name先查全库</li>
+<li>结果集在user-service再合并，最终返回一条记录</li>
+</ul>
+<p>解决方案2：base-service<strong>先查mapping库，再通过patition key路由</strong><br><img src="https://ss.csdn.net/p?https://mmbiz.qpic.cn/mmbiz_png/YrezxckhYOyyxscNQSUmvRjJ9H5ibfnFblouy1ticHFuXlgn4qvicPknk6OOUxiaFaWFqHPgMsXrROtCriaia6vzQSTA/0?wx_fmt=png" alt=""></p>
+<p>如上图：</p>
+<ul>
+<li>新建mapping库，记录login_name到uid的映射关系</li>
+<li>当有非 patition key的查询时，先通过login_name查询uid</li>
+<li>再通过patition key进行路由，最终返回一条记录</li>
+</ul>
+<p>解决方案3：基因法<br>关于“基因法”解决非patition key上的查询需求详见《分库后，非patition key上访问的多种解决办法》。</p>
+<h2 id="三、patition-key上的批量查询"><a href="#三、patition-key上的批量查询" class="headerlink" title="三、patition key上的批量查询"></a>三、patition key上的批量查询</h2><p>典型场景：用户列表uid上的IN查询</p>
+<p>场景特点：</p>
+<ul>
+<li>通过patition key查询</li>
+<li>每次返回多行记录</li>
+</ul>
+<p>解决方案1：base-service层访问所有库，结果集到base-service合并</p>
+<p>解决方案2：base-service<strong>分析路由规则，按需访问</strong><br><img src="http://s3.51cto.com/oss/201711/03/385f6efdf88c469aec6f1cf8d07bd369.jpg" alt=""><br>如上图：</p>
+<ul>
+<li>base-service根据路由规则分析，判断出有些数据落在库1，有些数据落在库2</li>
+<li>base-service按需访问相关库，而不是访问全库</li>
+<li>base-service合并结果集，返回列表数据</li>
+</ul>
+<h2 id="四、非patition-key上的夸库分页需求"><a href="#四、非patition-key上的夸库分页需求" class="headerlink" title="四、非patition key上的夸库分页需求"></a>四、非patition key上的夸库分页需求</h2><p>关于分库后，夸库分页的查询需求，详见《业界难题，夸库分页的四种方案》。</p>
+<h2 id="五、其他需求…"><a href="#五、其他需求…" class="headerlink" title="五、其他需求…"></a>五、其他需求…</h2><p>本文写到这里，上述一、二、三、四、五其实都不是重点，base-service层通过各种各样的奇技淫巧，能够解决db水平切分后的数据访问问题，只不过：</p>
+<ul>
+<li>base-service层的复杂度提高了</li>
+<li>数据的获取效率降低了</li>
+</ul>
+<p>当需要<strong>进行db水平切分的base-service越来越多</strong>以后，此时分层架构会变成下面这个样子：<br><img src="http://s1.51cto.com/oss/201711/03/c80f0a76be60e480a09aa96f8d5f566d.jpg" alt=""></p>
+<p>底层的复杂性会扩散到各个base-service，所有的base-service都要关注：</p>
+<ul>
+<li>patition key路由</li>
+<li>非patition key查询，先mapping，再路由</li>
+<li>先全库，再合并</li>
+<li>先分析，再按需路由</li>
+<li>夸库分页处理</li>
+<li>…</li>
+</ul>
+<p>这个架构图是不是看上去很别扭？如何让数据的获取更加高效快捷呢？<br><strong>数据库中间件</strong>的引入，势在必行。</p>
+<p><img src="http://s4.51cto.com/oss/201711/03/208b0f69c344de980add6047a39f4b22.jpg" alt=""></p>
+<p>这是<strong>“基于服务端”</strong>的数据库中间件架构图：</p>
+<ul>
+<li>base-service层，就像访问db一样，访问db-proxy，高效获取数据</li>
+<li>所有底层的复杂性，都屏蔽在db-proxy这一层</li>
+</ul>
+<p><img src="http://s2.51cto.com/oss/201711/03/54c10d200f6d84d0c47b8d841dbd0d1d.jpg" alt=""></p>
+<p>这是<strong>“基于客户端”</strong>的数据库中间件架构图：</p>
+<ul>
+<li>base-service层，通过db-proxy.jar，高效获取数据</li>
+<li>所有底层的复杂性，都屏蔽在db-proxy.jar这一层</li>
+</ul>
+<p><img src="http://s2.51cto.com/oss/201711/03/c38a81ac63d43fa1a14e8a664c3d19c4.jpg" alt=""></p>
+<p><strong>结论：</strong><br>当数据库水平切分，base-service层获取db数据过于复杂，成为通用痛点的时候，就应该抽象出数据库中间件，简化数据获取过程，提高数据获取效率，向上游屏蔽底层的复杂性。</p>
+
+      
+    </div>
+
+    
+      
+
+
+    
+
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/架构师之路/" rel="tag"># 架构师之路</a>
+          
+            <a href="/tags/数据库/" rel="tag"># 数据库</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2017/10/18/2017-10-18-architecture/" rel="next" title="分层架构，是否需要业务服务层">
+                <i class="fa fa-chevron-left"></i> 分层架构，是否需要业务服务层
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2017/11/02/2017-06-16-db-middleware1/" rel="prev" title="单KEY业务，数据库水平切分架构实践">
+                单KEY业务，数据库水平切分架构实践 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+  
+    <div class="comments" id="comments">
+      <div id="lv-container" data-id="city" data-uid="MTAyMC8zNDA5NS8xMDYzMw=="></div>
+    </div>
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image"
+                src="/images/logo.jpg"
+                alt="Govern" />
+            
+              <p class="site-author-name" itemprop="name">Govern</p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          
+            <nav class="site-state motion-element">
+              
+                <div class="site-state-item site-state-posts">
+                
+                  <a href="/archives/">
+                
+                    <span class="site-state-item-count">98</span>
+                    <span class="site-state-item-name">日志</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-categories">
+                  <a href="/categories/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">20</span>
+                    <span class="site-state-item-name">分类</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-tags">
+                  <a href="/tags/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">39</span>
+                    <span class="site-state-item-name">标签</span>
+                  </a>
+                </div>
+              
+            </nav>
+          
+
+          
+
+          
+
+          
+          
+
+          
+          
+
+          
+            
+          
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#一：partition-key上的单行查询"><span class="nav-number">1.</span> <span class="nav-text">一：partition key上的单行查询</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#二、非patition-key上的单行查询"><span class="nav-number">2.</span> <span class="nav-text">二、非patition key上的单行查询</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#三、patition-key上的批量查询"><span class="nav-number">3.</span> <span class="nav-text">三、patition key上的批量查询</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#四、非patition-key上的夸库分页需求"><span class="nav-number">4.</span> <span class="nav-text">四、非patition key上的夸库分页需求</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#五、其他需求…"><span class="nav-number">5.</span> <span class="nav-text">五、其他需求…</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+        <div class="back-to-top">
+          <i class="fa fa-arrow-up"></i>
+          
+            <span id="scrollpercent"><span>0</span>%</span>
+          
+        </div>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; 2012 &mdash; <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Govern</span>
+
+  
+
+  
+</div>
+
+
+  
+
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" rel="external nofollow" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" rel="external nofollow" href="https://github.com/theme-next/hexo-theme-next">NexT.Gemini</a> v6.0.3</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=6.0.3"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=6.0.3"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=6.0.3"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=6.0.3"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=6.0.3"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=6.0.3"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=6.0.3"></script>
+
+
+
+  
+
+
+
+
+
+
+
+  
+    <script type="text/javascript">
+      (function(d, s) {
+        var j, e = d.getElementsByTagName(s)[0];
+        if (typeof LivereTower === 'function') { return; }
+        j = d.createElement(s);
+        j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+        j.async = true;
+        e.parentNode.insertBefore(j, e);
+      })(document, 'script');
+    </script>
+  
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+  
+  
+  
+  <link rel="stylesheet" href="/lib/algolia-instant-search/instantsearch.min.css">
+
+  
+  
+  <script src="/lib/algolia-instant-search/instantsearch.min.js"></script>
+  
+
+  <script src="/js/src/algolia-search.js?v=6.0.3"></script>
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+  
+  
+  
+  <script src="/lib/bookmark/bookmark.min.js?v=1.0"></script>
+  <script type="text/javascript">
+  
+    bookmark.scrollToMark('auto', "#more");
+  
+  </script>
+
+
+</body>
+</html>

@@ -1,0 +1,1036 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next gemini use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=6.0.3" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=6.0.3">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/lights-32x32.png?v=6.0.3">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/lights-16x16.png?v=6.0.3">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=6.0.3" color="#222">
+
+
+
+
+
+
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Gemini',
+    version: '6.0.3',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":true,"scrollpercent":true,"onmobile":false},
+    fancybox: false,
+    fastclick: false,
+    lazyload: false,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    algolia: {
+      applicationID: '41NC33JUJG',
+      apiKey: '7362b84fed21bc83930f198a0927bb82',
+      indexName: 'blog',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+  
+
+
+
+
+  
+  <meta name="keywords" content="服务化,架构师之路," />
+
+
+<meta name="description" content="转自: 架构师之路 任何脱离业务场景的架构设计都是耍流氓。 广义系统通知，有1对1的通知，以及一对多的通知，有相对实时的业务通知，以及能够容忍一定延时的系统通知。结合具体的场景来看下，这样的一些系统通知，究竟是推还是拉？ 一、系统对1的通知典型业务，计数类通知：  有10个美女添加了你为好友 有8个好友私信了你  很多业务经常有这类计数通知，通知结果只针对你，这类通知是推送，还是拉取的呢？常见的有">
+<meta name="keywords" content="服务化,架构师之路">
+<meta property="og:type" content="article">
+<meta property="og:title" content="系统通知，居然有人使用拉取？">
+<meta property="og:url" content="http://governlee.github.io/2017/05/10/2017-05-10-pull-message/index.html">
+<meta property="og:site_name" content="Govern x Lab">
+<meta property="og:description" content="转自: 架构师之路 任何脱离业务场景的架构设计都是耍流氓。 广义系统通知，有1对1的通知，以及一对多的通知，有相对实时的业务通知，以及能够容忍一定延时的系统通知。结合具体的场景来看下，这样的一些系统通知，究竟是推还是拉？ 一、系统对1的通知典型业务，计数类通知：  有10个美女添加了你为好友 有8个好友私信了你  很多业务经常有这类计数通知，通知结果只针对你，这类通知是推送，还是拉取的呢？常见的有">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:updated_time" content="2018-05-16T09:08:57.575Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="系统通知，居然有人使用拉取？">
+<meta name="twitter:description" content="转自: 架构师之路 任何脱离业务场景的架构设计都是耍流氓。 广义系统通知，有1对1的通知，以及一对多的通知，有相对实时的业务通知，以及能够容忍一定延时的系统通知。结合具体的场景来看下，这样的一些系统通知，究竟是推还是拉？ 一、系统对1的通知典型业务，计数类通知：  有10个美女添加了你为好友 有8个好友私信了你  很多业务经常有这类计数通知，通知结果只针对你，这类通知是推送，还是拉取的呢？常见的有">
+
+
+
+
+
+
+  <link rel="canonical" href="http://governlee.github.io/2017/05/10/2017-05-10-pull-message/"/>
+
+
+
+<script type="text/javascript" id="page.configurations">
+  CONFIG.page = {
+    sidebar: "",
+  };
+</script>
+  <title>系统通知，居然有人使用拉取？ | Govern x Lab</title>
+  
+
+
+
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?f6804645172803d5efc7161f04df1d76";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+  <noscript>
+  <style type="text/css">
+    .use-motion .motion-element,
+    .use-motion .brand,
+    .use-motion .menu-item,
+    .sidebar-inner,
+    .use-motion .post-block,
+    .use-motion .pagination,
+    .use-motion .comments,
+    .use-motion .post-header,
+    .use-motion .post-body,
+    .use-motion .collection-title { opacity: initial; }
+
+    .use-motion .logo,
+    .use-motion .site-title,
+    .use-motion .site-subtitle {
+      opacity: initial;
+      top: initial;
+    }
+
+    .use-motion {
+      .logo-line-before i { left: initial; }
+      .logo-line-after i { right: initial; }
+    }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"> <div class="site-brand-wrapper">
+  <div class="site-meta custom-logo">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Govern x Lab</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <h1 class="site-subtitle" itemprop="description">I'm not the only one</h1>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-home"></i> <br />首页</a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-user"></i> <br />关于</a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />标签</a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-th"></i> <br />分类</a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />归档</a>
+        </li>
+      
+
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />搜索</a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  
+  <div class="algolia-popup popup search-popup">
+    <div class="algolia-search">
+      <div class="algolia-search-input-icon">
+        <i class="fa fa-search"></i>
+      </div>
+      <div class="algolia-search-input" id="algolia-search-input"></div>
+    </div>
+
+    <div class="algolia-results">
+      <div id="algolia-stats"></div>
+      <div id="algolia-hits"></div>
+      <div id="algolia-pagination" class="algolia-pagination"></div>
+    </div>
+
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+  </div>
+
+
+
+
+    </div>
+  
+</nav>
+
+
+  
+
+
+
+ </div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://governlee.github.io/2017/05/10/2017-05-10-pull-message/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Govern">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/logo.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Govern x Lab">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">系统通知，居然有人使用拉取？</h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-05-10T08:00:00+08:00">2017-05-10</time>
+            
+
+            
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/架构/" itemprop="url" rel="index"><span itemprop="name">架构</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p><strong>转自: 架构师之路</strong></p>
+<p>任何脱离业务场景的架构设计都是耍流氓。</p>
+<p>广义系统通知，有1对1的通知，以及一对多的通知，有相对实时的业务通知，以及能够容忍一定延时的系统通知。结合具体的场景来看下，这样的一些系统通知，究竟是推还是拉？</p>
+<h2 id="一、系统对1的通知"><a href="#一、系统对1的通知" class="headerlink" title="一、系统对1的通知"></a>一、系统对1的通知</h2><p>典型业务，计数类通知：</p>
+<ul>
+<li>有10个美女添加了你为好友</li>
+<li>有8个好友私信了你</li>
+</ul>
+<p>很多业务经常有这类计数通知，通知结果只针对你，这类通知是推送，还是拉取的呢？常见的有这样一些实践：</p>
+<p>如果业务需求对计数需求需要实时展现，例如微博的加好友计数，假如<strong>希望实现不刷新网页，计数就实时变化</strong>：</p>
+<ul>
+<li><p>登录微博时，会有一个计数的拉取，对网页端的计数进行初始化 int getCountByType(int countType)</p>
+</li>
+<li><p>在浏览微博的过程中，一旦有人加你为好友，服务端对网页端进行实时推送，告之增加了1个（或者N个）好友<br>int addCountByType(int countType, int diff)</p>
+</li>
+</ul>
+<p>这里的思路是，一开始得到初始值，后续推送增量值，由网页端计算最终计数并呈现最终结果。需要注意，针对不同业务，计数变化的差值可增可减。</p>
+<p>上述方案的坏处是，<strong>一旦有消息丢失，网页端的计数会一直不一致</strong>，直至再次登录重新初始化计数。这个计算计数可以优化为在服务器直接计算并通知网页端最终的结果，网页端只负责呈现即可，这样网页端的逻辑会变轻。</p>
+<p><strong>如果业务对此类通知的展现不需要这么实时，完全可以通过拉取</strong>：<br>只有在链接跳转，或者刷新网页时，才重新拉取最新的通知，例如上述计数<br>int getCountByType(int countType)<br>这样系统的实现会最简单。需要注意，通知<strong>拉取要异步</strong>，不要影响主页面的快速返回。</p>
+<p>系统对1的推送，例如针对1个用户的业务计数推送，计数的变化频率其实非常低，使用cache来存储这些计数能够极大提升系统性能。</p>
+<p>更多计数系统架构实践可详见《计数系统架构实践一次搞定》。</p>
+<h2 id="二、系统对多的通知"><a href="#二、系统对多的通知" class="headerlink" title="二、系统对多的通知"></a>二、系统对多的通知</h2><p>系统对多的通知消息，会比系统对1的通知消息复杂一些，以两个场景为例：</p>
+<ul>
+<li>QQ登录弹窗新闻</li>
+<li>QQ右下角弹窗广告</li>
+</ul>
+<h3 id="IM登录弹窗新闻"><a href="#IM登录弹窗新闻" class="headerlink" title="IM登录弹窗新闻"></a>IM登录弹窗新闻</h3><p>这个通知的需求是：</p>
+<ul>
+<li>同一天，用户登录弹出的新闻是相同的（很多业务符合这样的场景），不同天新闻则不一样（但所有用户都一样）</li>
+<li>每天第一次登录弹出新闻，当天的后续登录不出新闻</li>
+</ul>
+<p>不妨设有一个表存放<strong>弹窗新闻</strong>：<br>t_msg(msg_id, date, msg_content)  </p>
+<p>有一个表来存放<strong>用户信息</strong>：<br>t_user(user_id, user_info, …)  </p>
+<p>有一个表来存放<strong>用户收到的新闻弹窗</strong>：<br>t_user_msg(user_id, msg_id, date)</p>
+<p>这里的实现明显<strong>不能采用推送</strong>的方式：</p>
+<ul>
+<li>将t_user_msg里对于所有user_id推送插入一个msg_id，表示未读</li>
+<li>在user每天第一次登录的时候，将当天的msg_id拉取出来，并删除，表示已读</li>
+<li>在user每天非第一次登录的时候，就拉取不到msg_id于是不会再次弹窗  </li>
+</ul>
+<p>这个笨拙的方式，会导致t_user_msg里有<strong>大量的脏数据</strong>，毕竟大部分用户并不会登录。</p>
+<p>如果改为<strong>拉取</strong>的方式会好很多：</p>
+<ul>
+<li>在user每天第一次登陆时，将当天的msg_id拉取出来，并插入t_user_msg，表示已读</li>
+<li>在user每天非第一次登陆时，则会插入t_user_msg失败，则说明已读，不再进行二次弹窗展现</li>
+</ul>
+<p>这个方式虽然有所优化，但t_user_msg的<strong>数据量依然很大</strong>。</p>
+<p>还有一种巧妙的方式，去除t_user_msg表，改为在<strong>t_user表加一列，表示用户最近拉取的弹窗时间：<br>t_user(user_id, user_info, last_msg_date, …)</strong><br>这样业务流程会升级为：</p>
+<ul>
+<li>在user每天第一次登录时，将当天的msg_id拉取出来，并将last_msg_date修改为今天</li>
+<li>在user每天非第一次登录时，发现last_msg_date为今天，则说明今天已读  </li>
+</ul>
+<p>这种方式不再存储消息与用户的笛卡尔关系，数据量会大大减少，是不是有点意思？</p>
+<h3 id="IM右下角弹窗广告"><a href="#IM右下角弹窗广告" class="headerlink" title="IM右下角弹窗广告"></a>IM右下角弹窗广告</h3><p>这个通知的需求是：</p>
+<ul>
+<li>每天会对一批在线用户推送相同的弹窗TIPS广告，例如球鞋广告，手机广告等<blockquote>
+<p>画外音：如果1个推送一块钱，5KW用户推送收入就有5KW收入哟，一天推个几次，实现1个亿的小目标居然如此简单。</p>
+</blockquote>
+</li>
+</ul>
+<p>最直观的感受，这是一个<em>*for循环批量推送</em>的过程。如果是推送，必须要考虑的问题是，推送限速控制，避免短时间内对系统造成冲击，引发雪崩。</p>
+<p><strong>能不能用拉取呢？</strong><br>完全可以，这是一个对实时性要求不太高的场景，用户早1分钟晚1分钟收到这个广告影响不大，其实可以借助IM原本已有的<strong>keepalive请求</strong>，在请求返回时，告之“有消息拉取”，然后采用拉取的方式拉取广告消息。</p>
+<p>这个方案的好处是，由于5KW在线用户的keepalive请求是均匀的，所以可以很均匀的将广告拉取的请求同样？<strong> 均匀的分散？</strong> 到一段时间内，避免5KW集中推送对系统造成冲击。</p>
+<h2 id="三、总结"><a href="#三、总结" class="headerlink" title="三、总结"></a>三、总结</h2><p>广义系统通知，究竟是推送还是拉取呢？不同业务，不同需求，实现方式不同。<br>系统对1的通知：</p>
+<ul>
+<li>实时性要求高，可以推送</li>
+<li>实时性要求低，可以拉取</li>
+</ul>
+<p>系统对N的通知：</p>
+<ul>
+<li>登录弹窗新闻，拉取更佳，可以用一个last_msg_date来避免大量数据的存储</li>
+<li>批量弹窗广告，常见的方法是推送，需要注意限速，也可以拉取，以实现请求的均匀分散</li>
+</ul>
+<p>系统通知究竟是推还是拉，是一个相对比较简单的场景。对于feed流，单聊群聊，状态同步会更为复杂，这些场景，下期分解。</p>
+
+      
+    </div>
+
+    
+      
+
+
+    
+
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/服务化/" rel="tag"># 服务化</a>
+          
+            <a href="/tags/架构师之路/" rel="tag"># 架构师之路</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2017/05/05/2017-05-05-pull-or-push/" rel="next" title="feed留，单聊群聊，系统通知，状态同步，到底是推还是拉？">
+                <i class="fa fa-chevron-left"></i> feed留，单聊群聊，系统通知，状态同步，到底是推还是拉？
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2017/05/13/2017-05-13-cross-network-call/" rel="prev" title="跨公网调用的大坑与架构优化方案">
+                跨公网调用的大坑与架构优化方案 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+  
+    <div class="comments" id="comments">
+      <div id="lv-container" data-id="city" data-uid="MTAyMC8zNDA5NS8xMDYzMw=="></div>
+    </div>
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image"
+                src="/images/logo.jpg"
+                alt="Govern" />
+            
+              <p class="site-author-name" itemprop="name">Govern</p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          
+            <nav class="site-state motion-element">
+              
+                <div class="site-state-item site-state-posts">
+                
+                  <a href="/archives/">
+                
+                    <span class="site-state-item-count">98</span>
+                    <span class="site-state-item-name">日志</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-categories">
+                  <a href="/categories/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">20</span>
+                    <span class="site-state-item-name">分类</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-tags">
+                  <a href="/tags/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">39</span>
+                    <span class="site-state-item-name">标签</span>
+                  </a>
+                </div>
+              
+            </nav>
+          
+
+          
+
+          
+
+          
+          
+
+          
+          
+
+          
+            
+          
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#一、系统对1的通知"><span class="nav-number">1.</span> <span class="nav-text">一、系统对1的通知</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#二、系统对多的通知"><span class="nav-number">2.</span> <span class="nav-text">二、系统对多的通知</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#IM登录弹窗新闻"><span class="nav-number">2.1.</span> <span class="nav-text">IM登录弹窗新闻</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#IM右下角弹窗广告"><span class="nav-number">2.2.</span> <span class="nav-text">IM右下角弹窗广告</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#三、总结"><span class="nav-number">3.</span> <span class="nav-text">三、总结</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+        <div class="back-to-top">
+          <i class="fa fa-arrow-up"></i>
+          
+            <span id="scrollpercent"><span>0</span>%</span>
+          
+        </div>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; 2012 &mdash; <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Govern</span>
+
+  
+
+  
+</div>
+
+
+  
+
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" rel="external nofollow" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" rel="external nofollow" href="https://github.com/theme-next/hexo-theme-next">NexT.Gemini</a> v6.0.3</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=6.0.3"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=6.0.3"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=6.0.3"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=6.0.3"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=6.0.3"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=6.0.3"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=6.0.3"></script>
+
+
+
+  
+
+
+
+
+
+
+
+  
+    <script type="text/javascript">
+      (function(d, s) {
+        var j, e = d.getElementsByTagName(s)[0];
+        if (typeof LivereTower === 'function') { return; }
+        j = d.createElement(s);
+        j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+        j.async = true;
+        e.parentNode.insertBefore(j, e);
+      })(document, 'script');
+    </script>
+  
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+  
+  
+  
+  <link rel="stylesheet" href="/lib/algolia-instant-search/instantsearch.min.css">
+
+  
+  
+  <script src="/lib/algolia-instant-search/instantsearch.min.js"></script>
+  
+
+  <script src="/js/src/algolia-search.js?v=6.0.3"></script>
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+  
+  
+  
+  <script src="/lib/bookmark/bookmark.min.js?v=1.0"></script>
+  <script type="text/javascript">
+  
+    bookmark.scrollToMark('auto', "#more");
+  
+  </script>
+
+
+</body>
+</html>

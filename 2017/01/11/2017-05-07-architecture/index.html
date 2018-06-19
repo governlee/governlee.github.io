@@ -1,0 +1,1048 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next gemini use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=6.0.3" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=6.0.3">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/lights-32x32.png?v=6.0.3">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/lights-16x16.png?v=6.0.3">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=6.0.3" color="#222">
+
+
+
+
+
+
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Gemini',
+    version: '6.0.3',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":true,"scrollpercent":true,"onmobile":false},
+    fancybox: false,
+    fastclick: false,
+    lazyload: false,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    algolia: {
+      applicationID: '41NC33JUJG',
+      apiKey: '7362b84fed21bc83930f198a0927bb82',
+      indexName: 'blog',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+  
+
+
+
+
+  
+  <meta name="keywords" content="架构师之路,高并发," />
+
+
+<meta name="description" content="转自: 架构师之路 一、web-server的负载均衡 互联网架构中，web-server接入一般使用nginx来做反向代理，实施负载均衡。整个架构分三层：    上游调用层，一般是browser或者APP   中间反向代理层，nginx   下游真实接入集群，web-server，常见web-server的有tomcat，apache  整个访问过程为：  browser向daojia.com发">
+<meta name="keywords" content="架构师之路,高并发">
+<meta property="og:type" content="article">
+<meta property="og:title" content="TCP接入层的负载均衡、高可用、扩展性架构">
+<meta property="og:url" content="http://governlee.github.io/2017/01/11/2017-05-07-architecture/index.html">
+<meta property="og:site_name" content="Govern x Lab">
+<meta property="og:description" content="转自: 架构师之路 一、web-server的负载均衡 互联网架构中，web-server接入一般使用nginx来做反向代理，实施负载均衡。整个架构分三层：    上游调用层，一般是browser或者APP   中间反向代理层，nginx   下游真实接入集群，web-server，常见web-server的有tomcat，apache  整个访问过程为：  browser向daojia.com发">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="http://mmbiz.qpic.cn/mmbiz_png/YrezxckhYOy8HxPG3ibT4PZ8WXkwAF1GExGFcVxDfDWQrZ7J0iaKib1sL9plGCOEvSBSQAQjK0OZK0N399LFGg7aw/640?wx_fmt=png&tp=webp&wxfrom=5&wx_lazy=1">
+<meta property="og:image" content="http://mmbiz.qpic.cn/mmbiz_png/YrezxckhYOy8HxPG3ibT4PZ8WXkwAF1GEiaIWlia9M3CUicpic304E0pR2F49lmGd8Mic7FxD6JJibD2pEAP5IhV0w2LQ/640?wx_fmt=png&tp=webp&wxfrom=5&wx_lazy=1">
+<meta property="og:image" content="http://mmbiz.qpic.cn/mmbiz_png/YrezxckhYOy8HxPG3ibT4PZ8WXkwAF1GEVmOhGOtdPr7DFibCCgb7zbksjfL9SKWYbTl29yFHeacsUhWO0D37jTg/640?wx_fmt=png&tp=webp&wxfrom=5&wx_lazy=1">
+<meta property="og:image" content="http://mmbiz.qpic.cn/mmbiz_png/YrezxckhYOy8HxPG3ibT4PZ8WXkwAF1GEsSdfm1ibH1UibJMHgKhos2iaGWXR4MaFYg6vdVLUXibK96Rr00nqFXNqJA/640?wx_fmt=png&tp=webp&wxfrom=5&wx_lazy=1">
+<meta property="og:image" content="http://mmbiz.qpic.cn/mmbiz_png/YrezxckhYOy8HxPG3ibT4PZ8WXkwAF1GEVZ3N6ausRQmdURrtzBySKFvxodpGPSZCN3sPs7iaNqjCr963VXByzRw/640?wx_fmt=png&tp=webp&wxfrom=5&wx_lazy=1">
+<meta property="og:image" content="http://mmbiz.qpic.cn/mmbiz_png/YrezxckhYOy8HxPG3ibT4PZ8WXkwAF1GEOUp1Ihzzd4n2wAvafjQ6Gjvnn2m3UYWx7cR6ExyLTTWhfzG4to56vw/640?wx_fmt=png&tp=webp&wxfrom=5&wx_lazy=1">
+<meta property="og:updated_time" content="2018-04-21T03:24:20.791Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="TCP接入层的负载均衡、高可用、扩展性架构">
+<meta name="twitter:description" content="转自: 架构师之路 一、web-server的负载均衡 互联网架构中，web-server接入一般使用nginx来做反向代理，实施负载均衡。整个架构分三层：    上游调用层，一般是browser或者APP   中间反向代理层，nginx   下游真实接入集群，web-server，常见web-server的有tomcat，apache  整个访问过程为：  browser向daojia.com发">
+<meta name="twitter:image" content="http://mmbiz.qpic.cn/mmbiz_png/YrezxckhYOy8HxPG3ibT4PZ8WXkwAF1GExGFcVxDfDWQrZ7J0iaKib1sL9plGCOEvSBSQAQjK0OZK0N399LFGg7aw/640?wx_fmt=png&tp=webp&wxfrom=5&wx_lazy=1">
+
+
+
+
+
+
+  <link rel="canonical" href="http://governlee.github.io/2017/01/11/2017-05-07-architecture/"/>
+
+
+
+<script type="text/javascript" id="page.configurations">
+  CONFIG.page = {
+    sidebar: "",
+  };
+</script>
+  <title>TCP接入层的负载均衡、高可用、扩展性架构 | Govern x Lab</title>
+  
+
+
+
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?f6804645172803d5efc7161f04df1d76";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+  <noscript>
+  <style type="text/css">
+    .use-motion .motion-element,
+    .use-motion .brand,
+    .use-motion .menu-item,
+    .sidebar-inner,
+    .use-motion .post-block,
+    .use-motion .pagination,
+    .use-motion .comments,
+    .use-motion .post-header,
+    .use-motion .post-body,
+    .use-motion .collection-title { opacity: initial; }
+
+    .use-motion .logo,
+    .use-motion .site-title,
+    .use-motion .site-subtitle {
+      opacity: initial;
+      top: initial;
+    }
+
+    .use-motion {
+      .logo-line-before i { left: initial; }
+      .logo-line-after i { right: initial; }
+    }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"> <div class="site-brand-wrapper">
+  <div class="site-meta custom-logo">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Govern x Lab</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <h1 class="site-subtitle" itemprop="description">I'm not the only one</h1>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-home"></i> <br />首页</a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-user"></i> <br />关于</a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />标签</a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-th"></i> <br />分类</a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />归档</a>
+        </li>
+      
+
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />搜索</a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  
+  <div class="algolia-popup popup search-popup">
+    <div class="algolia-search">
+      <div class="algolia-search-input-icon">
+        <i class="fa fa-search"></i>
+      </div>
+      <div class="algolia-search-input" id="algolia-search-input"></div>
+    </div>
+
+    <div class="algolia-results">
+      <div id="algolia-stats"></div>
+      <div id="algolia-hits"></div>
+      <div id="algolia-pagination" class="algolia-pagination"></div>
+    </div>
+
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+  </div>
+
+
+
+
+    </div>
+  
+</nav>
+
+
+  
+
+
+
+ </div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://governlee.github.io/2017/01/11/2017-05-07-architecture/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Govern">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/logo.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Govern x Lab">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">TCP接入层的负载均衡、高可用、扩展性架构</h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-01-11T08:00:00+08:00">2017-01-11</time>
+            
+
+            
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/架构/" itemprop="url" rel="index"><span itemprop="name">架构</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p><strong>转自: 架构师之路</strong></p>
+<h2 id="一、web-server的负载均衡"><a href="#一、web-server的负载均衡" class="headerlink" title="一、web-server的负载均衡"></a>一、web-server的负载均衡</h2><p><img src="http://mmbiz.qpic.cn/mmbiz_png/YrezxckhYOy8HxPG3ibT4PZ8WXkwAF1GExGFcVxDfDWQrZ7J0iaKib1sL9plGCOEvSBSQAQjK0OZK0N399LFGg7aw/640?wx_fmt=png&amp;tp=webp&amp;wxfrom=5&amp;wx_lazy=1" alt=""></p>
+<p>互联网架构中，web-server接入一般使用nginx来做反向代理，实施负载均衡。整个架构分三层：  </p>
+<ul>
+<li>上游调用层，一般是browser或者APP  </li>
+<li>中间反向代理层，nginx  </li>
+<li>下游真实接入集群，web-server，常见web-server的有tomcat，apache</li>
+</ul>
+<p>整个访问过程为：</p>
+<ul>
+<li>browser向daojia.com发起请求</li>
+<li>DNS服务器将daojia.com解析为<strong>外网IP</strong>(1.2.3.4)</li>
+<li>browser通过外网IP(1.2.3.4)访问nginx</li>
+<li>nginx实施负载均衡策略，常见策略有轮询，随机，IP-hash等</li>
+<li>nginx将请求转发给<strong>内网IP</strong>(192.168.0.1)的web-server</li>
+</ul>
+<p>由于http短连接，以及web应用无状态的特性，理论上<strong>任何一个http请求落在任意一台web-server都应该得到正常处理</strong>（如果必须落在一台，说明架构不合理，不能水平扩展）。</p>
+<p>问题来了，<strong>tcp是有状态的连接</strong>，客户端和服务端一旦建立连接，一个client发起的请求必须落在同一台tcp-server上，此时如何做负载均衡，如何保证水平扩展呢？</p>
+<h2 id="二、单机法tcp-server"><a href="#二、单机法tcp-server" class="headerlink" title="二、单机法tcp-server"></a>二、单机法tcp-server</h2><p><img src="http://mmbiz.qpic.cn/mmbiz_png/YrezxckhYOy8HxPG3ibT4PZ8WXkwAF1GEiaIWlia9M3CUicpic304E0pR2F49lmGd8Mic7FxD6JJibD2pEAP5IhV0w2LQ/640?wx_fmt=png&amp;tp=webp&amp;wxfrom=5&amp;wx_lazy=1" alt=""></p>
+<p>单个tcp-server显然是可以保证请求一致性：</p>
+<ul>
+<li>client向tcp.daojia.com发起tcp请求</li>
+<li>DNS服务器将tcp.daojia.com解析为外网IP(1.2.3.4)</li>
+<li>client通过外网IP(1.2.3.4)向tcp-server发起请求</li>
+</ul>
+<p><strong>方案的缺点？</strong><br>无法保证高可用。</p>
+<h2 id="三、集群法tcp-server"><a href="#三、集群法tcp-server" class="headerlink" title="三、集群法tcp-server"></a>三、集群法tcp-server</h2><p><img src="http://mmbiz.qpic.cn/mmbiz_png/YrezxckhYOy8HxPG3ibT4PZ8WXkwAF1GEVmOhGOtdPr7DFibCCgb7zbksjfL9SKWYbTl29yFHeacsUhWO0D37jTg/640?wx_fmt=png&amp;tp=webp&amp;wxfrom=5&amp;wx_lazy=1" alt=""></p>
+<p>通过搭建<strong>tcp-server集群</strong>来保证高可用，客户端来实现负载均衡：</p>
+<ul>
+<li>client内配置有tcp1/tcp2/tcp3.daojia.com三个tcp-server的外网IP</li>
+<li>客户端通过“随机”的方式选择tcp-server，假设选择到的是tcp1.daojia.com</li>
+<li>通过DNS解析tcp1.daojia.com</li>
+<li>通过外网IP连接真实的tcp-server</li>
+</ul>
+<p><strong>如何保证高可用呢？</strong><br>如果client发现某个tcp-server连接不上，则选择另一个。</p>
+<p><strong>潜在的缺点？</strong><br>每次连接前，需要多实施一次DNS访问：</p>
+<ul>
+<li>难以预防DNS劫持</li>
+<li>多一次DNS访问意味着更长的连接时间，这个不足在手机端更为明显</li>
+</ul>
+<p><strong>如何解决DNS的问题？</strong><br>直接将IP配置在客户端，可以解决上述两个问题，很多公司也就是这么做的（俗称<strong>“IP直通车”</strong> ）。</p>
+<p><strong>“IP直通车”有什么新问题？</strong><br>将IP写死在客户端，在客户端实施负载均衡，扩展性很差：</p>
+<ul>
+<li>如果原有IP发生变化，客户端得不到实时通知</li>
+<li>如果新增IP，即tcp-sever扩容，客户端也得不到实时通知</li>
+<li>如果负载均衡策略变化，需要升级客户端</li>
+</ul>
+<h2 id="四、服务端实施负载均衡"><a href="#四、服务端实施负载均衡" class="headerlink" title="四、服务端实施负载均衡"></a>四、服务端实施负载均衡</h2><p>只有将复杂的策略下沉到服务端，才能根本上解决扩展性的问题。<br><img src="http://mmbiz.qpic.cn/mmbiz_png/YrezxckhYOy8HxPG3ibT4PZ8WXkwAF1GEsSdfm1ibH1UibJMHgKhos2iaGWXR4MaFYg6vdVLUXibK96Rr00nqFXNqJA/640?wx_fmt=png&amp;tp=webp&amp;wxfrom=5&amp;wx_lazy=1" alt=""></p>
+<p><strong>增加一个http接口，将客户端的“IP配置”与“均衡策略”放到服务端</strong>是一个不错的方案：</p>
+<ul>
+<li>client每次访问tcp-server前，先调用一个新增的get-tcp-ip接口，对于client而言，<strong>这个http接口只返回一个tcp-server的IP</strong></li>
+<li>这个http接口，实现的是原client的IP均衡策略</li>
+<li>拿到tcp-server的IP后，和原来一样向tcp-server发起TCP长连接</li>
+</ul>
+<p>这样的话，扩展性问题就解决了：</p>
+<ul>
+<li>如果原有IP发生变化，只需要修改get-tcp-ip接口的配置</li>
+<li>如果新增IP，也是修改get-tcp-ip接口的配置</li>
+<li>如果负载均衡策略变化，需要升级客户端</li>
+</ul>
+<p>然而，新的问题又产生了，如果所有IP放在客户端，当有一个IP挂掉的时候，client可以再换一个IP连接，保证可用性，而get-tcp-ip接口只是维护静态的tcp-server集群IP，<strong>对于这些IP对应的tcp-server是否可用</strong>，是完全不知情的，怎么办呢？</p>
+<h2 id="五、tcp-server状态上报"><a href="#五、tcp-server状态上报" class="headerlink" title="五、tcp-server状态上报"></a>五、tcp-server状态上报</h2><p><img src="http://mmbiz.qpic.cn/mmbiz_png/YrezxckhYOy8HxPG3ibT4PZ8WXkwAF1GEVZ3N6ausRQmdURrtzBySKFvxodpGPSZCN3sPs7iaNqjCr963VXByzRw/640?wx_fmt=png&amp;tp=webp&amp;wxfrom=5&amp;wx_lazy=1" alt=""></p>
+<p>get-tcp-ip接口怎么知道tcp-server集群中各台服务器是否可用呢，<strong>tcp-server主动上报是一个潜在方案</strong>，如果某一个tcp-server挂了，则会终止上报，对于停止上报状态的tcp-server，get-tcp-ip接口，将不返回给client相应的tcp-server的外网IP。</p>
+<p>该设计的存在的问题？<br>诚然，状态上报解决了tcp-server高可用的问题，但这个设计犯了一个<strong>“反向依赖”的耦合小错误</strong>：使得tcp-server要依赖于一个与本身业务无关的web-server。</p>
+<h2 id="六、tcp-server状态拉取"><a href="#六、tcp-server状态拉取" class="headerlink" title="六、tcp-server状态拉取"></a>六、tcp-server状态拉取</h2><p><img src="http://mmbiz.qpic.cn/mmbiz_png/YrezxckhYOy8HxPG3ibT4PZ8WXkwAF1GEOUp1Ihzzd4n2wAvafjQ6Gjvnn2m3UYWx7cR6ExyLTTWhfzG4to56vw/640?wx_fmt=png&amp;tp=webp&amp;wxfrom=5&amp;wx_lazy=1" alt=""></p>
+<p>更优的方案是：<strong>web-server通过“拉”的方式获取各个tcp-server的状态</strong>，而不是tcp-server通过“推”的方式上报自己的状态。</p>
+<p>这样的话，每个tcp-server都独立与解耦，只需专注于资深的tcp业务功能即可。</p>
+<p>高可用、负载均衡、扩展性等任务由get-tcp-ip的web-server专注来执行。</p>
+<p>多说一句，将负载均衡实现在服务端，还有一个好处，可以实现<strong>异构tcp-server的负载均衡，以及过载保护</strong>：</p>
+<ul>
+<li>静态实施：web-server下的多个tcp-server的IP可以配置负载权重，根据tcp-server的机器配置分配负载（nginx也有类似的功能）</li>
+<li>动态实施：web-server可以根据“拉”回来的tcp-server的状态，动态分配负载，并在tcp-server性能极具下降时实施过载保护</li>
+</ul>
+<h2 id="七、总结"><a href="#七、总结" class="headerlink" title="七、总结"></a>七、总结</h2><p>web-server如何实施负载均衡？<br>利用nginx反向代理来轮询、随机、ip-hash。</p>
+<p>tcp-server怎么快速保证请求一致性？<br>单机。</p>
+<p>如何保证高可用？<br>客户配置多个tcp-server的域名。</p>
+<p>如何防止DNS劫持，以及加速？<br>IP直通车，客户端配置多个tcp-server的IP。</p>
+<p>如何保证扩展性？<br>服务端提供get-tcp-ip接口，向client屏屏蔽负载均衡策略，并实施便捷扩容。</p>
+<p>如何保证高可用？<br>tcp-server“推”状态给get-tcp-ip接口，or get-tcp-ip接口“拉”tcp-server状态。</p>
+
+      
+    </div>
+
+    
+      
+
+
+    
+
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/架构师之路/" rel="tag"># 架构师之路</a>
+          
+            <a href="/tags/高并发/" rel="tag"># 高并发</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2017/01/11/2017-04-20-configuration/" rel="next" title="TCP接入层的负载均衡、高可用、扩展性架构">
+                <i class="fa fa-chevron-left"></i> TCP接入层的负载均衡、高可用、扩展性架构
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2017/01/11/2017-01-11-high-concurrency/" rel="prev" title="究竟啥才是互联网架构“高并发”">
+                究竟啥才是互联网架构“高并发” <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+  
+    <div class="comments" id="comments">
+      <div id="lv-container" data-id="city" data-uid="MTAyMC8zNDA5NS8xMDYzMw=="></div>
+    </div>
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image"
+                src="/images/logo.jpg"
+                alt="Govern" />
+            
+              <p class="site-author-name" itemprop="name">Govern</p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          
+            <nav class="site-state motion-element">
+              
+                <div class="site-state-item site-state-posts">
+                
+                  <a href="/archives/">
+                
+                    <span class="site-state-item-count">98</span>
+                    <span class="site-state-item-name">日志</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-categories">
+                  <a href="/categories/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">20</span>
+                    <span class="site-state-item-name">分类</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-tags">
+                  <a href="/tags/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">39</span>
+                    <span class="site-state-item-name">标签</span>
+                  </a>
+                </div>
+              
+            </nav>
+          
+
+          
+
+          
+
+          
+          
+
+          
+          
+
+          
+            
+          
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#一、web-server的负载均衡"><span class="nav-number">1.</span> <span class="nav-text">一、web-server的负载均衡</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#二、单机法tcp-server"><span class="nav-number">2.</span> <span class="nav-text">二、单机法tcp-server</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#三、集群法tcp-server"><span class="nav-number">3.</span> <span class="nav-text">三、集群法tcp-server</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#四、服务端实施负载均衡"><span class="nav-number">4.</span> <span class="nav-text">四、服务端实施负载均衡</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#五、tcp-server状态上报"><span class="nav-number">5.</span> <span class="nav-text">五、tcp-server状态上报</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#六、tcp-server状态拉取"><span class="nav-number">6.</span> <span class="nav-text">六、tcp-server状态拉取</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#七、总结"><span class="nav-number">7.</span> <span class="nav-text">七、总结</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+        <div class="back-to-top">
+          <i class="fa fa-arrow-up"></i>
+          
+            <span id="scrollpercent"><span>0</span>%</span>
+          
+        </div>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; 2012 &mdash; <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Govern</span>
+
+  
+
+  
+</div>
+
+
+  
+
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" rel="external nofollow" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" rel="external nofollow" href="https://github.com/theme-next/hexo-theme-next">NexT.Gemini</a> v6.0.3</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=6.0.3"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=6.0.3"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=6.0.3"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=6.0.3"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=6.0.3"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=6.0.3"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=6.0.3"></script>
+
+
+
+  
+
+
+
+
+
+
+
+  
+    <script type="text/javascript">
+      (function(d, s) {
+        var j, e = d.getElementsByTagName(s)[0];
+        if (typeof LivereTower === 'function') { return; }
+        j = d.createElement(s);
+        j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+        j.async = true;
+        e.parentNode.insertBefore(j, e);
+      })(document, 'script');
+    </script>
+  
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+  
+  
+  
+  <link rel="stylesheet" href="/lib/algolia-instant-search/instantsearch.min.css">
+
+  
+  
+  <script src="/lib/algolia-instant-search/instantsearch.min.js"></script>
+  
+
+  <script src="/js/src/algolia-search.js?v=6.0.3"></script>
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+  
+  
+  
+  <script src="/lib/bookmark/bookmark.min.js?v=1.0"></script>
+  <script type="text/javascript">
+  
+    bookmark.scrollToMark('auto', "#more");
+  
+  </script>
+
+
+</body>
+</html>

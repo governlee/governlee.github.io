@@ -1,0 +1,1030 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next gemini use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=6.0.3" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=6.0.3">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/lights-32x32.png?v=6.0.3">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/lights-16x16.png?v=6.0.3">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=6.0.3" color="#222">
+
+
+
+
+
+
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Gemini',
+    version: '6.0.3',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":true,"scrollpercent":true,"onmobile":false},
+    fancybox: false,
+    fastclick: false,
+    lazyload: false,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    algolia: {
+      applicationID: '41NC33JUJG',
+      apiKey: '7362b84fed21bc83930f198a0927bb82',
+      indexName: 'blog',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+  
+
+
+
+
+  
+  <meta name="keywords" content="架构师之路," />
+
+
+<meta name="description" content="转自: 架构师之路  通用业务服务化之后，系统的典型后端结构如上：  web-server通过RPC接口，从通用业务服务获取数据 biz-service通过RPC接口，从多个基础数据service获取数据 基础数据service通过DAO，从独立db/cache获取数据 db/cache存储数据  随着时间的推移，系统架构并不会一成不变，业务越来越复杂，改版越来越多，此时web-server层虽然">
+<meta name="keywords" content="架构师之路">
+<meta property="og:type" content="article">
+<meta property="og:title" content="互联网分层架构，为啥要前后端分离？">
+<meta property="og:url" content="http://governlee.github.io/2017/11/06/2017-10-25-separation/index.html">
+<meta property="og:site_name" content="Govern x Lab">
+<meta property="og:description" content="转自: 架构师之路  通用业务服务化之后，系统的典型后端结构如上：  web-server通过RPC接口，从通用业务服务获取数据 biz-service通过RPC接口，从多个基础数据service获取数据 基础数据service通过DAO，从独立db/cache获取数据 db/cache存储数据  随着时间的推移，系统架构并不会一成不变，业务越来越复杂，改版越来越多，此时web-server层虽然">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="https://mmbiz.qpic.cn/mmbiz_png/YrezxckhYOwm5oKmD2xmM3s8APgEsDAbJbljjcaPibicxmx6ZSLJggicZgVkRFwStWxgxAC3bbYcOWxskAIOCFFOA/640?wx_fmt=png&tp=webp&wxfrom=5&wx_lazy=1">
+<meta property="og:image" content="https://mmbiz.qpic.cn/mmbiz_png/YrezxckhYOwm5oKmD2xmM3s8APgEsDAbbqXXQsQlaTEKG3z7t9Gso5nliaw2syURAylV89tTcIKBica6N1qgpUNw/640?wx_fmt=png&tp=webp&wxfrom=5&wx_lazy=1">
+<meta property="og:image" content="https://mmbiz.qpic.cn/mmbiz_png/YrezxckhYOwm5oKmD2xmM3s8APgEsDAbpict8KUoZtEVIu0IgpraiczZ4XjE0EZpoWjAicQCU4gP9uS2ibJibcvRicPQ/640?wx_fmt=png&tp=webp&wxfrom=5&wx_lazy=1">
+<meta property="og:image" content="https://mmbiz.qpic.cn/mmbiz_png/YrezxckhYOwm5oKmD2xmM3s8APgEsDAbUYdnv3SFicE8hjF5Dfgf2dHEOKnwLmKq2nvVicJF3tnrP9XaxcYEI4TA/640?wx_fmt=png&tp=webp&wxfrom=5&wx_lazy=1">
+<meta property="og:image" content="https://mmbiz.qpic.cn/mmbiz_png/YrezxckhYOwm5oKmD2xmM3s8APgEsDAbbcq4H5nOPVdw3mbQMne8v6bibkK1jryu1aEIDOWsOhu2Rv8YZnPoqtw/640?wx_fmt=png&tp=webp&wxfrom=5&wx_lazy=1">
+<meta property="og:image" content="https://mmbiz.qpic.cn/mmbiz_png/YrezxckhYOwm5oKmD2xmM3s8APgEsDAbYudokeHnVico03auBFBwXbsoJAdAWgicibcia3TBibISVU4tzGVG9KUQSbA/640?wx_fmt=png&tp=webp&wxfrom=5&wx_lazy=1">
+<meta property="og:image" content="https://mmbiz.qpic.cn/mmbiz_png/YrezxckhYOwm5oKmD2xmM3s8APgEsDAbfXBSBia7iaHGZrQu2ksic0tHvKxE1kpFzic5gP5ROfETsZPXAfibkh4EUBQ/640?wx_fmt=png&tp=webp&wxfrom=5&wx_lazy=1">
+<meta property="og:updated_time" content="2018-04-24T15:11:19.938Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="互联网分层架构，为啥要前后端分离？">
+<meta name="twitter:description" content="转自: 架构师之路  通用业务服务化之后，系统的典型后端结构如上：  web-server通过RPC接口，从通用业务服务获取数据 biz-service通过RPC接口，从多个基础数据service获取数据 基础数据service通过DAO，从独立db/cache获取数据 db/cache存储数据  随着时间的推移，系统架构并不会一成不变，业务越来越复杂，改版越来越多，此时web-server层虽然">
+<meta name="twitter:image" content="https://mmbiz.qpic.cn/mmbiz_png/YrezxckhYOwm5oKmD2xmM3s8APgEsDAbJbljjcaPibicxmx6ZSLJggicZgVkRFwStWxgxAC3bbYcOWxskAIOCFFOA/640?wx_fmt=png&tp=webp&wxfrom=5&wx_lazy=1">
+
+
+
+
+
+
+  <link rel="canonical" href="http://governlee.github.io/2017/11/06/2017-10-25-separation/"/>
+
+
+
+<script type="text/javascript" id="page.configurations">
+  CONFIG.page = {
+    sidebar: "",
+  };
+</script>
+  <title>互联网分层架构，为啥要前后端分离？ | Govern x Lab</title>
+  
+
+
+
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?f6804645172803d5efc7161f04df1d76";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+  <noscript>
+  <style type="text/css">
+    .use-motion .motion-element,
+    .use-motion .brand,
+    .use-motion .menu-item,
+    .sidebar-inner,
+    .use-motion .post-block,
+    .use-motion .pagination,
+    .use-motion .comments,
+    .use-motion .post-header,
+    .use-motion .post-body,
+    .use-motion .collection-title { opacity: initial; }
+
+    .use-motion .logo,
+    .use-motion .site-title,
+    .use-motion .site-subtitle {
+      opacity: initial;
+      top: initial;
+    }
+
+    .use-motion {
+      .logo-line-before i { left: initial; }
+      .logo-line-after i { right: initial; }
+    }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"> <div class="site-brand-wrapper">
+  <div class="site-meta custom-logo">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Govern x Lab</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <h1 class="site-subtitle" itemprop="description">I'm not the only one</h1>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-home"></i> <br />首页</a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-user"></i> <br />关于</a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />标签</a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-th"></i> <br />分类</a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />归档</a>
+        </li>
+      
+
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />搜索</a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  
+  <div class="algolia-popup popup search-popup">
+    <div class="algolia-search">
+      <div class="algolia-search-input-icon">
+        <i class="fa fa-search"></i>
+      </div>
+      <div class="algolia-search-input" id="algolia-search-input"></div>
+    </div>
+
+    <div class="algolia-results">
+      <div id="algolia-stats"></div>
+      <div id="algolia-hits"></div>
+      <div id="algolia-pagination" class="algolia-pagination"></div>
+    </div>
+
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+  </div>
+
+
+
+
+    </div>
+  
+</nav>
+
+
+  
+
+
+
+ </div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://governlee.github.io/2017/11/06/2017-10-25-separation/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Govern">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/logo.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Govern x Lab">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">互联网分层架构，为啥要前后端分离？</h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-11-06T08:00:00+08:00">2017-11-06</time>
+            
+
+            
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/架构/" itemprop="url" rel="index"><span itemprop="name">架构</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p><strong>转自: 架构师之路</strong></p>
+<p><img src="https://mmbiz.qpic.cn/mmbiz_png/YrezxckhYOwm5oKmD2xmM3s8APgEsDAbJbljjcaPibicxmx6ZSLJggicZgVkRFwStWxgxAC3bbYcOWxskAIOCFFOA/640?wx_fmt=png&amp;tp=webp&amp;wxfrom=5&amp;wx_lazy=1" alt=""></p>
+<p>通用业务服务化之后，系统的典型后端结构如上：</p>
+<ul>
+<li><strong>web-server</strong>通过RPC接口，从通用业务服务获取数据</li>
+<li><strong>biz-service</strong>通过RPC接口，从多个基础数据service获取数据</li>
+<li><strong>基础数据service</strong>通过DAO，从独立db/cache获取数据</li>
+<li><strong>db/cache</strong>存储数据</li>
+</ul>
+<p>随着时间的推移，系统架构并不会一成不变，业务越来越复杂，改版越来越多，此时web-server层虽然使用了MVC架构，但以下诸多痛点是否似曾相识？</p>
+<ul>
+<li><strong>产品追求绚丽的效果，并对设备兼容性要求高</strong>，这些需求不断折磨着使用MVC的Java工程师们（本文以Java举例）</li>
+<li>不管是PC，还是手机H5，还是APP，<strong>应用前端展现的变化频率远远大于后端逻辑的变化频率</strong>（感谢那些喜欢做改版的产品经理），改velocity模版并不是Java工程师喜欢和擅长的工作</li>
+</ul>
+<p>此时，为了缓解这些问题，一般会成立单独的前端FE部门，来负责交互与展现的研发，其职责与后端Java工程师分离开，但痛点依然没有完全解决：</p>
+<ul>
+<li>一点点展现的改动，需要Java工程师们<strong>重新编译，打包，上线，重启tomcat，效率极低</strong></li>
+<li>原先Java工程师负责所有MVC的研发工作，现在分为Java和FE两块，<strong>需要等前端和后端都完成研发，才能一起调试整体效果</strong>，不仅<strong>增加了沟通成本</strong>，任何一块出问题，都可能导致项目延期</li>
+</ul>
+<p>更具体的，看一个这样的例子，最开始产品只有PC版本，此时其系统分层架构如下：</p>
+<p><img src="https://mmbiz.qpic.cn/mmbiz_png/YrezxckhYOwm5oKmD2xmM3s8APgEsDAbbqXXQsQlaTEKG3z7t9Gso5nliaw2syURAylV89tTcIKBica6N1qgpUNw/640?wx_fmt=png&amp;tp=webp&amp;wxfrom=5&amp;wx_lazy=1" alt=""><br>客户端，web-server，service，非常清晰。</p>
+<p>随着业务的发展，产品需要新增<strong>Mobile版本</strong>，Mobile版本和PC版本大部分业务逻辑都一样，唯一的区别是屏幕比较小：</p>
+<ul>
+<li>信息展现的条数会比较少，即调用service服务时，<strong>传入的参数会不一样</strong></li>
+<li>产品功能会比较少，大部分service的调用一样，<strong>少数service不需要调用</strong></li>
+<li><strong>展现，交互会有所区别（Controller）</strong></li>
+</ul>
+<p>由于工期较紧，Mobile版本的web-server一般怎么来呢？</p>
+<p><img src="https://mmbiz.qpic.cn/mmbiz_png/YrezxckhYOwm5oKmD2xmM3s8APgEsDAbpict8KUoZtEVIu0IgpraiczZ4XjE0EZpoWjAicQCU4gP9uS2ibJibcvRicPQ/640?wx_fmt=png&amp;tp=webp&amp;wxfrom=5&amp;wx_lazy=1" alt=""></p>
+<p>没错，<strong>把PC版本的工程拷贝一份，然后再做小量的修改</strong>：</p>
+<ul>
+<li>service调用的参数有些变化</li>
+<li>大部分service的调用一样，少数service的调用去掉</li>
+<li>修改展现，交互相关的代码</li>
+</ul>
+<p>业务继续发展，<strong>产品又需要新增APP版本</strong>，APP版本和Mobile版本业务逻辑完全相同，唯一的区别是：</p>
+<ul>
+<li>Mobile版本返回html格式的数据，<strong>APP版本返回json格式的数据</strong>，然后进行本地渲染</li>
+</ul>
+<p>由于工期较紧，APP版本的web-server一般怎么来呢？<br><img src="https://mmbiz.qpic.cn/mmbiz_png/YrezxckhYOwm5oKmD2xmM3s8APgEsDAbUYdnv3SFicE8hjF5Dfgf2dHEOKnwLmKq2nvVicJF3tnrP9XaxcYEI4TA/640?wx_fmt=png&amp;tp=webp&amp;wxfrom=5&amp;wx_lazy=1" alt=""></p>
+<p>没错，把Mobile版本的工程拷贝一份，然后再做小量的修改：</p>
+<ul>
+<li>把拼装html数据的代码，修改为拼装json数据</li>
+</ul>
+<p>这么迭代，演化，发展，架构会变成这个样子：<br><img src="https://mmbiz.qpic.cn/mmbiz_png/YrezxckhYOwm5oKmD2xmM3s8APgEsDAbbcq4H5nOPVdw3mbQMne8v6bibkK1jryu1aEIDOWsOhu2Rv8YZnPoqtw/640?wx_fmt=png&amp;tp=webp&amp;wxfrom=5&amp;wx_lazy=1" alt=""></p>
+<ul>
+<li>端，是PC，Mobile，APP</li>
+<li>web-server接入，是PC站，M站，APP站</li>
+<li>服务层，通用的业务服务，以及基础数据服务</li>
+</ul>
+<p>这个架构图中的依赖关系是不是看上去很别扭？</p>
+<ul>
+<li>端到web-server之间连接关系很清晰</li>
+<li>web-server与service之间的连接关系变成了蜘蛛网</li>
+</ul>
+<p>PC/H5/APP的web-server层大部分业务是相同的，只有少数的逻辑/展现/交互不一样：</p>
+<ul>
+<li>一旦一个服务RPC接口有稍许变化，所有web-server系统都需要升级修改</li>
+<li>web-server之间存在大量代码拷贝</li>
+<li>一旦拷贝代码，出现一个bug，多个子系统都需要升级修改</li>
+</ul>
+<p><strong>如何让数据的获取更加高效快捷，如何让数据生产与数据展现解耦分离呢？</strong><br>前后端分离的分层抽象势在必行。<br><img src="https://mmbiz.qpic.cn/mmbiz_png/YrezxckhYOwm5oKmD2xmM3s8APgEsDAbYudokeHnVico03auBFBwXbsoJAdAWgicibcia3TBibISVU4tzGVG9KUQSbA/640?wx_fmt=png&amp;tp=webp&amp;wxfrom=5&amp;wx_lazy=1" alt=""></p>
+<p>通过前后端分离分层抽象：</p>
+<ul>
+<li>站点展示层，node.js，负责数据的展现与交互，由FE维护</li>
+<li>站点数据层，web-server，负责业务逻辑与json数据接口的提供，由Java工程师维护</li>
+</ul>
+<p>这样的好处是：</p>
+<ul>
+<li>复杂的业务逻辑与数据生成，只有在站点数据层处写了一次，没有代码拷贝</li>
+<li>底层service接口发生变化，只有站点数据层一处需要升级修改</li>
+<li>底层service如果有bug，只有站点数据层一处需要升级修改</li>
+<li>站点展现层可以根据产品的不同形态，传入不同的参数，调用不同的站点数据层接口</li>
+</ul>
+<p>除此之外：</p>
+<ul>
+<li>产品追求绚丽的效果，并对设备兼容性要求高，不再困扰Java工程师，由更专业的FE对接</li>
+<li>一点点展现的改动，不再需要Java工程师们重新编译，打包，上线，重启tomcat</li>
+<li>约定好json接口后，Java和FE分开开发，FE可以用mock的接口自测，不再等待一起联调</li>
+</ul>
+<p><img src="https://mmbiz.qpic.cn/mmbiz_png/YrezxckhYOwm5oKmD2xmM3s8APgEsDAbfXBSBia7iaHGZrQu2ksic0tHvKxE1kpFzic5gP5ROfETsZPXAfibkh4EUBQ/640?wx_fmt=png&amp;tp=webp&amp;wxfrom=5&amp;wx_lazy=1" alt=""></p>
+<p><strong>结论：</strong><br>当业务越来越复杂，端上的产品越来越多，展现层的变化越来越快越来越多，站点层存在大量代码拷贝，数据获取复杂性成为通用痛点的时候，就应该进行前后端分离分层抽象，简化数据获取过程，提高数据获取效率，向上游屏蔽底层的复杂性。</p>
+<p>最后再强调两点：</p>
+<ul>
+<li>是否需要前后端分离，和业务复杂性，以及业务发展阶段有关，不可一概而论</li>
+<li>本文强调的前后端分离的思路，实际情况下有多种实现方式，文章并没有透彻展开实现细节</li>
+</ul>
+
+      
+    </div>
+
+    
+      
+
+
+    
+
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/架构师之路/" rel="tag"># 架构师之路</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2017/11/06/2017-11-06-cross-domain/" rel="next" title="搞定所有的跨域请求问题: jsonp & CORS">
+                <i class="fa fa-chevron-left"></i> 搞定所有的跨域请求问题: jsonp & CORS
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2017/11/07/2017-11-07-separation-1/" rel="prev" title="分层架构，前后端分离有啥坏处？">
+                分层架构，前后端分离有啥坏处？ <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+  
+    <div class="comments" id="comments">
+      <div id="lv-container" data-id="city" data-uid="MTAyMC8zNDA5NS8xMDYzMw=="></div>
+    </div>
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+
+      <section class="site-overview-wrap sidebar-panel sidebar-panel-active">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image"
+                src="/images/logo.jpg"
+                alt="Govern" />
+            
+              <p class="site-author-name" itemprop="name">Govern</p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          
+            <nav class="site-state motion-element">
+              
+                <div class="site-state-item site-state-posts">
+                
+                  <a href="/archives/">
+                
+                    <span class="site-state-item-count">98</span>
+                    <span class="site-state-item-name">日志</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-categories">
+                  <a href="/categories/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">20</span>
+                    <span class="site-state-item-name">分类</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-tags">
+                  <a href="/tags/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">39</span>
+                    <span class="site-state-item-name">标签</span>
+                  </a>
+                </div>
+              
+            </nav>
+          
+
+          
+
+          
+
+          
+          
+
+          
+          
+
+          
+            
+          
+          
+
+        </div>
+      </section>
+
+      
+
+      
+        <div class="back-to-top">
+          <i class="fa fa-arrow-up"></i>
+          
+            <span id="scrollpercent"><span>0</span>%</span>
+          
+        </div>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; 2012 &mdash; <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Govern</span>
+
+  
+
+  
+</div>
+
+
+  
+
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" rel="external nofollow" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" rel="external nofollow" href="https://github.com/theme-next/hexo-theme-next">NexT.Gemini</a> v6.0.3</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=6.0.3"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=6.0.3"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=6.0.3"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=6.0.3"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=6.0.3"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=6.0.3"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=6.0.3"></script>
+
+
+
+  
+
+
+
+
+
+
+
+  
+    <script type="text/javascript">
+      (function(d, s) {
+        var j, e = d.getElementsByTagName(s)[0];
+        if (typeof LivereTower === 'function') { return; }
+        j = d.createElement(s);
+        j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+        j.async = true;
+        e.parentNode.insertBefore(j, e);
+      })(document, 'script');
+    </script>
+  
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+  
+  
+  
+  <link rel="stylesheet" href="/lib/algolia-instant-search/instantsearch.min.css">
+
+  
+  
+  <script src="/lib/algolia-instant-search/instantsearch.min.js"></script>
+  
+
+  <script src="/js/src/algolia-search.js?v=6.0.3"></script>
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+  
+  
+  
+  <script src="/lib/bookmark/bookmark.min.js?v=1.0"></script>
+  <script type="text/javascript">
+  
+    bookmark.scrollToMark('auto', "#more");
+  
+  </script>
+
+
+</body>
+</html>

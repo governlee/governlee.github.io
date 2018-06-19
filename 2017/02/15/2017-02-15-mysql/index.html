@@ -1,0 +1,992 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next gemini use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=6.0.3" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=6.0.3">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/lights-32x32.png?v=6.0.3">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/lights-16x16.png?v=6.0.3">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=6.0.3" color="#222">
+
+
+
+
+
+
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Gemini',
+    version: '6.0.3',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":true,"scrollpercent":true,"onmobile":false},
+    fancybox: false,
+    fastclick: false,
+    lazyload: false,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    algolia: {
+      applicationID: '41NC33JUJG',
+      apiKey: '7362b84fed21bc83930f198a0927bb82',
+      indexName: 'blog',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+  
+
+
+
+
+  
+  <meta name="keywords" content="MySql," />
+
+
+<meta name="description" content="转自: 架构师之路 军规适用场景：并发量大、数据量大的互联网业务军规：介绍内容解读：讲解原因，解读比军规更重要 一、基础规范（1）必须使用InnoDB存储引擎解读：支持事务、行级锁、并发性能更好、CPU及内存缓存页优化使得资源利用率更高 （2）必须使用UTF8字符集解读：万国码，无需转码，无乱码风险，节省空间 （3）数据表、数据字段必须加入中文注释解读：N年后谁tm知道这个r1,r2,r3字段是干">
+<meta name="keywords" content="MySql">
+<meta property="og:type" content="article">
+<meta property="og:title" content="58到家数据库30条军规解读">
+<meta property="og:url" content="http://governlee.github.io/2017/02/15/2017-02-15-mysql/index.html">
+<meta property="og:site_name" content="Govern x Lab">
+<meta property="og:description" content="转自: 架构师之路 军规适用场景：并发量大、数据量大的互联网业务军规：介绍内容解读：讲解原因，解读比军规更重要 一、基础规范（1）必须使用InnoDB存储引擎解读：支持事务、行级锁、并发性能更好、CPU及内存缓存页优化使得资源利用率更高 （2）必须使用UTF8字符集解读：万国码，无需转码，无乱码风险，节省空间 （3）数据表、数据字段必须加入中文注释解读：N年后谁tm知道这个r1,r2,r3字段是干">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:updated_time" content="2018-04-26T12:59:20.173Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="58到家数据库30条军规解读">
+<meta name="twitter:description" content="转自: 架构师之路 军规适用场景：并发量大、数据量大的互联网业务军规：介绍内容解读：讲解原因，解读比军规更重要 一、基础规范（1）必须使用InnoDB存储引擎解读：支持事务、行级锁、并发性能更好、CPU及内存缓存页优化使得资源利用率更高 （2）必须使用UTF8字符集解读：万国码，无需转码，无乱码风险，节省空间 （3）数据表、数据字段必须加入中文注释解读：N年后谁tm知道这个r1,r2,r3字段是干">
+
+
+
+
+
+
+  <link rel="canonical" href="http://governlee.github.io/2017/02/15/2017-02-15-mysql/"/>
+
+
+
+<script type="text/javascript" id="page.configurations">
+  CONFIG.page = {
+    sidebar: "",
+  };
+</script>
+  <title>58到家数据库30条军规解读 | Govern x Lab</title>
+  
+
+
+
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?f6804645172803d5efc7161f04df1d76";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+  <noscript>
+  <style type="text/css">
+    .use-motion .motion-element,
+    .use-motion .brand,
+    .use-motion .menu-item,
+    .sidebar-inner,
+    .use-motion .post-block,
+    .use-motion .pagination,
+    .use-motion .comments,
+    .use-motion .post-header,
+    .use-motion .post-body,
+    .use-motion .collection-title { opacity: initial; }
+
+    .use-motion .logo,
+    .use-motion .site-title,
+    .use-motion .site-subtitle {
+      opacity: initial;
+      top: initial;
+    }
+
+    .use-motion {
+      .logo-line-before i { left: initial; }
+      .logo-line-after i { right: initial; }
+    }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"> <div class="site-brand-wrapper">
+  <div class="site-meta custom-logo">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Govern x Lab</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <h1 class="site-subtitle" itemprop="description">I'm not the only one</h1>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-home"></i> <br />首页</a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-user"></i> <br />关于</a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />标签</a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-th"></i> <br />分类</a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />归档</a>
+        </li>
+      
+
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />搜索</a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  
+  <div class="algolia-popup popup search-popup">
+    <div class="algolia-search">
+      <div class="algolia-search-input-icon">
+        <i class="fa fa-search"></i>
+      </div>
+      <div class="algolia-search-input" id="algolia-search-input"></div>
+    </div>
+
+    <div class="algolia-results">
+      <div id="algolia-stats"></div>
+      <div id="algolia-hits"></div>
+      <div id="algolia-pagination" class="algolia-pagination"></div>
+    </div>
+
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+  </div>
+
+
+
+
+    </div>
+  
+</nav>
+
+
+  
+
+
+
+ </div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://governlee.github.io/2017/02/15/2017-02-15-mysql/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Govern">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/logo.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Govern x Lab">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">58到家数据库30条军规解读</h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-02-15T08:00:00+08:00">2017-02-15</time>
+            
+
+            
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/数据库/" itemprop="url" rel="index"><span itemprop="name">数据库</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p><strong>转自: 架构师之路</strong></p>
+<p><strong>军规适用场景</strong>：并发量大、数据量大的互联网业务<br><strong>军规</strong>：介绍内容<br><strong>解读</strong>：讲解原因，解读比军规更重要</p>
+<h2 id="一、基础规范"><a href="#一、基础规范" class="headerlink" title="一、基础规范"></a>一、基础规范</h2><p><strong>（1）必须使用InnoDB存储引擎</strong><br>解读：<strong>支持事务、行级锁、并发性能更好、CPU及内存缓存页优化使得资源利用率更高</strong></p>
+<p><strong>（2）必须使用UTF8字符集</strong><br>解读：万国码，无需转码，无乱码风险，节省空间</p>
+<p><strong>（3）数据表、数据字段必须加入中文注释</strong><br>解读：N年后谁tm知道这个r1,r2,r3字段是干嘛的</p>
+<p><strong>（4）禁止使用存储过程、视图、触发器、Event</strong><br>解读：高并发大数据的互联网业务，架构设计思路是“<strong>解放数据库CPU，将计算转移到服务层</strong>”，并发量大的情况下，这些功能很可能将数据库拖死，<strong>业务逻辑放到服务层具备更好的扩展性，能够轻易实现“增机器就加性能”</strong>。数据库擅长存储与索引，CPU计算还是上移吧</p>
+<p><strong>（5）禁止存储大文件或者大照片</strong><br>解读：为何要让数据库做它不擅长的事情？<strong>大文件和照片存储在文件系统，数据库里存URI多好</strong></p>
+<h2 id="二、命名规范"><a href="#二、命名规范" class="headerlink" title="二、命名规范"></a>二、命名规范</h2><p><strong>（6）只允许使用内网域名，而不是ip连接数据库</strong></p>
+<p><strong>（7）线上环境、开发环境、测试环境数据库内网域名遵循命名规范</strong><br>业务名称：xxx<br>线上环境：dj.xxx.db<br>开发环境：dj.xxx.rdb<br>测试环境：dj.xxx.tdb<br>从库在名称后加-s标识，备库在名称后加-ss标识<br>线上从库：dj.xxx-s.db<br>线上备库：dj.xxx-sss.db</p>
+<p><strong>（8）库名、表名、字段名：小写，下划线风格，不超过32个字符，必须见名知意，禁止拼音英文混用</strong></p>
+<p><strong>（9）表名t_xxx，非唯一索引名idx_xxx，唯一索引名uniq_xxx</strong></p>
+<h2 id="三、表设计规范"><a href="#三、表设计规范" class="headerlink" title="三、表设计规范"></a>三、表设计规范</h2><p><strong>（10）单实例表数目必须小于500</strong></p>
+<p><strong>（11）单表列数目必须小于30</strong></p>
+<p><strong>（12）表必须有主键，例如自增主键</strong><br>解读：<br>a）主键递增，数据行写入可以提高插入性能，可以避免page分裂，减少表碎片提升空间和内存的使用<br>b）主键要选择较短的数据类型， Innodb引擎普通索引都会保存主键的值，较短的数据类型可以有效的减少索引的磁盘空间，提高索引的缓存效率<br>c） 无主键的表删除，在row模式的主从架构，会导致备库夯住</p>
+<p><strong>（13）禁止使用外键，如果有外键完整性约束，需要应用程序控制</strong><br>解读：<br>外键会导致表与表之间耦合，update与delete操作都会涉及相关联的表，十分影响sql 的性能，甚至会造成死锁。高并发情况下容易造成数据库性能，大数据高并发业务场景数据库使用以性能优先</p>
+<h2 id="四、字段设计规范"><a href="#四、字段设计规范" class="headerlink" title="四、字段设计规范"></a>四、字段设计规范</h2><p><strong>（14）必须把字段定义为NOT NULL并且提供默认值</strong><br>解读：<br>a）null的列使索引/索引统计/值比较都更加复杂，对MySQL来说更难优化<br>b）null 这种类型MySQL内部需要进行特殊处理，增加数据库处理记录的复杂性；同等条件下，表中有较多空字段的时候，数据库的处理性能会降低很多<br>c）null值需要更多的存储空，无论是表还是索引中每行中的null的列都需要额外的空间来标识<br>d）对null 的处理时候，只能采用is null或is not null，而不能采用=、in、&lt;、&lt;&gt;、!=、not in这些操作符号。如：where name!=’shenjian’，如果存在name为null值的记录，查询结果就不会包含name为null值的记录</p>
+<p><strong>（15）禁止使用TEXT、BLOB类型</strong><br>解读：<br>会浪费更多的磁盘和内存空间，非必要的大量的大字段查询会淘汰掉热数据，导致内存命中率急剧降低，影响数据库性能</p>
+<p><strong>（16）禁止使用小数存储货币</strong><br>解读：<br>使用整数吧，小数容易导致钱对不上</p>
+<p><strong>（17）必须使用varchar(20)存储手机号</strong><br>解读：<br>a）涉及到区号或者国家代号，可能出现+-()<br>b）手机号会去做数学运算么？<br>c）varchar可以支持模糊查询，例如：like“138%”</p>
+<p><strong>（18）禁止使用ENUM，可使用TINYINT代替</strong><br>解读：<br>a）增加新的ENUM值要做DDL操作<br>b）ENUM的内部实际存储就是整数，你以为自己定义的是字符串？</p>
+<h2 id="五、索引设计规范"><a href="#五、索引设计规范" class="headerlink" title="五、索引设计规范"></a>五、索引设计规范</h2><p><strong>（19）单表索引建议控制在5个以内</strong></p>
+<p><strong>（20）单索引字段数不允许超过5个</strong><br>解读：字段超过5个时，实际已经起不到有效过滤数据的作用了</p>
+<p><strong>（21）禁止在更新十分频繁、区分度不高的属性上建立索引</strong><br>解读：<br>a）<strong>更新会变更B+树</strong>，更新频繁的字段建立索引会大大降低数据库性能<br>b）“性别”这种区分度不大的属性，建立索引是没有什么意义的，不能有效过滤数据，性能与全表扫描类似</p>
+<p><strong>（22）建立组合索引，必须把区分度高的字段放在前面</strong><br>解读：<br>能够更加有效的过滤数据</p>
+<h2 id="六、SQL使用规范"><a href="#六、SQL使用规范" class="headerlink" title="六、SQL使用规范"></a>六、SQL使用规范</h2><p><strong>（23）禁止使用SELECT *，只获取必要的字段，需要显示说明列属性</strong><br>解读：<br>a）读取不需要的列会增加CPU、IO、NET消耗<br>b）不能有效的利用覆盖索引<br>c）使用SELECT *容易在增加或者删除字段后出现程序BUG</p>
+<p><strong>（24）禁止使用INSERT INTO t_xxx VALUES(xxx)，必须显示指定插入的列属性</strong><br>解读：<br>容易在增加或者删除字段后出现程序BUG</p>
+<p><strong>（25）禁止使用属性隐式转换</strong><br>解读：<br>SELECT uid FROM t_user WHERE phone=13812345678<br>会导致全表扫描，而不能命中phone索引，猜猜为什么？（这个线上问题不止出现过一次）</p>
+<p><strong>（26）禁止在WHERE条件的属性上使用函数或者表达式</strong><br>解读：<br>SELECT uid FROM t_user WHERE from_unixtime(day)&gt;=’2017-02-15’<br>会导致全表扫描<br>正确的写法是：<br>SELECT uid FROM t_user WHERE day&gt;= unix_timestamp(‘2017-02-15 00:00:00’)</p>
+<p><strong>（27）禁止负向查询，以及%开头的模糊查询</strong><br>解读：<br>a）负向查询条件：NOT、!=、&lt;&gt;、!&lt;、!&gt;、NOT IN、NOT LIKE等，会导致全表扫描<br>b）%开头的模糊查询，会导致全表扫描</p>
+<p><strong>（28）禁止大表使用JOIN查询，禁止大表使用子查询</strong><br>解读：<br>会产生临时表，消耗较多内存与CPU，极大影响数据库性能</p>
+<p><strong>（29）禁止使用OR条件，必须改为IN查询</strong><br>解读：<br>旧版本Mysql的OR查询是不能命中索引的，即使能命中索引，为何要让数据库耗费更多的CPU帮助实施查询优化呢？</p>
+<p><strong>（30）应用程序必须捕获SQL异常，并有相应处理</strong></p>
+
+      
+    </div>
+
+    
+      
+
+
+    
+
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/MySql/" rel="tag"># MySql</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2017/02/14/2017-02-23-search-engine-2/" rel="next" title="搜索架构(二) 流量从小到大，检索架构演进">
+                <i class="fa fa-chevron-left"></i> 搜索架构(二) 流量从小到大，检索架构演进
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2017/02/15/2017-08-21-oom/" rel="prev" title="线上服务内存OOM问题定位三板斧">
+                线上服务内存OOM问题定位三板斧 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+  
+    <div class="comments" id="comments">
+      <div id="lv-container" data-id="city" data-uid="MTAyMC8zNDA5NS8xMDYzMw=="></div>
+    </div>
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image"
+                src="/images/logo.jpg"
+                alt="Govern" />
+            
+              <p class="site-author-name" itemprop="name">Govern</p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          
+            <nav class="site-state motion-element">
+              
+                <div class="site-state-item site-state-posts">
+                
+                  <a href="/archives/">
+                
+                    <span class="site-state-item-count">98</span>
+                    <span class="site-state-item-name">日志</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-categories">
+                  <a href="/categories/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">20</span>
+                    <span class="site-state-item-name">分类</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-tags">
+                  <a href="/tags/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">39</span>
+                    <span class="site-state-item-name">标签</span>
+                  </a>
+                </div>
+              
+            </nav>
+          
+
+          
+
+          
+
+          
+          
+
+          
+          
+
+          
+            
+          
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#一、基础规范"><span class="nav-number">1.</span> <span class="nav-text">一、基础规范</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#二、命名规范"><span class="nav-number">2.</span> <span class="nav-text">二、命名规范</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#三、表设计规范"><span class="nav-number">3.</span> <span class="nav-text">三、表设计规范</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#四、字段设计规范"><span class="nav-number">4.</span> <span class="nav-text">四、字段设计规范</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#五、索引设计规范"><span class="nav-number">5.</span> <span class="nav-text">五、索引设计规范</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#六、SQL使用规范"><span class="nav-number">6.</span> <span class="nav-text">六、SQL使用规范</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+        <div class="back-to-top">
+          <i class="fa fa-arrow-up"></i>
+          
+            <span id="scrollpercent"><span>0</span>%</span>
+          
+        </div>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; 2012 &mdash; <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Govern</span>
+
+  
+
+  
+</div>
+
+
+  
+
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" rel="external nofollow" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" rel="external nofollow" href="https://github.com/theme-next/hexo-theme-next">NexT.Gemini</a> v6.0.3</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=6.0.3"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=6.0.3"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=6.0.3"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=6.0.3"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=6.0.3"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=6.0.3"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=6.0.3"></script>
+
+
+
+  
+
+
+
+
+
+
+
+  
+    <script type="text/javascript">
+      (function(d, s) {
+        var j, e = d.getElementsByTagName(s)[0];
+        if (typeof LivereTower === 'function') { return; }
+        j = d.createElement(s);
+        j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+        j.async = true;
+        e.parentNode.insertBefore(j, e);
+      })(document, 'script');
+    </script>
+  
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+  
+  
+  
+  <link rel="stylesheet" href="/lib/algolia-instant-search/instantsearch.min.css">
+
+  
+  
+  <script src="/lib/algolia-instant-search/instantsearch.min.js"></script>
+  
+
+  <script src="/js/src/algolia-search.js?v=6.0.3"></script>
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+  
+  
+  
+  <script src="/lib/bookmark/bookmark.min.js?v=1.0"></script>
+  <script type="text/javascript">
+  
+    bookmark.scrollToMark('auto', "#more");
+  
+  </script>
+
+
+</body>
+</html>

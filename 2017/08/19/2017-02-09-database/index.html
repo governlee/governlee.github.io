@@ -1,0 +1,1005 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next gemini use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=6.0.3" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=6.0.3">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/lights-32x32.png?v=6.0.3">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/lights-16x16.png?v=6.0.3">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=6.0.3" color="#222">
+
+
+
+
+
+
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Gemini',
+    version: '6.0.3',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":true,"scrollpercent":true,"onmobile":false},
+    fancybox: false,
+    fastclick: false,
+    lazyload: false,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    algolia: {
+      applicationID: '41NC33JUJG',
+      apiKey: '7362b84fed21bc83930f198a0927bb82',
+      indexName: 'blog',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+  
+
+
+
+
+  
+  <meta name="keywords" content="架构," />
+
+
+<meta name="description" content="转自: 架构师之路 一、缘起（1）并发量大，流量大的互联网架构，一般来说，数据库上层都有一个服务层，服务层记录了“业务库名”与“数据库实例”的映射关系，通过数据库连接池向数据库路由sql语句以执行： 如上图：服务层配置用户库user对应的数据库实例物理位置为ip（其实是一个内网域名）。 （2）随着数据量的增大，数据要进行水平切分，分库后将数据分布到不同的数据库实例（甚至物理机器）上，以达到降低数据">
+<meta name="keywords" content="架构">
+<meta property="og:type" content="article">
+<meta property="og:title" content="数据库秒级平滑扩容架构方案">
+<meta property="og:url" content="http://governlee.github.io/2017/08/19/2017-02-09-database/index.html">
+<meta property="og:site_name" content="Govern x Lab">
+<meta property="og:description" content="转自: 架构师之路 一、缘起（1）并发量大，流量大的互联网架构，一般来说，数据库上层都有一个服务层，服务层记录了“业务库名”与“数据库实例”的映射关系，通过数据库连接池向数据库路由sql语句以执行： 如上图：服务层配置用户库user对应的数据库实例物理位置为ip（其实是一个内网域名）。 （2）随着数据量的增大，数据要进行水平切分，分库后将数据分布到不同的数据库实例（甚至物理机器）上，以达到降低数据">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="http://mmbiz.qpic.cn/mmbiz_png/YrezxckhYOzOGwoVobJtZTvibPmgp6DGTDicxhdHS3wrArZfuzkc7OUOLAu8CzY2SQU6lFwNXOicibC3sSAqFSr4pA/640?wx_fmt=png&tp=webp&wxfrom=5&wx_lazy=1">
+<meta property="og:image" content="http://mmbiz.qpic.cn/mmbiz_png/YrezxckhYOzOGwoVobJtZTvibPmgp6DGT2zfBUuaB18yMn41ETMv9YhLcGCDyEEOib3s00yVnWuTSib1uP0CgwaKg/640?wx_fmt=png&tp=webp&wxfrom=5&wx_lazy=1">
+<meta property="og:image" content="http://mmbiz.qpic.cn/mmbiz_png/YrezxckhYOzOGwoVobJtZTvibPmgp6DGTWicwsXpucQ1QMZ1WLkyyKEzJzNtRRHLHr5Lse93ScRHMics7rKDJnVhg/640?wx_fmt=png&tp=webp&wxfrom=5&wx_lazy=1">
+<meta property="og:image" content="http://mmbiz.qpic.cn/mmbiz_png/YrezxckhYOzOGwoVobJtZTvibPmgp6DGTDpNcQjHJ6lhzR3vbmRnhx32QEISagDblQibfP8ER7UEdWBG2vkrysmA/640?wx_fmt=png&tp=webp&wxfrom=5&wx_lazy=1">
+<meta property="og:image" content="http://mmbiz.qpic.cn/mmbiz_png/YrezxckhYOzOGwoVobJtZTvibPmgp6DGTdclkCtxvlGCicTicjaA4MRhcYhsrb9zRNycIWMJpNn1gSSq1PMPicsArQ/640?wx_fmt=png&tp=webp&wxfrom=5&wx_lazy=1">
+<meta property="og:image" content="http://mmbiz.qpic.cn/mmbiz_png/YrezxckhYOzOGwoVobJtZTvibPmgp6DGTdclkCtxvlGCicTicjaA4MRhcYhsrb9zRNycIWMJpNn1gSSq1PMPicsArQ/640?wx_fmt=png&tp=webp&wxfrom=5&wx_lazy=1">
+<meta property="og:image" content="http://mmbiz.qpic.cn/mmbiz_png/YrezxckhYOzOGwoVobJtZTvibPmgp6DGTtQJjJa3MmwzsXwUNBwIdEDEIpa4F4p4zxWT9qIv1yNRWP265kMx6rw/640?wx_fmt=png&tp=webp&wxfrom=5&wx_lazy=1">
+<meta property="og:image" content="http://mmbiz.qpic.cn/mmbiz_png/YrezxckhYOzOGwoVobJtZTvibPmgp6DGTYdtyLG7P9D4XsqP2EXJ2FaV0Qo4KXTicjDicrZs70B6TEdKA0ic6fNLpA/640?wx_fmt=png&tp=webp&wxfrom=5&wx_lazy=1">
+<meta property="og:updated_time" content="2018-04-27T14:47:45.064Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="数据库秒级平滑扩容架构方案">
+<meta name="twitter:description" content="转自: 架构师之路 一、缘起（1）并发量大，流量大的互联网架构，一般来说，数据库上层都有一个服务层，服务层记录了“业务库名”与“数据库实例”的映射关系，通过数据库连接池向数据库路由sql语句以执行： 如上图：服务层配置用户库user对应的数据库实例物理位置为ip（其实是一个内网域名）。 （2）随着数据量的增大，数据要进行水平切分，分库后将数据分布到不同的数据库实例（甚至物理机器）上，以达到降低数据">
+<meta name="twitter:image" content="http://mmbiz.qpic.cn/mmbiz_png/YrezxckhYOzOGwoVobJtZTvibPmgp6DGTDicxhdHS3wrArZfuzkc7OUOLAu8CzY2SQU6lFwNXOicibC3sSAqFSr4pA/640?wx_fmt=png&tp=webp&wxfrom=5&wx_lazy=1">
+
+
+
+
+
+
+  <link rel="canonical" href="http://governlee.github.io/2017/08/19/2017-02-09-database/"/>
+
+
+
+<script type="text/javascript" id="page.configurations">
+  CONFIG.page = {
+    sidebar: "",
+  };
+</script>
+  <title>数据库秒级平滑扩容架构方案 | Govern x Lab</title>
+  
+
+
+
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?f6804645172803d5efc7161f04df1d76";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+  <noscript>
+  <style type="text/css">
+    .use-motion .motion-element,
+    .use-motion .brand,
+    .use-motion .menu-item,
+    .sidebar-inner,
+    .use-motion .post-block,
+    .use-motion .pagination,
+    .use-motion .comments,
+    .use-motion .post-header,
+    .use-motion .post-body,
+    .use-motion .collection-title { opacity: initial; }
+
+    .use-motion .logo,
+    .use-motion .site-title,
+    .use-motion .site-subtitle {
+      opacity: initial;
+      top: initial;
+    }
+
+    .use-motion {
+      .logo-line-before i { left: initial; }
+      .logo-line-after i { right: initial; }
+    }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"> <div class="site-brand-wrapper">
+  <div class="site-meta custom-logo">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Govern x Lab</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <h1 class="site-subtitle" itemprop="description">I'm not the only one</h1>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-home"></i> <br />首页</a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-user"></i> <br />关于</a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />标签</a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-th"></i> <br />分类</a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />归档</a>
+        </li>
+      
+
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />搜索</a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  
+  <div class="algolia-popup popup search-popup">
+    <div class="algolia-search">
+      <div class="algolia-search-input-icon">
+        <i class="fa fa-search"></i>
+      </div>
+      <div class="algolia-search-input" id="algolia-search-input"></div>
+    </div>
+
+    <div class="algolia-results">
+      <div id="algolia-stats"></div>
+      <div id="algolia-hits"></div>
+      <div id="algolia-pagination" class="algolia-pagination"></div>
+    </div>
+
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+  </div>
+
+
+
+
+    </div>
+  
+</nav>
+
+
+  
+
+
+
+ </div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://governlee.github.io/2017/08/19/2017-02-09-database/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Govern">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/logo.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Govern x Lab">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">数据库秒级平滑扩容架构方案</h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-08-19T08:00:00+08:00">2017-08-19</time>
+            
+
+            
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/数据库/" itemprop="url" rel="index"><span itemprop="name">数据库</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p><strong>转自: 架构师之路</strong></p>
+<h2 id="一、缘起"><a href="#一、缘起" class="headerlink" title="一、缘起"></a>一、缘起</h2><p>（1）并发量大，流量大的互联网架构，一般来说，数据库上层都有一个服务层，<strong>服务层记录了“业务库名”与“数据库实例”的映射关系</strong>，通过数据库连接池向数据库路由sql语句以执行：<br><img src="http://mmbiz.qpic.cn/mmbiz_png/YrezxckhYOzOGwoVobJtZTvibPmgp6DGTDicxhdHS3wrArZfuzkc7OUOLAu8CzY2SQU6lFwNXOicibC3sSAqFSr4pA/640?wx_fmt=png&amp;tp=webp&amp;wxfrom=5&amp;wx_lazy=1" alt=""></p>
+<p>如上图：服务层配置用户库user对应的数据库实例物理位置为ip（其实是一个内网域名）。</p>
+<p>（2）随着数据量的增大，数据要进行<strong>水平切分</strong>，分库后将数据分布到不同的数据库实例（甚至物理机器）上，以达到降低数据量，增强性能的扩容目的：<br><img src="http://mmbiz.qpic.cn/mmbiz_png/YrezxckhYOzOGwoVobJtZTvibPmgp6DGT2zfBUuaB18yMn41ETMv9YhLcGCDyEEOib3s00yVnWuTSib1uP0CgwaKg/640?wx_fmt=png&amp;tp=webp&amp;wxfrom=5&amp;wx_lazy=1" alt=""></p>
+<p>如上图：用户库user分布在两个实例上，ip0和ip1，服务层通过用户标识uid取模的方式进行寻库路由，模2余0的访问ip0上的user库，模2余1的访问ip1上的user库。</p>
+<p>关于数据库水平切分，垂直切分的更多细节，详见《一分钟掌握数据库垂直拆分》 。</p>
+<p>（3）互联网架构需要保证<strong>数据库高可用</strong>，常见的一种方式，使用<strong>双主同步+keepalived+虚ip</strong>的方式保证数据库的可用性：</p>
+<p><img src="http://mmbiz.qpic.cn/mmbiz_png/YrezxckhYOzOGwoVobJtZTvibPmgp6DGTWicwsXpucQ1QMZ1WLkyyKEzJzNtRRHLHr5Lse93ScRHMics7rKDJnVhg/640?wx_fmt=png&amp;tp=webp&amp;wxfrom=5&amp;wx_lazy=1" alt=""></p>
+<p>如上图：<strong>两个相互同步的主库使用相同的虚ip</strong>。</p>
+<p><img src="http://mmbiz.qpic.cn/mmbiz_png/YrezxckhYOzOGwoVobJtZTvibPmgp6DGTDpNcQjHJ6lhzR3vbmRnhx32QEISagDblQibfP8ER7UEdWBG2vkrysmA/640?wx_fmt=png&amp;tp=webp&amp;wxfrom=5&amp;wx_lazy=1" alt=""></p>
+<p>如上图：当<strong>主库挂掉的时候，虚ip自动漂移到另一个主库</strong>，整个过程对调用方透明，通过这种方式保证数据库的高可用。</p>
+<p>（4）综合上文的（2）和（3），线上实际的架构，<strong>既有水平切分，又有高可用保证</strong>，所以实际的数据库架构是这样的：</p>
+<p><img src="http://mmbiz.qpic.cn/mmbiz_png/YrezxckhYOzOGwoVobJtZTvibPmgp6DGTdclkCtxvlGCicTicjaA4MRhcYhsrb9zRNycIWMJpNn1gSSq1PMPicsArQ/640?wx_fmt=png&amp;tp=webp&amp;wxfrom=5&amp;wx_lazy=1" alt=""></p>
+<p>提问：如果数据量持续增大，分2个库性能扛不住了，该怎么办呢？<br>回答：<strong>继续水平拆分，拆成更多的库</strong>，降低单库数据量，增加库主库实例（机器）数量，提高性能。</p>
+<p>最终问题抛出：分成x个库后，随着数据量的增加，要增加到y个库，数据库扩容的过程中，能否平滑，持续对外提供服务，保证服务的可用性，是本文要讨论的问题。</p>
+<h2 id="二、停服务方案"><a href="#二、停服务方案" class="headerlink" title="二、停服务方案"></a>二、停服务方案</h2><p>在讨论平滑方案之前，先简要说明下“x库拆y库”停服务的方案：<br>（1）站点挂一个公告“为了为广大用户提供更好的服务，本站点/游戏将在今晚00:00-2:00之间升级，届时将不能登录，用户周知”<br>（2）停服务<br>（3）新建y个库，做好高可用<br>（4）数据迁移，重新分布，写一个数据迁移程序，从x个库里导入到y个库里，路由规则由%x升级为%y<br>（5）修改服务配置，原来x行配置升级为y行<br>（6）重启服务，连接新库重新对外提供服务<br>整个过程中，最耗时的是第四步数据迁移。</p>
+<p>回滚方案：<br>如果数据迁移失败，或者迁移后测试失败，则将配置改回x库，恢复服务，改天再挂公告。</p>
+<p>方案优点：简单</p>
+<p>方案缺点：<br>（1）停服务，不高可用<br>（2）技术同学压力大，所有工作要在规定时间内做完，根据经验，压力越大约容易出错（这一点很致命）<br>（3）如果有问题第一时间没检查出来，启动了服务，运行一段时间后再发现有问题，难以回滚，需要回档，可能会丢失一部分数据</p>
+<p>有没有更平滑的方案呢？</p>
+<h2 id="三、秒级、平滑、帅气方案"><a href="#三、秒级、平滑、帅气方案" class="headerlink" title="三、秒级、平滑、帅气方案"></a>三、秒级、平滑、帅气方案</h2><p>再次看一眼扩容前的架构，分两个库，假设每个库1亿数据量，如何平滑扩容，增加实例数，降低单库数据量呢？三个简单步骤搞定。<br><img src="http://mmbiz.qpic.cn/mmbiz_png/YrezxckhYOzOGwoVobJtZTvibPmgp6DGTdclkCtxvlGCicTicjaA4MRhcYhsrb9zRNycIWMJpNn1gSSq1PMPicsArQ/640?wx_fmt=png&amp;tp=webp&amp;wxfrom=5&amp;wx_lazy=1" alt=""></p>
+<p><strong>（1）修改配置</strong></p>
+<p><img src="http://mmbiz.qpic.cn/mmbiz_png/YrezxckhYOzOGwoVobJtZTvibPmgp6DGTtQJjJa3MmwzsXwUNBwIdEDEIpa4F4p4zxWT9qIv1yNRWP265kMx6rw/640?wx_fmt=png&amp;tp=webp&amp;wxfrom=5&amp;wx_lazy=1" alt=""></p>
+<p>主要修改两处：<br>a）数据库实例所在的机器做<strong>双虚ip</strong>，原来%2=0的库是虚ip0，现在增加一个虚ip00，%2=1的另一个库同理<br>b）修改<strong>服务的配置</strong>（不管是在配置文件里，还是在配置中心），将2个库的数据库配置，改为4个库的数据库配置，<strong>修改的时候要注意旧库与辛苦的映射关系：</strong></p>
+<p>%2=0的库，会变为%4=0与%4=2；<br>%2=1的部分，会变为%4=1与%4=3；<br>这样修改是为了保证，拆分后依然能够<strong>路由到正确的数据</strong>。</p>
+<p><strong>（2）reload配置，实例扩容</strong></p>
+<p><img src="http://mmbiz.qpic.cn/mmbiz_png/YrezxckhYOzOGwoVobJtZTvibPmgp6DGTYdtyLG7P9D4XsqP2EXJ2FaV0Qo4KXTicjDicrZs70B6TEdKA0ic6fNLpA/640?wx_fmt=png&amp;tp=webp&amp;wxfrom=5&amp;wx_lazy=1" alt=""></p>
+<p>服务层reload配置，reload可能是这么几种方式：<br>a）比较原始的，<strong>重启服务</strong>，读新的配置文件<br>b）高级一点的，<strong>配置中心给服务发信号</strong>，重读配置文件，重新初始化数据库连接池</p>
+<p>不管哪种方式，reload之后，数据库的<strong>实例扩容就完成了</strong>，原来是2个数据库实例提供服务，现在变为4个数据库实例提供服务，这个过程一般可以在秒级完成。</p>
+<p>整个过程可以逐步重启，<strong>对服务的正确性和可用性完全没有影响</strong>：<br>a）即使%2寻库和%4寻库同时存在，也不影响数据的正确性，因为此时仍然是双主数据同步的<br>b）服务reload之前是不对外提供服务的，冗余的服务能够保证高可用</p>
+<p>完成了实例的扩展，会发现<strong>每个数据库的数据量依然没有下降</strong>，所以第三个步骤还要做一些收尾工作。</p>
+<p><strong>（3）收尾工作，数据收缩</strong></p>
+<p>有这些一些收尾工作：<br>a）把双虚ip修改回单虚ip<br>b）解除旧的双主同步，让成对库的数据不再同步增加<br>c）增加新的双主同步，保证高可用<br>d）删除掉冗余数据，例如：ip0里%4=2的数据全部干掉，只为%4=0的数据提供服务啦</p>
+<p>这样下来，<strong>每个库的数据量就降为原来的一半，数据收缩完成</strong>。</p>
+<h2 id="四、总结"><a href="#四、总结" class="headerlink" title="四、总结"></a>四、总结</h2><p>该帅气方案能够实现n库扩2n库的秒级、平滑扩容，增加数据库服务能力，降低单库一半的数据量，其核心原理是：<strong>成倍扩容，避免数据迁移</strong>。</p>
+<p>迁移步骤：<br>（1）修改配置<br>（2）reload配置，实例扩容完成<br>（3）删除冗余数据等收尾工作，数据量收缩完成</p>
+
+      
+    </div>
+
+    
+      
+
+
+    
+
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/架构/" rel="tag"># 架构</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2017/08/19/2017-08-19-cpu/" rel="next" title="线上服务CPU100%问题快速定位实战">
+                <i class="fa fa-chevron-left"></i> 线上服务CPU100%问题快速定位实战
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2017/08/22/2017-08-22-blockingqueue/" rel="prev" title="解读 Java 并发队列 BlockingQueue">
+                解读 Java 并发队列 BlockingQueue <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+  
+    <div class="comments" id="comments">
+      <div id="lv-container" data-id="city" data-uid="MTAyMC8zNDA5NS8xMDYzMw=="></div>
+    </div>
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image"
+                src="/images/logo.jpg"
+                alt="Govern" />
+            
+              <p class="site-author-name" itemprop="name">Govern</p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          
+            <nav class="site-state motion-element">
+              
+                <div class="site-state-item site-state-posts">
+                
+                  <a href="/archives/">
+                
+                    <span class="site-state-item-count">98</span>
+                    <span class="site-state-item-name">日志</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-categories">
+                  <a href="/categories/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">20</span>
+                    <span class="site-state-item-name">分类</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-tags">
+                  <a href="/tags/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">39</span>
+                    <span class="site-state-item-name">标签</span>
+                  </a>
+                </div>
+              
+            </nav>
+          
+
+          
+
+          
+
+          
+          
+
+          
+          
+
+          
+            
+          
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#一、缘起"><span class="nav-number">1.</span> <span class="nav-text">一、缘起</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#二、停服务方案"><span class="nav-number">2.</span> <span class="nav-text">二、停服务方案</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#三、秒级、平滑、帅气方案"><span class="nav-number">3.</span> <span class="nav-text">三、秒级、平滑、帅气方案</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#四、总结"><span class="nav-number">4.</span> <span class="nav-text">四、总结</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+        <div class="back-to-top">
+          <i class="fa fa-arrow-up"></i>
+          
+            <span id="scrollpercent"><span>0</span>%</span>
+          
+        </div>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; 2012 &mdash; <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Govern</span>
+
+  
+
+  
+</div>
+
+
+  
+
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" rel="external nofollow" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" rel="external nofollow" href="https://github.com/theme-next/hexo-theme-next">NexT.Gemini</a> v6.0.3</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=6.0.3"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=6.0.3"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=6.0.3"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=6.0.3"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=6.0.3"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=6.0.3"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=6.0.3"></script>
+
+
+
+  
+
+
+
+
+
+
+
+  
+    <script type="text/javascript">
+      (function(d, s) {
+        var j, e = d.getElementsByTagName(s)[0];
+        if (typeof LivereTower === 'function') { return; }
+        j = d.createElement(s);
+        j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+        j.async = true;
+        e.parentNode.insertBefore(j, e);
+      })(document, 'script');
+    </script>
+  
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+  
+  
+  
+  <link rel="stylesheet" href="/lib/algolia-instant-search/instantsearch.min.css">
+
+  
+  
+  <script src="/lib/algolia-instant-search/instantsearch.min.js"></script>
+  
+
+  <script src="/js/src/algolia-search.js?v=6.0.3"></script>
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+  
+  
+  
+  <script src="/lib/bookmark/bookmark.min.js?v=1.0"></script>
+  <script type="text/javascript">
+  
+    bookmark.scrollToMark('auto', "#more");
+  
+  </script>
+
+
+</body>
+</html>

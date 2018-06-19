@@ -1,0 +1,1133 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next gemini use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=6.0.3" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=6.0.3">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/lights-32x32.png?v=6.0.3">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/lights-16x16.png?v=6.0.3">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=6.0.3" color="#222">
+
+
+
+
+
+
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Gemini',
+    version: '6.0.3',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":true,"scrollpercent":true,"onmobile":false},
+    fancybox: false,
+    fastclick: false,
+    lazyload: false,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    algolia: {
+      applicationID: '41NC33JUJG',
+      apiKey: '7362b84fed21bc83930f198a0927bb82',
+      indexName: 'blog',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+  
+
+
+
+
+  
+  <meta name="keywords" content="websocket," />
+
+
+<meta name="description" content="导语 尽管现在对于客户端的实时通讯已经涌现出很多新的解决方案，但websocket在其中依然占据着重要地位。一直以来，对websocket技术处于一知半解的状态，为此搜集整理了网上的相关内容，对webscoket技术作一个完整梳理记录。本篇文章以websocket的原理和落地为核心，来叙述websocket的使用，以及相关应用场景。  websocket是什么Websocket是html5提出的一">
+<meta name="keywords" content="websocket">
+<meta property="og:type" content="article">
+<meta property="og:title" content="websocket学习整理(一)">
+<meta property="og:url" content="http://governlee.github.io/2017/07/09/2017-07-09-websocket/index.html">
+<meta property="og:site_name" content="Govern x Lab">
+<meta property="og:description" content="导语 尽管现在对于客户端的实时通讯已经涌现出很多新的解决方案，但websocket在其中依然占据着重要地位。一直以来，对websocket技术处于一知半解的状态，为此搜集整理了网上的相关内容，对webscoket技术作一个完整梳理记录。本篇文章以websocket的原理和落地为核心，来叙述websocket的使用，以及相关应用场景。  websocket是什么Websocket是html5提出的一">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="http://i.imgur.com/9oXAC24.png">
+<meta property="og:image" content="http://i.imgur.com/LQebUEA.jpg">
+<meta property="og:image" content="http://i.imgur.com/UlIC9MN.jpg">
+<meta property="og:image" content="http://i.imgur.com/76HEyXA.jpg">
+<meta property="og:image" content="http://i.imgur.com/7TI4d5K.png">
+<meta property="og:image" content="http://i.imgur.com/JGTZ0o3.jpg">
+<meta property="og:image" content="http://lrwinx.github.io/images/httpwebsocket.jpg">
+<meta property="og:image" content="http://lrwinx.github.io/images/Supportedbrowser.jpeg">
+<meta property="og:updated_time" content="2018-02-21T12:34:57.243Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="websocket学习整理(一)">
+<meta name="twitter:description" content="导语 尽管现在对于客户端的实时通讯已经涌现出很多新的解决方案，但websocket在其中依然占据着重要地位。一直以来，对websocket技术处于一知半解的状态，为此搜集整理了网上的相关内容，对webscoket技术作一个完整梳理记录。本篇文章以websocket的原理和落地为核心，来叙述websocket的使用，以及相关应用场景。  websocket是什么Websocket是html5提出的一">
+<meta name="twitter:image" content="http://i.imgur.com/9oXAC24.png">
+
+
+
+
+
+
+  <link rel="canonical" href="http://governlee.github.io/2017/07/09/2017-07-09-websocket/"/>
+
+
+
+<script type="text/javascript" id="page.configurations">
+  CONFIG.page = {
+    sidebar: "",
+  };
+</script>
+  <title>websocket学习整理(一) | Govern x Lab</title>
+  
+
+
+
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?f6804645172803d5efc7161f04df1d76";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+  <noscript>
+  <style type="text/css">
+    .use-motion .motion-element,
+    .use-motion .brand,
+    .use-motion .menu-item,
+    .sidebar-inner,
+    .use-motion .post-block,
+    .use-motion .pagination,
+    .use-motion .comments,
+    .use-motion .post-header,
+    .use-motion .post-body,
+    .use-motion .collection-title { opacity: initial; }
+
+    .use-motion .logo,
+    .use-motion .site-title,
+    .use-motion .site-subtitle {
+      opacity: initial;
+      top: initial;
+    }
+
+    .use-motion {
+      .logo-line-before i { left: initial; }
+      .logo-line-after i { right: initial; }
+    }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"> <div class="site-brand-wrapper">
+  <div class="site-meta custom-logo">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Govern x Lab</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <h1 class="site-subtitle" itemprop="description">I'm not the only one</h1>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-home"></i> <br />首页</a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-user"></i> <br />关于</a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />标签</a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-th"></i> <br />分类</a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />归档</a>
+        </li>
+      
+
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />搜索</a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  
+  <div class="algolia-popup popup search-popup">
+    <div class="algolia-search">
+      <div class="algolia-search-input-icon">
+        <i class="fa fa-search"></i>
+      </div>
+      <div class="algolia-search-input" id="algolia-search-input"></div>
+    </div>
+
+    <div class="algolia-results">
+      <div id="algolia-stats"></div>
+      <div id="algolia-hits"></div>
+      <div id="algolia-pagination" class="algolia-pagination"></div>
+    </div>
+
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+  </div>
+
+
+
+
+    </div>
+  
+</nav>
+
+
+  
+
+
+
+ </div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://governlee.github.io/2017/07/09/2017-07-09-websocket/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Govern">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/logo.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Govern x Lab">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">websocket学习整理(一)</h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-07-09T08:00:00+08:00">2017-07-09</time>
+            
+
+            
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/网络通信/" itemprop="url" rel="index"><span itemprop="name">网络通信</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h1 id="导语"><a href="#导语" class="headerlink" title="导语"></a>导语</h1><blockquote>
+<p>尽管现在对于客户端的实时通讯已经涌现出很多新的解决方案，但websocket在其中依然占据着重要地位。一直以来，对websocket技术处于一知半解的状态，为此搜集整理了网上的相关内容，对webscoket技术作一个完整梳理记录。<br>本篇文章以websocket的原理和落地为核心，来叙述websocket的使用，以及相关应用场景。</p>
+</blockquote>
+<h2 id="websocket是什么"><a href="#websocket是什么" class="headerlink" title="websocket是什么"></a>websocket是什么</h2><p>Websocket是html5提出的一个协议规范，参考rfc6455。</p>
+<p>websocket约定了一个通信的规范，通过一个握手的机制，客户端（浏览器）和服务器（webserver）之间能建立一个类似tcp的连接，从而方便c－s之间的通信。在websocket出现之前，web交互一般是基于http协议的短连接或者长连接。</p>
+<p>WebSocket是为解决客户端与服务端实时通信而产生的技术。websocket协议本质上是一个基于tcp的协议，是先通过HTTP/HTTPS协议发起一条特殊的http请求进行握手后创建一个用于交换数据的TCP连接，此后服务端与客户端通过此TCP连接进行实时通信(<strong>此时不再需要原HTTP协议的参与了</strong>)。</p>
+<h2 id="websocket的优点"><a href="#websocket的优点" class="headerlink" title="websocket的优点"></a>websocket的优点</h2><p>以前web server实现推送技术或者即时通讯，用的都是轮询（polling），在特点的时间间隔（比如1秒钟）由浏览器自动发出请求，将服务器的消息主动的拉回来，在这种情况下，我们需要不断的向服务器发送请求，然而HTTP request 的header是非常长的，里面包含的数据可能只是一个很小的值，这样会占用很多的带宽和服务器资源。</p>
+<p>而最比较新的技术去做轮询的效果是Comet – 用了AJAX。但这种技术虽然可达到全双工通信，但依然需要发出请求(reuqest)。</p>
+<p>WebSocket API最伟大之处在于服务器和客户端可以在给定的时间范围内的任意时刻，相互推送信息。 浏览器和服务器只需要要做一个握手的动作，在建立连接之后，服务器可以主动传送数据给客户端，客户端也可以随时向服务器发送数据。 此外，服务器与客户端之间交换的标头信息很小。</p>
+<p>WebSocket并不限于以Ajax(或XHR)方式通信，因为Ajax技术需要客户端发起请求，而WebSocket服务器和客户端可以彼此相互推送信息；<br><img src="http://i.imgur.com/9oXAC24.png" alt=""><br>因此从服务器角度来说，websocket有以下好处：</p>
+<ul>
+<li>节省每次请求的header,http的header一般有几十字节</li>
+<li>Server Push,服务器可以主动传送数据给客户端</li>
+</ul>
+<h2 id="为什么要使用websocket"><a href="#为什么要使用websocket" class="headerlink" title="为什么要使用websocket"></a>为什么要使用websocket</h2><p>那么了解http与websocket之间的不同以后，我们为什么要使用websocket呢？ 他的应用场景是什么呢？</p>
+<p>我找到了一个比较符合websocket使用场景的描述</p>
+<p>“The best fit for WebSocket is in web applications where the client and server need to exchange events at high frequency and with low latency.”</p>
+<p>翻译: 在客户端与服务器端交互的web应用中，websocket最适合在高频率低延迟的场景下，进行事件的交换和处理<br>(<a href="http://docs.spring.io/spring/docs/5.0.0.M5/spring-framework-reference/html/websocket.html" target="_blank" rel="noopener">此段来源于spring websocket的官方文档</a>)</p>
+<p>了解以上知识后，我举出几个比较常见的场景:</p>
+<ol>
+<li>游戏中的数据传输</li>
+<li>股票K线图数据</li>
+<li>客服系统<br>根据如上所述，各个系统都来使用websocket不是更好吗？</li>
+</ol>
+<p>其实并不是，websocket建立连接之后，后边交互都由tcp协议进行交互，故开发的复杂度会较高。当然websocket通讯，本身要考虑的事情要比HTTP协议的通讯考虑的更多.</p>
+<p>所以如果不是有特殊要求(即 应用不是”高频率低延迟”的要求),需要优先考虑HTTP协议是否可以满足。</p>
+<p>比如新闻系统，新闻的数据晚上10分钟-30分钟，是可以接受的，那么就可以采用HTTP的方式进行轮询(polling)操作调用REST接口。</p>
+<p>当然有时我们建立了websocket通讯，并且希望通过HTTP提供的REST接口推送给某客户端，此时需要考虑REST接口接受数据传送给websocket中，进行广播式的通讯方式。</p>
+<p>至此，我已经讲述了三种交互方式的使用场景:</p>
+<ol>
+<li>websocket独立使用场景</li>
+<li>HTTP独立使用场景</li>
+<li>HTTP中转websocket使用场景</li>
+</ol>
+<h2 id="发展历史"><a href="#发展历史" class="headerlink" title="发展历史"></a>发展历史</h2><h3 id="http协议"><a href="#http协议" class="headerlink" title="http协议"></a>http协议</h3><p>1996年IETF HTTP工作组发布了HTTP协议的1.0版本，到现在普遍使用的版本1.1，HTTP协议经历了17年的发展。 这种分布式、无状态、基于TCP的请求/响应式、在互联网盛行的今天得到广泛应用的协议。互联网从兴起到现在，经历了门户网站盛行的web1.0时代，而后随着ajax技术的出现，发展为web应用盛行的web2.0时代，如今又朝着web3.0的方向迈进。反观http协议，从版本1.0发展到1.1，除了默认长连接之外就是缓存处理、带宽优化和安全性等方面的不痛不痒的改进。它一直保留着无状态、请求/响应模式，似乎从来没意识到这应该有所改变。</p>
+<h3 id="通过脚本发送的http请求（Ajax）"><a href="#通过脚本发送的http请求（Ajax）" class="headerlink" title="通过脚本发送的http请求（Ajax）"></a>通过脚本发送的http请求（Ajax）</h3><p>传统的web应用要想与服务器交互，必须提交一个表单（form），服务器接收并处理传来的表单，然后返回全新的页面，因为前后两个页面的数据大部分都是相同的，这个过程传输了很多冗余的数据、浪费了带宽。于是Ajax技术便应运而生。</p>
+<p>Ajax是Asynchronous JavaScript and XML的简称，由Jesse James Garrett 首先提出。这种技术开创性地允许浏览器脚本（JS）发送http请求。Outlook Web Access小组于98年使用，并很快成为IE4.0的一部分，但是这个技术一直很小众，直到2005年初，google在他的goole groups、gmail等交互式应用中广泛使用此种技术，才使得Ajax迅速被大家所接受。</p>
+<p>Ajax的出现使客户端与服务器端传输数据少了很多，也快了很多，也满足了以丰富用户体验为特点的web2.0时代 初期发展的需要，但是慢慢地也暴露了他的弊端。比如无法满足即时通信等富交互式应用的实时更新数据的要求。这种浏览器端的小技术毕竟还是基于http协议，http协议要求的请求/响应的模式也是无法改变的，除非http协议本身有所改变。</p>
+<h3 id="一种hack技术（Comet）"><a href="#一种hack技术（Comet）" class="headerlink" title="一种hack技术（Comet）"></a>一种hack技术（Comet）</h3><p>以即时通信为代表的web应用程序对数据的低延时要求，传统的基于轮询的方式已经无法满足，而且也会带来不好的用户体验。于是一种基于http长连接的“服务器推”技术便被hack出来。这种技术被命名为Comet，这个术语由Dojo Toolkit 的项目主管Alex Russell在博文Comet: Low Latency Data for the Browser首次提出，并沿用下来。</p>
+<p>其实，服务器推很早就存在了，在经典的client/server模型中有广泛使用，只是浏览器太懒了，并没有对这种技术提供很好的支持。但是Ajax的出现使这种技术在浏览器上实现成为可能， google的gmail和gtalk的整合首先使用了这种技术。随着一些关键问题的解决（比如IE的加载显示问题），很快这种技术得到了认可，目前已经有很多成熟的开源Comet框架。</p>
+<p>以下是典型的Ajax和Comet数据传输方式的对比，区别简单明了。典型的Ajax通信方式也是http协议的经典使用方式，要想取得数据，必须首先发送请求。在Low Latency要求比较高的web应用中，只能增加服务器请求的频率。Comet则不同，客户端与服务器端保持一个长连接，只有客户端需要的数据更新时，服务器才主动将数据推送给客户端。</p>
+<p><img src="http://i.imgur.com/LQebUEA.jpg" alt=""></p>
+<p>Comet的实现主要有两种方式：</p>
+<ul>
+<li>基于Ajax的长轮询（long-polling）方式</li>
+</ul>
+<p><img src="http://i.imgur.com/UlIC9MN.jpg" alt=""></p>
+<ul>
+<li>基于 Iframe 及 htmlfile 的流（http streaming）方式<br>Iframe是html标记，这个标记的src属性会保持对指定服务器的长连接请求，服务器端则可以不停地返回数据，相对于第一种方式，这种方式跟传统的服务器推则更接近。<br>在第一种方式中，浏览器在收到数据后会直接调用JS回调函数，但是这种方式该如何响应数据呢？可以通过在返回数据中嵌入JS脚本的方式，服务器端将返回的数据作为回调函数的参数，浏览器在收到数据后就会执行这段JS脚本。</li>
+</ul>
+<p><img src="http://i.imgur.com/76HEyXA.jpg" alt=""></p>
+<h3 id="Websocket—未来的解决方案"><a href="#Websocket—未来的解决方案" class="headerlink" title="Websocket—未来的解决方案"></a>Websocket—未来的解决方案</h3><p>如果说Ajax的出现是互联网发展的必然，那么Comet技术的出现则更多透露出一种无奈，仅仅作为一种hack技术，因为没有更好的解决方案。Comet解决的问题应该由谁来解决才是合理的呢？浏览器，还是http标准？主角应该是谁呢？本质上讲，这涉及到数据传输方式，http协议应首当其冲，是时候改变一下这个懒惰的协议的请求/响应模式了。</p>
+<p>W3C给出了答案，在新一代html标准html5中提供了一种浏览器和服务器间进行全双工通讯的网络技术Websocket。从Websocket草案得知，Websocket是一个全新的、独立的协议，基于TCP协议，与http协议兼容、却不会融入http协议，仅仅作为html5的一部分。于是乎脚本又被赋予了另一种能力：发起websocket请求。这种方式我们应该很熟悉，因为Ajax就是这么做的，所不同的是，Ajax发起的是http请求而已。</p>
+<h2 id="websocket逻辑"><a href="#websocket逻辑" class="headerlink" title="websocket逻辑"></a>websocket逻辑</h2><p>与http协议不同的请求/响应模式不同，Websocket在建立连接之前有一个Handshake（Opening Handshake）过程，在关闭连接前也有一个Handshake（Closing Handshake）过程，建立连接之后，双方即可双向通信。<br>在websocket协议发展过程中前前后后就出现了多个版本的握手协议，这里分情况说明一下：</p>
+<ul>
+<li><p>基于flash的握手协议</p>
+<p>使用场景是IE的多数版本，因为IE的多数版本不都不支持WebSocket协议，以及FF、CHROME等浏览器的低版本，还没有原生的支持WebSocket。此处，server唯一要做的，就是准备一个WebSocket-Location域给client，没有加密，可靠性很差。</p>
+<p>客户端请求：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">GET /ls HTTP/1.1</span><br><span class="line">Upgrade: WebSocket</span><br><span class="line">Connection: Upgrade</span><br><span class="line">Host: www.qixing318.com</span><br><span class="line">Origin: http://www.qixing318.com</span><br></pre></td></tr></table></figure>
+<p>服务器返回：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">HTTP/1.1 101 Web Socket Protocol Handshake</span><br><span class="line">Upgrade: WebSocket</span><br><span class="line">Connection: Upgrade</span><br><span class="line">WebSocket-Origin: http://www.qixing318.com</span><br><span class="line">WebSocket-Location: ws://www.qixing318.com/ls</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>基于md5加密方式的握手协议</p>
+<p>客户端请求：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">  GET /demo HTTP/1.1</span><br><span class="line">Host: example.com</span><br><span class="line">Connection: Upgrade</span><br><span class="line">Sec-WebSocket-Key2:</span><br><span class="line">Upgrade: WebSocket</span><br><span class="line">Sec-WebSocket-Key1:</span><br><span class="line">Origin: http://www.qixing318.com</span><br><span class="line">[8-byte security key]</span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+<p>服务端返回：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">HTTP/1.1 101 WebSocket Protocol Handshake</span><br><span class="line">Upgrade: WebSocket</span><br><span class="line">Connection: Upgrade</span><br><span class="line">WebSocket-Origin: http://www.qixing318.com</span><br><span class="line">WebSocket-Location: ws://example.com/demo</span><br><span class="line">[16-byte hash response]</span><br></pre></td></tr></table></figure></p>
+<p>其中 Sec-WebSocket-Key1，Sec-WebSocket-Key2 和 [8-byte security key] 这几个头信息是web server用来生成应答信息的来源，依据 draft-hixie-thewebsocketprotocol-76 草案的定义。<br>web server基于以下的算法来产生正确的应答信息：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">1. 逐个字符读取 Sec-WebSocket-Key1 头信息中的值，将数值型字符连接到一起放到一个临时字符串里，同时统计所有空格的数量；</span><br><span class="line">2. 将在第（1）步里生成的数字字符串转换成一个整型数字，然后除以第（1）步里统计出来的空格数量，将得到的浮点数转换成整数型；</span><br><span class="line">3. 将第（2）步里生成的整型值转换为符合网络传输的网络字节数组；</span><br><span class="line">4. 对 Sec-WebSocket-Key2 头信息同样进行第（1）到第（3）步的操作，得到另外一个网络字节数组；</span><br><span class="line">5. 将 [8-byte security key] 和在第（3）、（4）步里生成的网络字节数组合并成一个16字节的数组；</span><br><span class="line">6. 对第（5）步生成的字节数组使用MD5算法生成一个哈希值，这个哈希值就作为安全密钥返回给客户端，以表明服务器端获取了客户端的请求，同意创建websocket连接</span><br></pre></td></tr></table></figure></p>
+<ul>
+<li>基于sha加密方式的握手协议<br>也是目前见的最多的一种方式，这里的版本号目前是需要13以上的版本。<br>客户端请求：<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">GET /ls HTTP/1.1</span><br><span class="line">Upgrade: websocket</span><br><span class="line">Connection: Upgrade</span><br><span class="line">Host: www.qixing318.com</span><br><span class="line">Sec-WebSocket-Origin: http://www.qixing318.com</span><br><span class="line">Sec-WebSocket-Key: 2SCVXUeP9cTjV+0mWB8J6A==</span><br><span class="line">Sec-WebSocket-Version: 13</span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+<p>服务器返回：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">HTTP/1.1 101 Switching Protocols</span><br><span class="line">Upgrade: websocket</span><br><span class="line">Connection: Upgrade</span><br><span class="line">Sec-WebSocket-Accept: mLDKNeBNWz6T9SxU+o0Fy/HgeSw=</span><br></pre></td></tr></table></figure></p>
+<p>其中 server就是把客户端上报的key拼上一段GUID（ “258EAFA5-E914-47DA-95CA-C5AB0DC85B11″），拿这个字符串做SHA-1 hash计算，然后再把得到的结果通过base64加密，最后再返回给客户端。</p>
+<h3 id="Opening-Handshake："><a href="#Opening-Handshake：" class="headerlink" title="Opening Handshake："></a>Opening Handshake：</h3><p>客户端发起连接Handshake请求<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">GET /chat HTTP/1.1</span><br><span class="line">Host: server.example.com</span><br><span class="line">Upgrade: websocket</span><br><span class="line">Connection: Upgrade</span><br><span class="line">Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==</span><br><span class="line">Origin: http://example.com</span><br><span class="line">Sec-WebSocket-Protocol: chat, superchat</span><br><span class="line">Sec-WebSocket-Version: 13</span><br></pre></td></tr></table></figure></p>
+<p>服务器端响应：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">HTTP/1.1 101 Switching Protocols</span><br><span class="line">Upgrade: websocket</span><br><span class="line">Connection: Upgrade</span><br><span class="line">Sec-WebSocket-Accept: s3pPLMBiTxaQ9kYGzzhZRbK+xOo=</span><br><span class="line">Sec-WebSocket-Protocol: chat</span><br></pre></td></tr></table></figure></p>
+<ul>
+<li>Upgrade：WebSocket<br>表示这是一个特殊的 HTTP 请求，请求的目的就是要将客户端和服务器端的通讯协议从 HTTP 协议升级到 WebSocket 协议。</li>
+<li>Sec-WebSocket-Key<br>是一段浏览器base64加密的密钥，server端收到后需要提取Sec-WebSocket-Key 信息，然后加密。</li>
+<li><p>Sec-WebSocket-Accept<br>服务器端在接收到的Sec-WebSocket-Key密钥后追加一段神奇字符串“258EAFA5-E914-47DA-95CA-C5AB0DC85B11”，并将结果进行sha-1哈希，然后再进行base64加密返回给客户端（就是Sec-WebSocket-Key）。 比如：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">encry</span>(<span class="params">$req</span>)</span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    $key = $<span class="keyword">this</span>-&gt;getKey($req);</span><br><span class="line">    $mask = <span class="string">"258EAFA5-E914-47DA-95CA-C5AB0DC85B11"</span>;</span><br><span class="line">    # 将 SHA-1 加密后的字符串再进行一次 base64 加密</span><br><span class="line">    <span class="keyword">return</span> base64_encode(sha1($key . <span class="string">'258EAFA5-E914-47DA-95CA-C5AB0DC85B11'</span>, <span class="literal">true</span>));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>Sec-WebSocket-Protocol<br>表示客户端请求提供的可供选择的子协议，及服务器端选中的支持的子协议，“Origin”服务器端用于区分未授权的websocket浏览器</p>
+</li>
+<li>Sec-WebSocket-Version: 13<br>客户端在握手时的请求中携带，这样的版本标识，表示这个是一个升级版本，现在的浏览器都是使用的这个版本。</li>
+<li>HTTP/1.1 101 Switching Protocols<br>101为服务器返回的状态码，所有非101的状态码都表示handshake并未完成。</li>
+</ul>
+<h2 id="Data-Framing"><a href="#Data-Framing" class="headerlink" title="Data Framing"></a>Data Framing</h2><p>Websocket协议通过序列化的数据帧传输数据。数据封包协议中定义了opcode、payload length、Payload data等字段。其中要求：</p>
+<ol>
+<li>客户端向服务器传输的数据帧必须进行掩码处理：服务器若接收到未经过掩码处理的数据帧，则必须主动关闭连接。</li>
+<li>服务器向客户端传输的数据帧一定不能进行掩码处理。客户端若接收到经过掩码处理的数据帧，则必须主动关闭连接。<br>针对上情况，发现错误的一方可向对方发送close帧（状态码是1002，表示协议错误），以关闭连接。<br>具体数据帧格式如下图所示：</li>
+</ol>
+<p><img src="http://i.imgur.com/7TI4d5K.png" alt=""></p>
+<h2 id="Closing-Handshake"><a href="#Closing-Handshake" class="headerlink" title="Closing Handshake"></a>Closing Handshake</h2><p>相对于Opening Handshake，Closing Handshake则简单得多，主动关闭的一方向另一方发送一个关闭类型的数据包，对方收到此数据包之后，再回复一个相同类型的数据包，关闭完成。</p>
+<p>关闭类型数据包遵守封包协议，Opcode为0x8，Payload data可以用于携带关闭原因或消息</p>
+<h2 id="websocket的事件响应"><a href="#websocket的事件响应" class="headerlink" title="websocket的事件响应"></a>websocket的事件响应</h2><p>以上的Opening Handshake、Data Framing、Closing Handshake三个步骤其实分别对应了websocket的三个事件：<br><img src="http://i.imgur.com/JGTZ0o3.jpg" alt=""></p>
+<ul>
+<li>onopen 当接口打开时响应</li>
+<li>onmessage 当收到信息时响应</li>
+<li>onclose 当接口关闭时响应<br>任何程序语言的websocket api都至少要提供上面三个事件的api接口， 有的可能还提供的有onerror事件的处理机制。</li>
+</ul>
+<p>websocket 在任何时候都会处于下面4种状态中的其中一种：</p>
+<ul>
+<li>CONNECTING (0)：表示还没建立连接；</li>
+<li>OPEN (1)： 已经建立连接，可以进行通讯；</li>
+<li>CLOSING (2)：通过关闭握手，正在关闭连接；</li>
+<li>CLOSED (3)：连接已经关闭或无法打开；</li>
+</ul>
+<h2 id="如何使用websocket"><a href="#如何使用websocket" class="headerlink" title="如何使用websocket"></a>如何使用websocket</h2><p>客户端<br>在支持WebSocket的浏览器中，在创建socket之后。可以通过onopen，onmessage，onclose即onerror四个事件实现对socket进行响应<br>一个简单是示例：<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> ws = <span class="keyword">new</span> WebSocket(“ws:<span class="comment">//localhost:8080”);</span></span><br><span class="line">ws.onopen = <span class="function"><span class="keyword">function</span>(<span class="params"></span>)</span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">  <span class="built_in">console</span>.log(“open”);</span><br><span class="line">  ws.send(“hello”);</span><br><span class="line">&#125;;</span><br><span class="line">ws.onmessage = <span class="function"><span class="keyword">function</span>(<span class="params">evt</span>)  </span>&#123;  <span class="built_in">console</span>.log(evt.data); &#125;;</span><br><span class="line">ws.onclose   = <span class="function"><span class="keyword">function</span>(<span class="params">evt</span>)  </span>&#123;  <span class="built_in">console</span>.log(“WebSocketClosed!”); &#125;;</span><br><span class="line">ws.onerror   = <span class="function"><span class="keyword">function</span>(<span class="params">evt</span>)  </span>&#123;  <span class="built_in">console</span>.log(“WebSocketError!”); &#125;;</span><br></pre></td></tr></table></figure></p>
+<p>首先申请一个WebSocket对象，参数是需要连接的服务器端的地址，同http协议使用<a href="http://开头一样，WebSocket协议的URL使用ws://开头，另外安全的WebSocket协议使用wss://开头。" target="_blank" rel="noopener">http://开头一样，WebSocket协议的URL使用ws://开头，另外安全的WebSocket协议使用wss://开头。</a></p>
+<p>client先发起握手请求：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">GET /echobot HTTP/1.1</span><br><span class="line">Host: 192.168.14.215:9000</span><br><span class="line">Connection: Upgrade</span><br><span class="line">Pragma: no-cache</span><br><span class="line">Cache-Control: no-cache</span><br><span class="line">Upgrade: websocket</span><br><span class="line">Origin: http://192.168.14.215</span><br><span class="line">Sec-WebSocket-Version: 13</span><br><span class="line">User-Agent: Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/45.0.2454.101 Safari/537.36</span><br><span class="line">Accept-Encoding: gzip, deflate, sdch</span><br><span class="line">Accept-Language: zh-CN,zh;q=0.8</span><br><span class="line">Sec-WebSocket-Key: mh3xLXeRuIWNPwq7ATG9jA==</span><br><span class="line">Sec-WebSocket-Extensions: permessage-deflate; client_max_window_bits</span><br></pre></td></tr></table></figure></p>
+<p>服务端响应：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">HTTP/1.1 101 Switching Protocols</span><br><span class="line">Upgrade: websocket</span><br><span class="line">Connection: Upgrade</span><br><span class="line">Sec-WebSocket-Accept: SIEylb7zRYJAEgiqJXaOW3V+ZWQ=</span><br></pre></td></tr></table></figure></p>
+<p>交互数据：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">ws.send(“hello”);   # 用于将消息发送到服务端</span><br><span class="line">ws.recv($buffer);   # 用于接收服务端的消息</span><br></pre></td></tr></table></figure></p>
+<h2 id="相关技术概念"><a href="#相关技术概念" class="headerlink" title="相关技术概念"></a>相关技术概念</h2><h3 id="websocket"><a href="#websocket" class="headerlink" title="websocket"></a>websocket</h3><p>websocket为一次HTTP握手后，后续通讯为tcp协议的通讯方式。</p>
+<p>当然，和HTTP一样，websocket也有一些约定的通讯方式，http通讯方式为http开头的方式,e.g. <a href="http://xxx.com/path" target="_blank" rel="noopener">http://xxx.com/path</a> ,websocket通讯方式则为ws开头的方式,e.g. ws://xxx.com/path</p>
+<p>SSL:</p>
+<pre><code>HTTP: https://xxx.com/path
+
+WEBSOCKET: wss://xxx.com/path
+</code></pre><p><img src="http://lrwinx.github.io/images/httpwebsocket.jpg" alt=""></p>
+<h3 id="SockJS"><a href="#SockJS" class="headerlink" title="SockJS"></a>SockJS</h3><p>正如我们所知,websocket协议虽然已经被制定，当时还有很多版本的浏览器或浏览器厂商还没有支持的很好。</p>
+<p>所以,SockJS,可以理解为是websocket的一个备选方案。</p>
+<p>那它如何规定备选方案的呢？</p>
+<p>它大概支持这样几个方案:</p>
+<ol>
+<li>Websockets</li>
+<li>Streaming</li>
+<li>Polling<br>当然，开启并使用SockJS后，它会优先选用websocket协议作为传输协议，如果浏览器不支持websocket协议，则会在其他方案中，选择一个较好的协议进行通讯。</li>
+</ol>
+<p>看一下目前浏览器的支持情况:<br><img src="http://lrwinx.github.io/images/Supportedbrowser.jpeg" alt=""></p>
+<p>所以，如果使用SockJS进行通讯，它将在使用上保持一致，底层由它自己去选择相应的协议。<br>可以认为SockJS是websocket通讯层上的上层协议。底层对于开发者来说是透明的。</p>
+<h3 id="STOMP"><a href="#STOMP" class="headerlink" title="STOMP"></a>STOMP</h3><p>STOMP 中文为: 面向消息的简单文本协议</p>
+<p>websocket定义了两种传输信息类型: 文本信息 和 二进制信息 ( text and binary ).</p>
+<p>类型虽然被确定，但是他们的传输体是没有规定的。</p>
+<p>当然你可以自己来写传输体，来规定传输内容。(当然，这样的复杂度是很高的)</p>
+<p>所以,需要用一种简单的文本传输类型来规定传输内容，它可以作为通讯中的文本传输协议,即交互中的高级协议来定义交互信息。</p>
+<p>STOMP本身可以支持流类型的网络传输协议: websocket协议和tcp协议</p>
+<p>它的格式为:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">COMMAND</span><br><span class="line">header1:value1</span><br><span class="line">header2:value2</span><br><span class="line"></span><br><span class="line">Body^@</span><br><span class="line"></span><br><span class="line">SUBSCRIBE</span><br><span class="line">id:sub-1</span><br><span class="line">destination:/topic/price.stock.*</span><br><span class="line"></span><br><span class="line">^@</span><br><span class="line"></span><br><span class="line">SEND</span><br><span class="line">destination:/queue/trade</span><br><span class="line">content-type:application/json</span><br><span class="line">content-length:44</span><br><span class="line"></span><br><span class="line">&#123;&quot;action&quot;:&quot;BUY&quot;,&quot;ticker&quot;:&quot;MMM&quot;,&quot;shares&quot;,44&#125;^@</span><br></pre></td></tr></table></figure></p>
+<p>当然STOMP已经应用于很多消息代理中，作为一个传输协议的规定，如:RabbitMQ, ActiveMQ</p>
+<p>我们皆可以用STOMP和这类MQ进行消息交互.</p>
+<p>除了STOMP相关的代理外，实际上还提供了一个stomp.js,用于浏览器客户端使用STOMP消息协议传输的js库。</p>
+<p>让我们很方便的使用stomp.js进行与STOMP协议相关的代理进行交互.</p>
+<p>正如我们所知，如果websocket内容传输信息使用STOMP来进行交互，websocket也很好的于消息代理器进行交互(如:RabbitMQ, ActiveMQ)</p>
+<p>这样就很好的提供了消息代理的集成方案。</p>
+<p>总结，使用STOMP的优点如下:</p>
+<p>不需要自建一套自定义的消息格式<br>现有stomp.js客户端(浏览器中使用)可以直接使用<br>能路由信息到指定消息地点<br>可以直接使用成熟的STOMP代理进行广播 如:RabbitMQ, ActiveMQ</p>
+<h2 id="技术落地"><a href="#技术落地" class="headerlink" title="技术落地"></a>技术落地</h2><h3 id="后端技术方案选型"><a href="#后端技术方案选型" class="headerlink" title="后端技术方案选型"></a>后端技术方案选型</h3><p>websocket服务端选型:spring websocket</p>
+<p>支持SockJS,开启SockJS后，可应对不同浏览器的通讯支持<br>支持STOMP传输协议，可无缝对接STOMP协议下的消息代理器(如:RabbitMQ, ActiveMQ)</p>
+<h3 id="前端技术方案选型"><a href="#前端技术方案选型" class="headerlink" title="前端技术方案选型"></a>前端技术方案选型</h3><p>前端选型: stomp.js,sockjs.js</p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>上述所用技术，是这样的逻辑:</p>
+<ol>
+<li><p>开启socktJS:</p>
+<p>如果有浏览器不支持websocket协议，可以在其他两种协议中进行选择，但是对于应用层来讲，使用起来是一样的。<br>这是为了支持浏览器不支持websocket协议的一种备选方案</p>
+</li>
+<li><p>使用STOMP:</p>
+<p>使用STOMP进行交互，前端可以使用stomp.js类库进行交互，消息一STOMP协议格式进行传输，这样就规定了消息传输格式。 消息进入后端以后，可以将消息与实现STOMP格式的代理器进行整合。<br>这是为了消息统一管理，进行机器扩容时，可进行负载均衡部署</p>
+</li>
+<li><p>使用spring websocket:</p>
+<p>使用spring websocket,是因为他提供了STOMP的传输自协议的同时，还提供了StockJS的支持。<br>当然，除此之外，spring websocket还提供了权限整合的功能，还有自带天生与spring家族等相关框架进行无缝整合。</p>
+</li>
+</ol>
+<h2 id="参考文档"><a href="#参考文档" class="headerlink" title="参考文档"></a>参考文档</h2><p>再谈websocket-论架构设计<br><a href="http://lrwinx.github.io/2017/07/09/%E5%86%8D%E8%B0%88websocket-%E8%AE%BA%E6%9E%B6%E6%9E%84%E8%AE%BE%E8%AE%A1/" target="_blank" rel="noopener">http://lrwinx.github.io/2017/07/09/%E5%86%8D%E8%B0%88websocket-%E8%AE%BA%E6%9E%B6%E6%9E%84%E8%AE%BE%E8%AE%A1/</a></p>
+<p>Websocket协议的学习、调研和实现<br><a href="http://www.cnblogs.com/lizhenghn/p/5155933.html" target="_blank" rel="noopener">http://www.cnblogs.com/lizhenghn/p/5155933.html</a></p>
+
+      
+    </div>
+
+    
+      
+
+
+    
+
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/websocket/" rel="tag"># websocket</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2017/07/08/2017-07-08-work-thread/" rel="next" title="工作线程数究竟要设置为多少">
+                <i class="fa fa-chevron-left"></i> 工作线程数究竟要设置为多少
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2017/07/09/2017-07-10-websocket2/" rel="prev" title="websocket学习整理(二)">
+                websocket学习整理(二) <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+  
+    <div class="comments" id="comments">
+      <div id="lv-container" data-id="city" data-uid="MTAyMC8zNDA5NS8xMDYzMw=="></div>
+    </div>
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image"
+                src="/images/logo.jpg"
+                alt="Govern" />
+            
+              <p class="site-author-name" itemprop="name">Govern</p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          
+            <nav class="site-state motion-element">
+              
+                <div class="site-state-item site-state-posts">
+                
+                  <a href="/archives/">
+                
+                    <span class="site-state-item-count">98</span>
+                    <span class="site-state-item-name">日志</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-categories">
+                  <a href="/categories/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">20</span>
+                    <span class="site-state-item-name">分类</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-tags">
+                  <a href="/tags/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">39</span>
+                    <span class="site-state-item-name">标签</span>
+                  </a>
+                </div>
+              
+            </nav>
+          
+
+          
+
+          
+
+          
+          
+
+          
+          
+
+          
+            
+          
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#导语"><span class="nav-number">1.</span> <span class="nav-text">导语</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#websocket是什么"><span class="nav-number">1.1.</span> <span class="nav-text">websocket是什么</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#websocket的优点"><span class="nav-number">1.2.</span> <span class="nav-text">websocket的优点</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#为什么要使用websocket"><span class="nav-number">1.3.</span> <span class="nav-text">为什么要使用websocket</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#发展历史"><span class="nav-number">1.4.</span> <span class="nav-text">发展历史</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#http协议"><span class="nav-number">1.4.1.</span> <span class="nav-text">http协议</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#通过脚本发送的http请求（Ajax）"><span class="nav-number">1.4.2.</span> <span class="nav-text">通过脚本发送的http请求（Ajax）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#一种hack技术（Comet）"><span class="nav-number">1.4.3.</span> <span class="nav-text">一种hack技术（Comet）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Websocket—未来的解决方案"><span class="nav-number">1.4.4.</span> <span class="nav-text">Websocket—未来的解决方案</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#websocket逻辑"><span class="nav-number">1.5.</span> <span class="nav-text">websocket逻辑</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Opening-Handshake："><span class="nav-number">1.5.1.</span> <span class="nav-text">Opening Handshake：</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Data-Framing"><span class="nav-number">1.6.</span> <span class="nav-text">Data Framing</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Closing-Handshake"><span class="nav-number">1.7.</span> <span class="nav-text">Closing Handshake</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#websocket的事件响应"><span class="nav-number">1.8.</span> <span class="nav-text">websocket的事件响应</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#如何使用websocket"><span class="nav-number">1.9.</span> <span class="nav-text">如何使用websocket</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#相关技术概念"><span class="nav-number">1.10.</span> <span class="nav-text">相关技术概念</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#websocket"><span class="nav-number">1.10.1.</span> <span class="nav-text">websocket</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#SockJS"><span class="nav-number">1.10.2.</span> <span class="nav-text">SockJS</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#STOMP"><span class="nav-number">1.10.3.</span> <span class="nav-text">STOMP</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#技术落地"><span class="nav-number">1.11.</span> <span class="nav-text">技术落地</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#后端技术方案选型"><span class="nav-number">1.11.1.</span> <span class="nav-text">后端技术方案选型</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#前端技术方案选型"><span class="nav-number">1.11.2.</span> <span class="nav-text">前端技术方案选型</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#总结"><span class="nav-number">1.12.</span> <span class="nav-text">总结</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#参考文档"><span class="nav-number">1.13.</span> <span class="nav-text">参考文档</span></a></li></ol></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+        <div class="back-to-top">
+          <i class="fa fa-arrow-up"></i>
+          
+            <span id="scrollpercent"><span>0</span>%</span>
+          
+        </div>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; 2012 &mdash; <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Govern</span>
+
+  
+
+  
+</div>
+
+
+  
+
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" rel="external nofollow" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" rel="external nofollow" href="https://github.com/theme-next/hexo-theme-next">NexT.Gemini</a> v6.0.3</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=6.0.3"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=6.0.3"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=6.0.3"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=6.0.3"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=6.0.3"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=6.0.3"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=6.0.3"></script>
+
+
+
+  
+
+
+
+
+
+
+
+  
+    <script type="text/javascript">
+      (function(d, s) {
+        var j, e = d.getElementsByTagName(s)[0];
+        if (typeof LivereTower === 'function') { return; }
+        j = d.createElement(s);
+        j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+        j.async = true;
+        e.parentNode.insertBefore(j, e);
+      })(document, 'script');
+    </script>
+  
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+  
+  
+  
+  <link rel="stylesheet" href="/lib/algolia-instant-search/instantsearch.min.css">
+
+  
+  
+  <script src="/lib/algolia-instant-search/instantsearch.min.js"></script>
+  
+
+  <script src="/js/src/algolia-search.js?v=6.0.3"></script>
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+  
+  
+  
+  <script src="/lib/bookmark/bookmark.min.js?v=1.0"></script>
+  <script type="text/javascript">
+  
+    bookmark.scrollToMark('auto', "#more");
+  
+  </script>
+
+
+</body>
+</html>

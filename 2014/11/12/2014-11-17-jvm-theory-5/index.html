@@ -1,0 +1,1157 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next gemini use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=6.0.3" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=6.0.3">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/lights-32x32.png?v=6.0.3">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/lights-16x16.png?v=6.0.3">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=6.0.3" color="#222">
+
+
+
+
+
+
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Gemini',
+    version: '6.0.3',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":true,"scrollpercent":true,"onmobile":false},
+    fancybox: false,
+    fastclick: false,
+    lazyload: false,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    algolia: {
+      applicationID: '41NC33JUJG',
+      apiKey: '7362b84fed21bc83930f198a0927bb82',
+      indexName: 'blog',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+  
+
+
+
+
+  
+  <meta name="keywords" content="字节码," />
+
+
+<meta name="description" content="原文链接:             https://blog.csdn.net/luanlouis/article/details/41113695 概述方法表集合是指由若干个方法表（method_info）组成的集合。对于在类中定义的若干个，经过JVM编译成class文件后，会将相应的method方法信息组织到一个叫做方法表集合的结构中，方法表集合是一个类数组结构，如下图所示：  method方">
+<meta name="keywords" content="字节码">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Java虚拟机原理：(五) class文件中的方法表集合">
+<meta property="og:url" content="http://governlee.github.io/2014/11/12/2014-11-17-jvm-theory-5/index.html">
+<meta property="og:site_name" content="Govern x Lab">
+<meta property="og:description" content="原文链接:             https://blog.csdn.net/luanlouis/article/details/41113695 概述方法表集合是指由若干个方法表（method_info）组成的集合。对于在类中定义的若干个，经过JVM编译成class文件后，会将相应的method方法信息组织到一个叫做方法表集合的结构中，方法表集合是一个类数组结构，如下图所示：  method方">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="https://img-blog.csdn.net/20141114104145226">
+<meta property="og:image" content="https://img-blog.csdn.net/20141114104728083">
+<meta property="og:image" content="https://img-blog.csdn.net/20141114150716551">
+<meta property="og:image" content="https://img-blog.csdn.net/20141114144708625">
+<meta property="og:image" content="https://img-blog.csdn.net/20141114161151578">
+<meta property="og:image" content="https://img-blog.csdn.net/20141114170949140">
+<meta property="og:image" content="https://img-blog.csdn.net/20141114180514489">
+<meta property="og:image" content="https://img-blog.csdn.net/20141115094626151">
+<meta property="og:image" content="https://img-blog.csdn.net/20141115145825045">
+<meta property="og:image" content="https://img-blog.csdn.net/20141116114625218">
+<meta property="og:image" content="https://img-blog.csdn.net/20141116221304421">
+<meta property="og:image" content="https://img-blog.csdn.net/20141117100511124">
+<meta property="og:image" content="https://img-blog.csdn.net/20141117111623566">
+<meta property="og:image" content="https://img-blog.csdn.net/20141117123854641">
+<meta property="og:image" content="https://img-blog.csdn.net/20141115154139486">
+<meta property="og:image" content="https://img-blog.csdn.net/20141115114030609">
+<meta property="og:image" content="https://img-blog.csdn.net/20141117142215355">
+<meta property="og:image" content="https://img-blog.csdn.net/20141117142426801">
+<meta property="og:updated_time" content="2018-03-29T15:41:32.227Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Java虚拟机原理：(五) class文件中的方法表集合">
+<meta name="twitter:description" content="原文链接:             https://blog.csdn.net/luanlouis/article/details/41113695 概述方法表集合是指由若干个方法表（method_info）组成的集合。对于在类中定义的若干个，经过JVM编译成class文件后，会将相应的method方法信息组织到一个叫做方法表集合的结构中，方法表集合是一个类数组结构，如下图所示：  method方">
+<meta name="twitter:image" content="https://img-blog.csdn.net/20141114104145226">
+
+
+
+
+
+
+  <link rel="canonical" href="http://governlee.github.io/2014/11/12/2014-11-17-jvm-theory-5/"/>
+
+
+
+<script type="text/javascript" id="page.configurations">
+  CONFIG.page = {
+    sidebar: "",
+  };
+</script>
+  <title>Java虚拟机原理：(五) class文件中的方法表集合 | Govern x Lab</title>
+  
+
+
+
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?f6804645172803d5efc7161f04df1d76";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+  <noscript>
+  <style type="text/css">
+    .use-motion .motion-element,
+    .use-motion .brand,
+    .use-motion .menu-item,
+    .sidebar-inner,
+    .use-motion .post-block,
+    .use-motion .pagination,
+    .use-motion .comments,
+    .use-motion .post-header,
+    .use-motion .post-body,
+    .use-motion .collection-title { opacity: initial; }
+
+    .use-motion .logo,
+    .use-motion .site-title,
+    .use-motion .site-subtitle {
+      opacity: initial;
+      top: initial;
+    }
+
+    .use-motion {
+      .logo-line-before i { left: initial; }
+      .logo-line-after i { right: initial; }
+    }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"> <div class="site-brand-wrapper">
+  <div class="site-meta custom-logo">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Govern x Lab</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <h1 class="site-subtitle" itemprop="description">I'm not the only one</h1>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-home"></i> <br />首页</a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-user"></i> <br />关于</a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />标签</a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-th"></i> <br />分类</a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />归档</a>
+        </li>
+      
+
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />搜索</a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  
+  <div class="algolia-popup popup search-popup">
+    <div class="algolia-search">
+      <div class="algolia-search-input-icon">
+        <i class="fa fa-search"></i>
+      </div>
+      <div class="algolia-search-input" id="algolia-search-input"></div>
+    </div>
+
+    <div class="algolia-results">
+      <div id="algolia-stats"></div>
+      <div id="algolia-hits"></div>
+      <div id="algolia-pagination" class="algolia-pagination"></div>
+    </div>
+
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+  </div>
+
+
+
+
+    </div>
+  
+</nav>
+
+
+  
+
+
+
+ </div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://governlee.github.io/2014/11/12/2014-11-17-jvm-theory-5/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Govern">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/logo.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Govern x Lab">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">Java虚拟机原理：(五) class文件中的方法表集合</h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2014-11-12T08:00:00+08:00">2014-11-12</time>
+            
+
+            
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/JVM/" itemprop="url" rel="index"><span itemprop="name">JVM</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p><strong>原文链接:</strong>             <a href="https://blog.csdn.net/luanlouis/article/details/41113695" target="_blank" rel="noopener">https://blog.csdn.net/luanlouis/article/details/41113695</a></p>
+<h3 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h3><p><strong>方法表集合</strong>是指由若干个<strong>方法表（method_info）</strong>组成的集合。对于在类中定义的若干个，经过JVM编译成class文件后，会将相应的method方法信息组织到一个叫做方法表集合的结构中，方法表集合是一个类数组结构，如下图所示：</p>
+<p><img src="https://img-blog.csdn.net/20141114104145226" alt=""></p>
+<h3 id="method方法的描述-方法表集合在class文件中的位置"><a href="#method方法的描述-方法表集合在class文件中的位置" class="headerlink" title="method方法的描述-方法表集合在class文件中的位置"></a>method方法的描述-方法表集合在class文件中的位置</h3><p>method方法的描述-方法表集合紧跟在字段表集合的后面，如下图所示：</p>
+<p><img src="https://img-blog.csdn.net/20141114104728083" alt=""></p>
+<p>接下来让我们看看Method_info 结构体是怎么组织method方法信息的:</p>
+<h3 id="一个类中的method方法应该包含哪些信息？—-method-info结构体的定义"><a href="#一个类中的method方法应该包含哪些信息？—-method-info结构体的定义" class="headerlink" title="一个类中的method方法应该包含哪些信息？—-method_info结构体的定义"></a>一个类中的method方法应该包含哪些信息？—-method_info结构体的定义</h3><p>对于一个方法的表示，我们根据我们可以概括的信息如下所示：</p>
+<p><img src="https://img-blog.csdn.net/20141114150716551" alt=""></p>
+<p>实际上JVM还会对method方法的描述添加其他信息，我们将在后面详细讨论。如上图中的method_info结构体的定义，该结构体的定义跟描述field字段 的field_info结构体的结构几乎完全一致,如下图所示。</p>
+<p><img src="https://img-blog.csdn.net/20141114144708625" alt=""></p>
+<p>方法表的结构体由：访问标志(access_flags)、名称索引(name_index)、描述索引(descriptor_index)、属性表(attribute_info)集合组成。</p>
+<p><strong>访问标志(access_flags)：</strong></p>
+<p>method_info结构体最前面的两个字节表示的访问标志（access_flags），记录这这个方法的作用域、静态or非静态、可变性、是否可同步、是否本地方法、是否抽象等信息，实际上不止这些信息，我们后面会详细介绍访问标志这两个字节的每一位具体表示什么意思。</p>
+<p><strong>名称索引(name_index)：</strong></p>
+<p>紧跟在访问标志（access_flags）后面的两个字节称为名称索引，这两个字节中的值指向了常量池中的某一个常量池项，这个方法的名称以UTF-8格式的字符串存储在这个常量池项中。如public void methodName(),很显然，“methodName”则表示着这个方法的名称，那么在常量池中会有一个<strong>CONSTANT_Utf8_info</strong>格式的常量池项，里面存储着“methodName”字符串，而mehodName()方法的方法表中的名称索引则指向了这个常量池项。</p>
+<p><strong>描述索引(descriptor_index)：</strong></p>
+<p>描述索引表示的是这个方法的特征或者说是签名，一个方法会有若干个参数和返回值，而若干个参数的数据类型和返回值的数据类型构成了这个方法的描述，其基本格式为：<strong>(参数数据类型描述列表)返回值数据类型</strong>。我们将在后面继续讨论。</p>
+<p><strong>属性表(attribute_info)集合：</strong></p>
+<p>这个属性表集合非常重要，方法的实现被JVM编译成<strong>JVM的机器码指令</strong>，机器码指令就存放在一个<strong>Code类型</strong>的属性表中；如果方法声明要抛出异常，那么异常信息会在一个<strong>Exceptions类型</strong>的属性表中予以展现。Code类型的属性表可以说是非常复杂的内容，也是本文最难的地方。</p>
+<p>接下来，我们将一一击破它们，看看它们到底是怎么表示的。</p>
+<h3 id="访问标志-access-flags-—记录着method方法的访问信息"><a href="#访问标志-access-flags-—记录着method方法的访问信息" class="headerlink" title="访问标志(access_flags)—记录着method方法的访问信息"></a>访问标志(access_flags)—记录着method方法的访问信息</h3><p><strong>访问标志（access_flags）</strong>共占有2 个字节，分为 16 位，这 16位 表示的含义如下所示：</p>
+<p><img src="https://img-blog.csdn.net/20141114161151578" alt=""></p>
+<p>举例：某个类中定义了如下方法：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">synchronized</span> <span class="keyword">final</span> <span class="keyword">void</span> <span class="title">greeting</span><span class="params">()</span></span>&#123;  </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>greeting()方法的修饰符有：public、static、synchronized、final 这几个修饰符修饰，那么相对应地，greeting()方法的访问标志中的ACC_PUBLIC、ACC_STATIC、ACC_SYNCHRONIZED、ACC_FINAL标志位都应该是1，即：</p>
+<p><img src="https://img-blog.csdn.net/20141114170949140" alt=""></p>
+<p>从上图中可以看出访问标志的值应该是二进制00000000 00111001,即十六进制0x0039。我们将在文章的最后一个例子中证实这里点。</p>
+<h3 id="名称索引和描述符索引—-一个方法的签名"><a href="#名称索引和描述符索引—-一个方法的签名" class="headerlink" title="名称索引和描述符索引—-一个方法的签名"></a>名称索引和描述符索引—-一个方法的签名</h3><p>紧接着访问标志（access_flags）后面的两个字节，叫做<strong>名称索引(name_index)</strong>，这两个字节中的值是指向了常量池中某个常量池项的索引，<strong>该常量池项表示这这个方法名称的字符串</strong>。</p>
+<p><strong>方法描述符索引(descrptor_index)</strong>是紧跟在名称索引后面的两个字节，这两个字节中的值跟名称索引中的值性质一样，都是指向了常量池中的某个常量池项。这两个字节中的指向的常量池项，是表示了<strong>方法描述符的字符串</strong>。</p>
+<p>所谓的方法描述符，实质上就是指<strong>用一个什么样的字符串来描述一个方法</strong>，方法描述符的组成如下图所示：</p>
+<p><img src="https://img-blog.csdn.net/20141114180514489" alt=""></p>
+<p>举例：对于如下定义的的greeting()方法，我们来看一下对应的method_info结构体中的名称索引和描述符索引信息是怎样组织的。<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">synchronized</span> <span class="keyword">final</span> <span class="keyword">void</span> <span class="title">greeting</span><span class="params">()</span></span>&#123;  </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>如下图所示,method_info结构体的名称索引中存储了一个索引值x，指向了常量池中的第x项，第 x项表示的是字符串”greeting”,即表示该方法名称是”greeting”；描述符索引中的y 值指向了常量池的第y项，该项表示字符串”()V”，即表示该方法没有参数，返回值是void类型。</p>
+<p><img src="https://img-blog.csdn.net/20141115094626151" alt=""></p>
+<h3 id="属性表集合–记录方法的机器指令和抛出异常等信息"><a href="#属性表集合–记录方法的机器指令和抛出异常等信息" class="headerlink" title="属性表集合–记录方法的机器指令和抛出异常等信息"></a>属性表集合–记录方法的机器指令和抛出异常等信息</h3><p>属性表集合记录了某个方法的一些属性信息，这些信息包括：</p>
+<ul>
+<li>这个方法的代码实现，即<strong>方法的*可执行的机器指令</strong></li>
+<li>这个方法声明的要抛出的<strong>异常信息</strong></li>
+<li>这个方法是否被@deprecated注解表示</li>
+<li>这个方法是否是编译器自动生成的</li>
+</ul>
+<p>属性表（attribute_info）结构体的一般结构如下所示：</p>
+<p><img src="https://img-blog.csdn.net/20141115145825045" alt=""></p>
+<h3 id="Code类型的属性表–method方法中的机器指令的信息"><a href="#Code类型的属性表–method方法中的机器指令的信息" class="headerlink" title="Code类型的属性表–method方法中的机器指令的信息"></a>Code类型的属性表–method方法中的机器指令的信息</h3><p>Code类型的属性表(attribute_info)可以说是class文件中最为重要的部分，因为它包含的是JVM可以运行的机器码指令，JVM能够运行这个类，就是从这个属性中取出机器码的。除了要执行的机器码，它还包含了一些其他信息，如下所示：</p>
+<p><img src="https://img-blog.csdn.net/20141116114625218" alt=""></p>
+<p>Code属性表的组成部分：</p>
+<p><strong>机器指令—-code：</strong></p>
+<p>目前的JVM使用<strong>一个字节表示机器操作码</strong>，即对JVM底层而言，它能表示的机器操作码不多于2的 8 次方，即 256个。class文件中的机器指令部分是class文件中最重要的部分，并且非常复杂，本文的重点不止介绍它，我将专门在一片博文中讨论它，敬请期待。</p>
+<p><strong>异常处理跳转信息—exception_table：</strong></p>
+<p>如果代码中出现了try{}catch{}块，那么<strong>try{}块内的机器指令的地址范围</strong>记录下来，并且记录对应的<strong>catch{}块中的起始机器指令地址</strong>，当运行时在try块中有异常抛出的话，JVM会将catch{}块对应机器指令地址传递给<strong>PC寄存器</strong>，从而实现指令跳转；</p>
+<p><strong>Java源码行号和机器指令的对应关系—LineNumberTable属性表：</strong></p>
+<p>编译器在将java源码编译成class文件时，会将<strong>源码中的语句行号跟编译好的机器指令关联起来</strong>，这样的class文件加载到内存中并运行时，如果抛出异常，JVM可以根据这个对应关系，抛出异常信息，告诉我们我们的源码的多少行有问题，方便我们定位问题。<strong>这个信息不是运行时必不可少的信息</strong>，但是默认情况下，编译器会生成这一项信息，如果你项取消这一信息，你可以使用<strong>-g:none</strong>或<strong>-g:lines</strong>来取消或者要求设置这一项信息。如果使用了-g:none来生成class文件，class文件中将不会有LineNumberTable属性表，造成的影响就是 将来如果代码报错，将无法定位错误信息报错的行，并且如果项调试代码，将不能在此类中打断点（因为没有指定行号。）</p>
+<p><strong>局部变量表描述信息—-LocalVariableTable属性表：</strong></p>
+<p><strong>局部变量表信息会记录栈帧局部变量表中的变量和java源码中定义的变量之间的关系，这个信息不是运行时必须的属性，默认情况下会生成到class文件中</strong>。你可以根据javac指令的-g:none或者-g:vars选项来取消或者设置这一项信息。</p>
+<p>它有什么作用呢？  当我们使用IDE进行开发时，最喜欢的莫过于它们的<strong>代码提示功能</strong>了。如果在项目中引用到了第三方的jar包，而第三方的包中的class文件中有无LocalVariableTable属性表的区别如下所示：</p>
+<p><img src="https://img-blog.csdn.net/20141116221304421" alt=""></p>
+<p><strong>Code属性表结构体的解释：</strong></p>
+<ol>
+<li><strong>attribute_name_index</strong>,属性名称索引，占有2个字节，其内的值指向了常量池中的某一项，该项表示字符串“Code”;</li>
+<li><strong>attribute_length</strong>,属性长度，占有 4个字节，其内的值表示后面有多少个字节是属于此Code属性表的；</li>
+<li><strong>max_stack</strong>,<strong>操作数栈深度的最大值</strong>，占有 2 个字节，<strong>在方法执行的任意时刻，操作数栈都不应该超过这个值</strong>，虚拟机的运行的时候，会根据这个值来设置该方法对应的栈帧(Stack Frame)中的操作数栈的深度；</li>
+<li><strong>max_local</strong>,最大局部变量数目，占有 2个字节，其内的值表示局部变量表所需要的存储空间大小；</li>
+<li><strong>code_length</strong>,机器指令长度，占有 4 个字节，表示跟在其后的多少个字节表示的是机器指令；</li>
+<li><strong>code</strong>,机器指令区域，该区域占有的字节数目由 code_length中的值决定。JVM最底层的要执行的机器指令就存储在这里；</li>
+<li><strong>exception_table_length</strong>,异常表长度，占有2个字节，如果在方法代码中出现了try{} catch()形式的结构，该值不会为空，紧跟其后会跟着若干个exception_table结构体，以表示异常捕获情况；</li>
+<li><strong>exception_table</strong>，显式异常表，占有8 个字节，start_pc,end_pc,handler_pc中的值都表示的是PC计数器中的指令地址。exception_table表示的意思是：<strong>如果字节码从第start_pc行到第end_pc行之间出现了catch_type所描述的异常类型，那么将跳转到handler_pc行继续处理</strong>。</li>
+<li><strong>attribute_count,属性计数器</strong>，占有 2 个字节，表示Code属性表的其他属性的数目</li>
+<li><strong>attribute_info</strong>,表示Code属性表具有的属性表，它主要分为两个类型的属性表：“LineNumberTable”类型和“LocalVariableTable”类型。<br>“<strong>LineNumberTable</strong>”类型的属性表记录着Java源码和机器指令之间的对应关系<br>“<strong>LocalVariableTable</strong>”类型的属性表记录着局部变量描述</li>
+</ol>
+<p>举例：如下定义Simple类，使用javac -g:none Simple.java 编译出Simple.class 文件，并使用<code>javap -v Simple &gt; Simple.txt</code>查看反编译的信息，然后看Simple.class文件中的方法表集合是怎样组织的：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">Simple</span> </span>&#123;  </span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">synchronized</span> <span class="keyword">final</span> <span class="keyword">void</span> <span class="title">greeting</span><span class="params">()</span></span>&#123;  </span><br><span class="line">        <span class="keyword">int</span> a = <span class="number">10</span>;  </span><br><span class="line">    &#125;  </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>Simple.class文件组织信息如下所示：</p>
+<p><img src="https://img-blog.csdn.net/20141117100511124" alt=""></p>
+<p>如上所示，方法表集合使用了蓝色线段圈了起来。</p>
+<p>请注意：方法表集合的头两个字节，即方法表计数器（method_count）的值是0x0002，它表示该类中有2 个方法。细心的读者会注意到，我们的Simple.java中就定义了一个greeting()方法，为什么class文件中会显示有两个方法呢？？</p>
+<p>在Simple.classz中出现了两个方法表，分别代表构造方法&lt; init &gt;()和 greeting()方法，现在让我们分别来讨论这两个方法：</p>
+<p>Simple.class 中的<init>() 方法:</init></p>
+<p><img src="https://img-blog.csdn.net/20141117111623566" alt=""></p>
+<ol>
+<li><p><strong>方法访问标志(access_flags)</strong>： 占有 2个字节，值为0x0001,即标志位的第 16 位为 1，所以该<init>()方法的修饰符是：ACC_PUBLIC;</init></p>
+</li>
+<li><p><strong>名称索引(name_index)</strong>： 占有 2 个字节，值为 0x0004，指向常量池的第 4项，该项表示字符串“<init>”，即该方法的名称是“<init>”;</init></init></p>
+</li>
+<li><p><strong>描述符索引(descriptor_index)</strong>: 占有 2 个字节，值为0x0005,指向常量池的第 5 项，该项表示字符串“()V”，即表示该方法不带参数，并且无返回值（构造函数确实也没有返回值）；</p>
+</li>
+<li><p><strong>属性计数器（attribute_count)</strong>: 占有 2 个字节，值为0x0001,表示该方法表中含有一个属性表，后面会紧跟着一个属性表；</p>
+</li>
+<li><p><strong>属性表的名称索引(attribute_name_index)</strong>：占有 2 个字节，值为0x0006,指向常量池中的第6 项，该项表示字符串“Code”，表示这个属性表是Code类型的属性表；</p>
+</li>
+<li><p><strong>属性长度（attribute_length）</strong>：占有4个字节，值为0x0000 0011，即十进制的 17，表明后续的 17 个字节可以表示这个Code属性表的属性信息；</p>
+</li>
+<li><p><strong>操作数栈的最大深度（max_stack）</strong>：占有2个字节，值为0x0001,表示栈帧中操作数栈的最大深度是1；</p>
+</li>
+<li><p><strong>局部变量表的最大容量（max_variable）</strong>：占有2个字节，值为0x0001, JVM在调用该方法时，根据这个值设置栈帧中的局部变量表的大小；</p>
+</li>
+<li><p><strong>机器指令数目(code_length)</strong>：占有4个字节，值为0x0000 0005,表示后续的5 个字节 0x2A 、0xB7、 0x00、0x01、0xB1表示机器指令;</p>
+</li>
+<li><p><strong>机器指令集(code[code_length])</strong>：这里共有  5个字节，值为0x2A 、0xB7、 0x00、0x01、0xB1；</p>
+</li>
+<li><p><strong> 显式异常表集合（exception_table_count）</strong>： 占有2 个字节，值为0x0000,表示方法中没有需要处理的异常信息；</p>
+</li>
+<li><p><strong>Code属性表的属性表集合（attribute_count）</strong>： 占有2 个字节，值为0x0000，表示它没有其他的属性表集合，因为我们使用了<strong>-g:none</strong> 禁止编译器生成Code属性表的 <strong>LineNumberTable</strong> 和<strong>LocalVariableTable</strong>;</p>
+</li>
+</ol>
+<p><strong>Simple.class 中的greeting() 方法:</strong></p>
+<p><img src="https://img-blog.csdn.net/20141117123854641" alt=""></p>
+<ol>
+<li><p><strong>方法访问标志(access_flags)</strong>： 占有 2个字节，值为 0x0039 ,即二进制的00000000 00111001,即标志位的第11、12、13、16位为1，根据上面讲的方法标志位的表示，可以得到该greeting()方法的修饰符有：ACC_SYNCHRONIZED、ACC_FINAL、ACC_STATIC、ACC_PUBLIC;</p>
+</li>
+<li><p><strong>名称索引(name_index)</strong>： 占有 2 个字节，值为 0x0007，指向常量池的第 7 项，该项表示字符串“greeting”，即该方法的名称是“greeting”;</p>
+</li>
+<li><p><strong>描述符索引(descriptor_index)</strong>: 占有 2 个字节，值为0x0005,指向常量池的第 5 项，该项表示字符串“()V”，即表示该方法不带参数，并且无返回值；</p>
+</li>
+<li><p><strong>属性计数器（attribute_count)</strong>: 占有 2 个字节，值为0x0001,表示该方法表中含有一个属性表，后面会紧跟着一个属性表；</p>
+</li>
+<li><p><strong>属性表的名称索引(attribute_name_index)</strong>：占有 2 个字节，值为0x0006,指向常量池中的第6 项，该项表示字符串“Code”，表示这个属性表是Code类型的属性表；</p>
+</li>
+<li><p><strong>属性长度（attribute_length）</strong>：占有4个字节，值为0x0000 0010，即十进制的16，表明后续的16个字节可以表示这个Code属性表的属性信息；</p>
+</li>
+<li><p><strong>操作数栈的最大深度（max_stack）</strong>：占有2个字节，值为0x0001,表示栈帧中操作数栈的最大深度是1；</p>
+</li>
+<li><p><strong>局部变量表的最大容量（max_variable）</strong>：占有2个字节，值为0x0001, JVM在调用该方法时，根据这个值设置栈帧中的局部变量表的大小；</p>
+</li>
+<li><p><strong>机器指令数目(code_length)</strong>：占有4 个字节，值为0x0000 0004,表示后续的4个字节0x10、 0x0A、 0x3B、0xB1的是表示机器指令;</p>
+</li>
+<li><p><strong>机器指令集(code[code_length])</strong>：这里共有4 个字节，值为0x10、 0x0A、 0x3B、0xB1 ；</p>
+</li>
+<li><p><strong>显式异常表集合（exception_table_count）</strong>： 占有2 个字节，值为0x0000,表示方法中没有需要处理的异常信息；</p>
+</li>
+<li><p><strong> Code属性表的属性表集合（attribute_count）</strong>： 占有2 个字节，值为0x0000，表示它没有其他的属性表集合，因为我们使用了-g:none 禁止编译器生成Code属性表的 LineNumberTable 和LocalVariableTable;</p>
+</li>
+</ol>
+<p><strong>Exceptions类型的属性表—-method方法声明的要抛出的异常信息</strong></p>
+<p>有些方法在定义的时候，会声明该方法会抛出什么类型的异常，如下定义一个Interface接口，它声明了sayHello()方法，抛出Exception异常：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">interface</span> <span class="title">Interface</span> </span>&#123;  </span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span>  <span class="keyword">void</span> <span class="title">sayHello</span><span class="params">()</span> <span class="keyword">throws</span> Exception</span>;  </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>现在让我们看一下<strong>Exceptions类型的属性表</strong>(attribute_info)结构体是怎样组织的：</p>
+<p><img src="https://img-blog.csdn.net/20141115154139486" alt=""></p>
+<p>如上图所示，Exceptions类型的属性表(attribute_info)结构体由一下元素组成：</p>
+<p><strong>属性名称索引(attribute_name_index)</strong>：占有 2个字节，其中的值指向了常量池中的表示”<strong>Exceptions</strong>“字符串的常量池项；</p>
+<p><strong>属性长度(attribute_length)</strong>：它比较特殊，占有4个字节，它的值表示跟在其后面多少个字节表示异常信息；</p>
+<p><strong>异常数量(number_of_exceptions)</strong>：占有2 个字节，它的值表示方法声明抛出了多少个异常，即表示跟在其后有多少个异常名称索引；</p>
+<p><strong>异常名称索引(exceptions_index_table)</strong>：占有2个字节，它的值指向了常量池中的某一项，该项是一个<strong>CONSTANT_Class_info</strong>类型的项，表示这个异常的完全限定名称；</p>
+<blockquote>
+<p>Exceptions类型的属性表的长度计算</p>
+<p>如果某个方法定义中，没有声明抛出异常，那么，表示该方法的方法表(method_info)结构体中的属性表集合中不会有Exceptions类型的属性表；换句话说，如果方法声明了要抛出的异常，方法表(method_info)结构体中的属性表集合中必然会有Exceptions类型的属性表，并且该属性表中的异常数量不小于1。</p>
+</blockquote>
+<p>我们假设异常数量中的值为 N，那么后面的异常名称索引的数量就为N，它们总共占有的字节数为N*2，而异常数量占有2个字节，那么将有下面的这个关系式：</p>
+<p><strong>属性长度(attribute_length)中的值</strong>= 2  + 2<em>异常数量(number_of_exceptions)中的值<br><em>*Exceptions类型的属性表（attribute_info）的长度</em></em>=2+4+属性长度(attribute_length)中的值</p>
+<p>举例：将上面定义的Interface接口类编译成class文件，然后我们查看Interface.class文件，找出方法表集合所在位置和相应的数据，并辅助<code>javap -v  Inerface</code>查看常量池信息，如下图所示：</p>
+<p><img src="https://img-blog.csdn.net/20141115114030609" alt=""></p>
+<p>由于sayHello()方法是在的Interface接口类中声明的，它没有被实现，所以它对应的方法表(method_info)结构体中的属性表集合中<strong>没有Code类型的属性表</strong>。</p>
+<ol>
+<li><p><strong>方法计数器（methods_count）</strong>中的值为0x0001，表明其后的方法表(method_info)就一个,即我们就定义了一个方法，其后会紧跟着一个方法表(method_info)结构体；</p>
+</li>
+<li><p><strong>方法的访问标志（access_flags）</strong>的值是0x0401，二进制是00000100 00000001,第6位和第16位是1，对应上面的标志位信息，可以得出它的访问标志符有：ACC_ABSTRACT、ACC_PUBLIC。细心的读者可能会发现，在上面声明的sayHello()方法中并没有声明为abstract类型啊。确实如此，这是因为编译器对于接口内声明的方法自动加上ACC_ABSTRACT标志。</p>
+</li>
+<li><p><strong>名称索引（name_index）</strong>中的值为0x0005，0x0005指向了常量池的第5项，第五项表示的字符串为“sayHello”，即表示的方法名称是sayHello</p>
+</li>
+<li><p><strong>描述符索引(descriptor_index)</strong>中的值为0x0006,0x0006指向了常量池中的第6项，第6项表示的字符串为“()V” 表示这个方法的无入参，返回值为void类型</p>
+</li>
+<li><p><strong>属性表计数器(attribute_count)</strong>中的值为0x0001,表示后面的属性表的个数就1个，后面紧跟着一个attribute_info结构体；</p>
+</li>
+<li><p><strong>属性表（attribute_info）</strong>中的属性名称索引(attribute_name_index)中的值为0x0007，0x0007指向了常量池中的第7 项，第 7项指向字符串“Exceptions”，即表示该属性表表示的异常信息；</p>
+</li>
+<li><p><strong>属性长度（attribute_length）</strong>中的值为：0x00000004,即后续的4个字节将会被解析成属性值；</p>
+</li>
+<li><p><strong>异常数量（number_of_exceptions）</strong>中的值为0x0001,表示这个方法声明抛出的异常个数是1个；</p>
+</li>
+<li><p><strong>异常名称索引(exception_index_table)</strong>中的值为0x0008,指向了常量池中的第8项，第8项表示的是CONSTANT_Class_info类型的常量池项，表示“java/lang/Exception”，即表示此方法抛出了java.lang.Exception异常。</p>
+</li>
+</ol>
+<h3 id="IDE代码提示功能实现的基本原理"><a href="#IDE代码提示功能实现的基本原理" class="headerlink" title="IDE代码提示功能实现的基本原理"></a>IDE代码提示功能实现的基本原理</h3><p>现在对于企业级的开发，开发者们越来越依赖IDE如Intellij IDEA、Eclipse、MyEclipse、NetBeans等，利用他们提供的高级功能，可以极大地提高编码的速度和效率。</p>
+<p>每个IDE都提供了代码提示功能，它们实现的基本原理<strong>其实就是IDE针对它们项目下的包中所有的class文件进行建模，解析出它们的方法信息，当我们一定的条件时，IDE会自动地将合适条件的方法列表展示给开发者，供开发者使用</strong>。</p>
+<p><img src="https://img-blog.csdn.net/20141117142215355" alt=""></p>
+<p>在上面将Code属性表的时候也讲了，如果编译的第三方包，没有LocalVariableTable属性表信息，IDE的提示信息会稍有不同：</p>
+<p><img src="https://img-blog.csdn.net/20141117142426801" alt=""></p>
+<h3 id="写在后面"><a href="#写在后面" class="headerlink" title="写在后面"></a>写在后面</h3><p>以上就是Class文件的方法表集合的全部内容。</p>
+<p>读者可能觉得本文关于方法表的Code属性表讨论的不够深入，在讨论Code属性表的时候，我简单介绍了它的两个属性表LineNumberTable 和LocalVariableTable这两个在有什么实际作用，但是没有详细第介绍它们，并且在列举的例子中，刻意地使用了  -g:none 选项 ，以使生成的class文件没有这两项信息，这么做是因为Code 属性太过复杂，而本文主要是想让读者了解的是 方法表集合，所以就生成了最精简的Code属性表，以减少读者的负担。</p>
+<p>接下来的一篇文章，我打算专门来讨论Code属性表，揭开Code属性表的所有秘密，敬请关注~~</p>
+<p>本文还引出了一个需要讨论的话题：就是Code属性表中的机器指令,机器指令的运行要依赖于JVM体系结构的设计机制，理解机器指令的运行机制，这将是根非常非常难啃的骨头</p>
+
+      
+    </div>
+
+    
+      
+
+
+    
+
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/字节码/" rel="tag"># 字节码</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2014/11/12/2016-01-08-jvm-theory-7/" rel="next" title="Java虚拟机原理：(七) JVM机器指令集">
+                <i class="fa fa-chevron-left"></i> Java虚拟机原理：(七) JVM机器指令集
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2014/11/12/2014-10-13-jvm-theory-6/" rel="prev" title="Java虚拟机原理：(六) JVM运行时数据区">
+                Java虚拟机原理：(六) JVM运行时数据区 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+  
+    <div class="comments" id="comments">
+      <div id="lv-container" data-id="city" data-uid="MTAyMC8zNDA5NS8xMDYzMw=="></div>
+    </div>
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image"
+                src="/images/logo.jpg"
+                alt="Govern" />
+            
+              <p class="site-author-name" itemprop="name">Govern</p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          
+            <nav class="site-state motion-element">
+              
+                <div class="site-state-item site-state-posts">
+                
+                  <a href="/archives/">
+                
+                    <span class="site-state-item-count">98</span>
+                    <span class="site-state-item-name">日志</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-categories">
+                  <a href="/categories/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">20</span>
+                    <span class="site-state-item-name">分类</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-tags">
+                  <a href="/tags/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">39</span>
+                    <span class="site-state-item-name">标签</span>
+                  </a>
+                </div>
+              
+            </nav>
+          
+
+          
+
+          
+
+          
+          
+
+          
+          
+
+          
+            
+          
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#概述"><span class="nav-number">1.</span> <span class="nav-text">概述</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#method方法的描述-方法表集合在class文件中的位置"><span class="nav-number">2.</span> <span class="nav-text">method方法的描述-方法表集合在class文件中的位置</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#一个类中的method方法应该包含哪些信息？—-method-info结构体的定义"><span class="nav-number">3.</span> <span class="nav-text">一个类中的method方法应该包含哪些信息？—-method_info结构体的定义</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#访问标志-access-flags-—记录着method方法的访问信息"><span class="nav-number">4.</span> <span class="nav-text">访问标志(access_flags)—记录着method方法的访问信息</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#名称索引和描述符索引—-一个方法的签名"><span class="nav-number">5.</span> <span class="nav-text">名称索引和描述符索引—-一个方法的签名</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#属性表集合–记录方法的机器指令和抛出异常等信息"><span class="nav-number">6.</span> <span class="nav-text">属性表集合–记录方法的机器指令和抛出异常等信息</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Code类型的属性表–method方法中的机器指令的信息"><span class="nav-number">7.</span> <span class="nav-text">Code类型的属性表–method方法中的机器指令的信息</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#IDE代码提示功能实现的基本原理"><span class="nav-number">8.</span> <span class="nav-text">IDE代码提示功能实现的基本原理</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#写在后面"><span class="nav-number">9.</span> <span class="nav-text">写在后面</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+        <div class="back-to-top">
+          <i class="fa fa-arrow-up"></i>
+          
+            <span id="scrollpercent"><span>0</span>%</span>
+          
+        </div>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; 2012 &mdash; <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Govern</span>
+
+  
+
+  
+</div>
+
+
+  
+
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" rel="external nofollow" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" rel="external nofollow" href="https://github.com/theme-next/hexo-theme-next">NexT.Gemini</a> v6.0.3</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=6.0.3"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=6.0.3"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=6.0.3"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=6.0.3"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=6.0.3"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=6.0.3"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=6.0.3"></script>
+
+
+
+  
+
+
+
+
+
+
+
+  
+    <script type="text/javascript">
+      (function(d, s) {
+        var j, e = d.getElementsByTagName(s)[0];
+        if (typeof LivereTower === 'function') { return; }
+        j = d.createElement(s);
+        j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+        j.async = true;
+        e.parentNode.insertBefore(j, e);
+      })(document, 'script');
+    </script>
+  
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+  
+  
+  
+  <link rel="stylesheet" href="/lib/algolia-instant-search/instantsearch.min.css">
+
+  
+  
+  <script src="/lib/algolia-instant-search/instantsearch.min.js"></script>
+  
+
+  <script src="/js/src/algolia-search.js?v=6.0.3"></script>
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+  
+  
+  
+  <script src="/lib/bookmark/bookmark.min.js?v=1.0"></script>
+  <script type="text/javascript">
+  
+    bookmark.scrollToMark('auto', "#more");
+  
+  </script>
+
+
+</body>
+</html>

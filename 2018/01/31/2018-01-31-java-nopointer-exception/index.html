@@ -1,0 +1,1024 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next gemini use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=6.0.3" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=6.0.3">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/lights-32x32.png?v=6.0.3">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/lights-16x16.png?v=6.0.3">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=6.0.3" color="#222">
+
+
+
+
+
+
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Gemini',
+    version: '6.0.3',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":true,"scrollpercent":true,"onmobile":false},
+    fancybox: false,
+    fastclick: false,
+    lazyload: false,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    algolia: {
+      applicationID: '41NC33JUJG',
+      apiKey: '7362b84fed21bc83930f198a0927bb82',
+      indexName: 'blog',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+  
+
+
+
+
+  
+  <meta name="keywords" content="Java语言," />
+
+
+<meta name="description" content="浅谈空指针翻译整理自： http://www.yegor256.com/2014/05/13/why-null-is-bad.html 笔记 空指针应该是Java开发中最常遇到的异常，我们往往机械式地运用一大堆if判断来避免NPE，但除此之外，还有没有其他方法？ 其中 Optional 是我在本文中学习到的Java8新特性, 非常有意思，值得深入研究。  这是Java中常见的编码:1234567p">
+<meta name="keywords" content="Java语言">
+<meta property="og:type" content="article">
+<meta property="og:title" content="浅谈空指针">
+<meta property="og:url" content="http://governlee.github.io/2018/01/31/2018-01-31-java-nopointer-exception/index.html">
+<meta property="og:site_name" content="Govern x Lab">
+<meta property="og:description" content="浅谈空指针翻译整理自： http://www.yegor256.com/2014/05/13/why-null-is-bad.html 笔记 空指针应该是Java开发中最常遇到的异常，我们往往机械式地运用一大堆if判断来避免NPE，但除此之外，还有没有其他方法？ 其中 Optional 是我在本文中学习到的Java8新特性, 非常有意思，值得深入研究。  这是Java中常见的编码:1234567p">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:updated_time" content="2018-03-06T12:23:44.193Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="浅谈空指针">
+<meta name="twitter:description" content="浅谈空指针翻译整理自： http://www.yegor256.com/2014/05/13/why-null-is-bad.html 笔记 空指针应该是Java开发中最常遇到的异常，我们往往机械式地运用一大堆if判断来避免NPE，但除此之外，还有没有其他方法？ 其中 Optional 是我在本文中学习到的Java8新特性, 非常有意思，值得深入研究。  这是Java中常见的编码:1234567p">
+
+
+
+
+
+
+  <link rel="canonical" href="http://governlee.github.io/2018/01/31/2018-01-31-java-nopointer-exception/"/>
+
+
+
+<script type="text/javascript" id="page.configurations">
+  CONFIG.page = {
+    sidebar: "",
+  };
+</script>
+  <title>浅谈空指针 | Govern x Lab</title>
+  
+
+
+
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?f6804645172803d5efc7161f04df1d76";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+  <noscript>
+  <style type="text/css">
+    .use-motion .motion-element,
+    .use-motion .brand,
+    .use-motion .menu-item,
+    .sidebar-inner,
+    .use-motion .post-block,
+    .use-motion .pagination,
+    .use-motion .comments,
+    .use-motion .post-header,
+    .use-motion .post-body,
+    .use-motion .collection-title { opacity: initial; }
+
+    .use-motion .logo,
+    .use-motion .site-title,
+    .use-motion .site-subtitle {
+      opacity: initial;
+      top: initial;
+    }
+
+    .use-motion {
+      .logo-line-before i { left: initial; }
+      .logo-line-after i { right: initial; }
+    }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"> <div class="site-brand-wrapper">
+  <div class="site-meta custom-logo">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Govern x Lab</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <h1 class="site-subtitle" itemprop="description">I'm not the only one</h1>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-home"></i> <br />首页</a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-user"></i> <br />关于</a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />标签</a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-th"></i> <br />分类</a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />归档</a>
+        </li>
+      
+
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />搜索</a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  
+  <div class="algolia-popup popup search-popup">
+    <div class="algolia-search">
+      <div class="algolia-search-input-icon">
+        <i class="fa fa-search"></i>
+      </div>
+      <div class="algolia-search-input" id="algolia-search-input"></div>
+    </div>
+
+    <div class="algolia-results">
+      <div id="algolia-stats"></div>
+      <div id="algolia-hits"></div>
+      <div id="algolia-pagination" class="algolia-pagination"></div>
+    </div>
+
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+  </div>
+
+
+
+
+    </div>
+  
+</nav>
+
+
+  
+
+
+
+ </div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://governlee.github.io/2018/01/31/2018-01-31-java-nopointer-exception/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Govern">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/logo.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Govern x Lab">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">浅谈空指针</h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-01-31T08:00:00+08:00">2018-01-31</time>
+            
+
+            
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/JDK/" itemprop="url" rel="index"><span itemprop="name">JDK</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h1 id="浅谈空指针"><a href="#浅谈空指针" class="headerlink" title="浅谈空指针"></a>浅谈空指针</h1><p>翻译整理自： <a href="http://www.yegor256.com/2014/05/13/why-null-is-bad.html" target="_blank" rel="noopener">http://www.yegor256.com/2014/05/13/why-null-is-bad.html</a></p>
+<h2 id="笔记"><a href="#笔记" class="headerlink" title="笔记"></a>笔记</h2><blockquote>
+<p>空指针应该是Java开发中最常遇到的异常，我们往往机械式地运用一大堆if判断来避免NPE，但除此之外，还有没有其他方法？ 其中 Optional 是我在本文中学习到的Java8新特性, 非常有意思，值得深入研究。</p>
+</blockquote>
+<p>这是Java中常见的编码:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">public Employee getByName(String name) &#123;</span><br><span class="line">  int id = database.find(name);</span><br><span class="line">  if (id == 0) &#123;</span><br><span class="line">    return null;</span><br><span class="line">  &#125;</span><br><span class="line">  return new Employee(id);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>在我看来，这个方法最大的问题就是选择返回 NULL 对象而不是有意义的对象。空指针（NULL）在面向对象编程中是个很糟糕的的设计，会引发很严重的问题，应该不惜一切代价进行<a href="http://www.yegor256.com/2016/03/22/try-finally-if-not-null.html" target="_blank" rel="noopener">规避</a>。甚至 <a href="https://en.wikipedia.org/wiki/Tony_Hoare" target="_blank" rel="noopener">Tony Hoare</a> 向全<br>世界道歉，忏悔他曾经发明了「空指针」这个玩意(<a href="https://www.infoq.com/presentations/Null-References-The-Billion-Dollar-Mistake-Tony-Hoare" target="_blank" rel="noopener">Null References, The Billion Dollar Mistake </a>)。David West 在<a href="http://amzn.to/266oJr4" target="_blank" rel="noopener">Object Thinking</a>一书中也有类似的观点。</p>
+<p>在程序语言中加入空指针设计，其实并非是经过深思熟虑的结果，而仅仅是因为它很容易实现而已。这个设计是如此的影响深远，以至于后来的编程语言都不假思索的继承了这一设计，这个范围几乎包括了目前业界所有的流行的编程语言。</p>
+<p>对许多程序员来说，早就已经习惯了空指针的存在，就像日常生活中的空气和水一样。那么，空指针究竟有什么问题？</p>
+<h3 id="额外的错处处理"><a href="#额外的错处处理" class="headerlink" title="额外的错处处理"></a>额外的错处处理</h3><p>当然，有经验的编码人员自然会时刻意识到空指针问题的存在，那么有可能在编码的过程中加入额外的判断，就会规避这个问题，例如下面的写法：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">// this is a terrible design, don&apos;t reuse</span><br><span class="line">Employee employee = dept.getByName(&quot;Jeffrey&amp;quot&quot;);</span><br><span class="line">if (employee == null) &#123;</span><br><span class="line">  System.out.println(&quot;can&apos;t find an employee&quot;);</span><br><span class="line">  System.exit(-1);</span><br><span class="line">&#125; else &#123;</span><br><span class="line">  employee.transferTo(dept2);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>那么这样的话就会多了额外的流程去处理因为空指针判断而多加的判断。例如，上面的处理逻辑和流程中，如果按照面向对象的思维书写，不考虑空指针的情况，只是简单的：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">dept.getByName(&quot;Jeffrey&quot;).transferTo(dept2);</span><br></pre></td></tr></table></figure></p>
+<p>就可以。加入空指针判断以后，程序往往会有额外以及复杂的逻辑判断。</p>
+<h3 id="语义不清晰"><a href="#语义不清晰" class="headerlink" title="语义不清晰"></a>语义不清晰</h3><p>为了更好地理解，getByName 方法中加入异常判断后，那么重新命名这个方法为getByNameOrNullIfNotFound()。这样子从代码可读性的角度上说，从方法名字就可以判断这个方法会返回什么。但是自然而然为了表意清晰就会让方法的名字变得越来越长。</p>
+<p>对此，通常有两种替代NULL的方式：<br>第一种方式是使用<a href="https://en.wikipedia.org/wiki/Null_object_pattern" target="_blank" rel="noopener">Null Object design pattern</a>，把Null替换成一个常量:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">public Employee getByName(String name) &#123;</span><br><span class="line">  int id = database.find(name);</span><br><span class="line">  if (id == 0) &#123;</span><br><span class="line">    return Employee.NOBODY;</span><br><span class="line">  &#125;</span><br><span class="line">  return Employee(id);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>第二种方式是使用<a href="http://www.yegor256.com/2015/08/25/fail-fast.html" target="_blank" rel="noopener">fail-fast</a>原则，当无法返回对象的时候抛出异常:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">public Employee getByName(String name) &#123;</span><br><span class="line">  int id = database.find(name);</span><br><span class="line">  if (id == 0) &#123;</span><br><span class="line">    throw new EmployeeNotFoundException(name);</span><br><span class="line">  &#125;</span><br><span class="line">  return Employee(id);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>有些时候基于性能考虑，我们不得不使用NULL，例如Map的get()方法，当Map中不存在指定元素时会返回NULL。<br>利用这一特性，当我们很容易实现在Map不存在指定元素时，抛出业务异常的场景。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">Employee employee = employees.get(&quot;Jeffrey&quot;);</span><br><span class="line">if (employee == null) &#123;</span><br><span class="line">  throw new EmployeeNotFoundException();</span><br><span class="line">&#125;</span><br><span class="line">return employee;</span><br></pre></td></tr></table></figure></p>
+<p>如果我们重构一下Map的get()方法，当指定元素不存在时抛出异常，要实现上述代码功能，我们就要这样做：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">if (!employees.containsKey(&quot;Jeffrey&quot;)) &#123; // first search</span><br><span class="line">  throw new EmployeeNotFoundException();</span><br><span class="line">&#125;</span><br><span class="line">return employees.get(&quot;Jeffrey&quot;); // second search</span><br></pre></td></tr></table></figure></p>
+<p>但由于这样需对Map进行两次搜索，性能显然不如第一种方式。</p>
+<p>还有其他解决方法吗？参考C++ STP map::find()的实现。可以在Map中引入类似方法，返回Iterator(可是Java设计者暂时并没有这样做)<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">Iterator found = Map.search(&quot;Jeffrey&quot;);</span><br><span class="line">if (!found.hasNext()) &#123;</span><br><span class="line">  throw new EmployeeNotFoundException();</span><br><span class="line">&#125;</span><br><span class="line">return found.next();</span><br></pre></td></tr></table></figure></p>
+<h3 id="如何最大程度得避免空指针？"><a href="#如何最大程度得避免空指针？" class="headerlink" title="如何最大程度得避免空指针？"></a><strong>如何最大程度得避免空指针？</strong></h3><p>本篇开头的这个问题一样，空指针的问题可以追溯到计算法发展史时期，同时空指针异常的情况也很多，甚至在程序运行阶段也无法避免空指针的情况。那么，在编码层面，我们需要注意哪些呢？</p>
+<h4 id="确认调用的的每个变量都已经被初始化"><a href="#确认调用的的每个变量都已经被初始化" class="headerlink" title="确认调用的的每个变量都已经被初始化"></a><strong>确认调用的的每个变量都已经被初始化</strong></h4><p>这点说起来很简单，但事实上随着业务的发展项目代码也会越来越庞大。这时候方法之间调用的关系也会越来越复杂，很难避免使用到的方法都已经明确被初始化。</p>
+<p>所以这块单独放在这里，需要我们在编码的实话重点考虑变量存在的可能性，这其实大体上基于自己的实际编码经验。</p>
+<h4 id="尽量使用明确的值调用"><a href="#尽量使用明确的值调用" class="headerlink" title="尽量使用明确的值调用"></a><strong>尽量使用明确的值调用</strong></h4><p>如果已经明确某个变量（常量）的值，那么是可以安全调用它的方法的。例如对比下面的几行代码：</p>
+<pre><code>String a = null;
+a.equal(&quot;b&quot;);   // 会产生空指针异常
+&quot;b&quot;.equal(a);   // 推荐的写法
+</code></pre><p>很明显使用常量去做调用这代码会更健壮一些。</p>
+<h4 id="尽量避免在函数中返回-NULL"><a href="#尽量避免在函数中返回-NULL" class="headerlink" title="尽量避免在函数中返回 NULL"></a><strong>尽量避免在函数中返回 NULL</strong></h4><p>当如果在编写方法中考虑返回 NULL，这个时候则需要冷静下是否真的需要这样子做。因为，通常来说会有比返回 NULL 更好的处理方式。</p>
+<h4 id="自动装箱需谨慎"><a href="#自动装箱需谨慎" class="headerlink" title="自动装箱需谨慎"></a><strong>自动装箱需谨慎</strong></h4><p>自动装箱确实为编写程序带来很多方便，但我们在编程时候也不能滥用自动装箱。</p>
+<p>比如，下面这个程序依然存在空指针异常隐患：</p>
+<pre><code>Person jack = new Person(&quot;jack&quot;);
+int weight = jack.getWeight();
+</code></pre><p>这种异常在我们使用一些 ORM 框架中会碰到，如果数据库对应的对象并不存在该值，而我们又在类中使用了一个基本类型与之对应，依然就会抛出空指针异常。在这种情况下就尽量使用包装类来对应，并且在使用该值时候先判断是否为空,关于自动装箱、拆箱的问题，可以看看<a href="https://governlee.github.io/2015/04/07/2015-04-07-boxing-and-unboxing/">Java中的自动装箱与拆箱</a></p>
+<h4 id="遍历谨防集合为空"><a href="#遍历谨防集合为空" class="headerlink" title="遍历谨防集合为空"></a><strong>遍历谨防集合为空</strong></h4><pre><code>for (int num : list) {
+    // NPE occur if list is null
+}
+</code></pre><h4 id="及时验证外部数据"><a href="#及时验证外部数据" class="headerlink" title="及时验证外部数据"></a><strong>及时验证外部数据</strong></h4><p>在代码运行的过程中，尤其在解析外部数据的时候可能会引发影响不到的问题。例如下面的 Json 数据</p>
+<pre><code>{&quot;name&quot;: null, age: 28}
+</code></pre><p>如果不处理完善，直接使用 name 属性也会导致空指针的问题。</p>
+<h4 id="使用第三方库加强验证"><a href="#使用第三方库加强验证" class="headerlink" title="使用第三方库加强验证"></a><strong>使用第三方库加强验证</strong></h4><p>很多第三方的 Common 库都会有验证空指针的方法，例如 Guava 中针对空指针的判断有个单独的包去处理。</p>
+<pre><code>Optional&lt;Integer&gt; possible = Optional.of(5);
+possible.isPresent(); // returns true
+possible.get(); // returns 5
+</code></pre><p>或者过滤 NULL 也会更加的方便</p>
+<pre><code>Joiner joiner = Joiner.on(&quot;;&quot;&quot;).skipNulls();
+return joiner.join(&quot;Harry&quot;, null, &quot;Ron&quot;, &quot;Hermione&quot;);
+</code></pre><h4 id="使用-NotNull-或-Nullable-注解"><a href="#使用-NotNull-或-Nullable-注解" class="headerlink" title="使用 @NotNull 或 @Nullable 注解"></a><strong>使用 @NotNull 或 @Nullable 注解</strong></h4><p>强烈建议多使用注解来增加代码的可读性，例如多增加 @NotNull 或 @Nullable 注解，也<br>可以加强代码静态检查方面可能会造成空指针的可能性，<a href="https://stackoverflow.com/questions/34094039/using-notnull-annotation-in-method-argument" target="_blank" rel="noopener">具体可以参见这里
+</a><br>。</p>
+<h4 id="使用-Java8-的-Optional"><a href="#使用-Java8-的-Optional" class="headerlink" title="使用 Java8 的 Optional"></a><strong>使用 Java8 的 Optional</strong></h4><p>很多「现代」语言都会有针对变量为空的可选链式判断，例如</p>
+<p><code>Grovvy</code> 语言有一个 <code>?.</code> 的操作符，可以安全地处理潜在可能的空引用（据说 Java7 曾被建议引入这个但是并没有发布）。它是这么用的：</p>
+<pre><code>String version = computer?.getSoundcard()?.getUSB()?.getVersion();
+</code></pre><p>虽然 Java 看起来非常的保守，但好在 Java8 中增加了 <code>Option[T]</code> 这个对象包来代表类型 T 的某一个值存在或者没有。</p>
+<p>那么上面的代码可以写成</p>
+<pre><code>String name = computer.flatMap(Computer::getSoundcard)
+                          .flatMap(Soundcard::getUSB)
+                          .map(USB::getVersion)
+                          .orElse(&quot;UNKNOWN&quot;);
+</code></pre><p>看起来似乎有点麻烦，但相信我你会爱上这样的写法，具体可以<a href="http://weishu.me/2015/12/08/use-optional-avoid-nullpointexception/" target="_blank" rel="noopener">参见这里</a>。</p>
+<h2 id="参考资源"><a href="#参考资源" class="headerlink" title="参考资源"></a>参考资源</h2><ul>
+<li><a href="https://github.com/google/guava/wiki/UsingAndAvoidingNullExplained" target="_blank" rel="noopener">https://github.com/google/guava/wiki/UsingAndAvoidingNullExplained</a></li>
+<li><a href="https://stackoverflow.com/questions/271526/avoiding-null-statements" target="_blank" rel="noopener">https://stackoverflow.com/questions/271526/avoiding-null-statements</a></li>
+<li><a href="https://www.jianshu.com/p/e216330e0a89" target="_blank" rel="noopener">https://www.jianshu.com/p/e216330e0a89</a></li>
+<li><a href="http://www.deadcoderising.com/java-8-no-more-loops/" target="_blank" rel="noopener">http://www.deadcoderising.com/java-8-no-more-loops/</a></li>
+<li><a href="http://www.yegor256.com/2014/05/13/why-null-is-bad.html" target="_blank" rel="noopener">http://www.yegor256.com/2014/05/13/why-null-is-bad.html</a></li>
+</ul>
+
+      
+    </div>
+
+    
+      
+
+
+    
+
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/Java语言/" rel="tag"># Java语言</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2018/01/08/2018-01-08-singleton-not-single/" rel="next" title="单例模式的安全性">
+                <i class="fa fa-chevron-left"></i> 单例模式的安全性
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2018/02/01/2018-02-01-java-nio/" rel="prev" title="Java NIO：Buffer、Channel 和 Selector">
+                Java NIO：Buffer、Channel 和 Selector <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+  
+    <div class="comments" id="comments">
+      <div id="lv-container" data-id="city" data-uid="MTAyMC8zNDA5NS8xMDYzMw=="></div>
+    </div>
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image"
+                src="/images/logo.jpg"
+                alt="Govern" />
+            
+              <p class="site-author-name" itemprop="name">Govern</p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          
+            <nav class="site-state motion-element">
+              
+                <div class="site-state-item site-state-posts">
+                
+                  <a href="/archives/">
+                
+                    <span class="site-state-item-count">98</span>
+                    <span class="site-state-item-name">日志</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-categories">
+                  <a href="/categories/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">20</span>
+                    <span class="site-state-item-name">分类</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-tags">
+                  <a href="/tags/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">39</span>
+                    <span class="site-state-item-name">标签</span>
+                  </a>
+                </div>
+              
+            </nav>
+          
+
+          
+
+          
+
+          
+          
+
+          
+          
+
+          
+            
+          
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#浅谈空指针"><span class="nav-number">1.</span> <span class="nav-text">浅谈空指针</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#笔记"><span class="nav-number">1.1.</span> <span class="nav-text">笔记</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#额外的错处处理"><span class="nav-number">1.1.1.</span> <span class="nav-text">额外的错处处理</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#语义不清晰"><span class="nav-number">1.1.2.</span> <span class="nav-text">语义不清晰</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#如何最大程度得避免空指针？"><span class="nav-number">1.1.3.</span> <span class="nav-text">如何最大程度得避免空指针？</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#确认调用的的每个变量都已经被初始化"><span class="nav-number">1.1.3.1.</span> <span class="nav-text">确认调用的的每个变量都已经被初始化</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#尽量使用明确的值调用"><span class="nav-number">1.1.3.2.</span> <span class="nav-text">尽量使用明确的值调用</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#尽量避免在函数中返回-NULL"><span class="nav-number">1.1.3.3.</span> <span class="nav-text">尽量避免在函数中返回 NULL</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#自动装箱需谨慎"><span class="nav-number">1.1.3.4.</span> <span class="nav-text">自动装箱需谨慎</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#遍历谨防集合为空"><span class="nav-number">1.1.3.5.</span> <span class="nav-text">遍历谨防集合为空</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#及时验证外部数据"><span class="nav-number">1.1.3.6.</span> <span class="nav-text">及时验证外部数据</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#使用第三方库加强验证"><span class="nav-number">1.1.3.7.</span> <span class="nav-text">使用第三方库加强验证</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#使用-NotNull-或-Nullable-注解"><span class="nav-number">1.1.3.8.</span> <span class="nav-text">使用 @NotNull 或 @Nullable 注解</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#使用-Java8-的-Optional"><span class="nav-number">1.1.3.9.</span> <span class="nav-text">使用 Java8 的 Optional</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#参考资源"><span class="nav-number">1.2.</span> <span class="nav-text">参考资源</span></a></li></ol></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+        <div class="back-to-top">
+          <i class="fa fa-arrow-up"></i>
+          
+            <span id="scrollpercent"><span>0</span>%</span>
+          
+        </div>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; 2012 &mdash; <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Govern</span>
+
+  
+
+  
+</div>
+
+
+  
+
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" rel="external nofollow" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" rel="external nofollow" href="https://github.com/theme-next/hexo-theme-next">NexT.Gemini</a> v6.0.3</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=6.0.3"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=6.0.3"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=6.0.3"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=6.0.3"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=6.0.3"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=6.0.3"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=6.0.3"></script>
+
+
+
+  
+
+
+
+
+
+
+
+  
+    <script type="text/javascript">
+      (function(d, s) {
+        var j, e = d.getElementsByTagName(s)[0];
+        if (typeof LivereTower === 'function') { return; }
+        j = d.createElement(s);
+        j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+        j.async = true;
+        e.parentNode.insertBefore(j, e);
+      })(document, 'script');
+    </script>
+  
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+  
+  
+  
+  <link rel="stylesheet" href="/lib/algolia-instant-search/instantsearch.min.css">
+
+  
+  
+  <script src="/lib/algolia-instant-search/instantsearch.min.js"></script>
+  
+
+  <script src="/js/src/algolia-search.js?v=6.0.3"></script>
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+  
+  
+  
+  <script src="/lib/bookmark/bookmark.min.js?v=1.0"></script>
+  <script type="text/javascript">
+  
+    bookmark.scrollToMark('auto', "#more");
+  
+  </script>
+
+
+</body>
+</html>

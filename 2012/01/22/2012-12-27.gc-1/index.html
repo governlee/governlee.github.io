@@ -1,0 +1,1036 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next gemini use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=6.0.3" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=6.0.3">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/lights-32x32.png?v=6.0.3">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/lights-16x16.png?v=6.0.3">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=6.0.3" color="#222">
+
+
+
+
+
+
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Gemini',
+    version: '6.0.3',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":true,"scrollpercent":true,"onmobile":false},
+    fancybox: false,
+    fastclick: false,
+    lazyload: false,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    algolia: {
+      applicationID: '41NC33JUJG',
+      apiKey: '7362b84fed21bc83930f198a0927bb82',
+      indexName: 'blog',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+  
+
+
+
+
+  
+  <meta name="keywords" content="java语言,gc," />
+
+
+<meta name="description" content="原文链接:http://www.importnew.com/1993.html 对于Java开发人员来说，了解垃圾回收机制（GC）有哪些好处呢？首先可以满足作为一名软件工程师的求知欲，其次，深入了解GC如何工作可以帮你写出更好的Java应用。 这仅仅代表我个人的意见，但我坚信一个精通GC的人往往是一个好的Java开发者。如果你对GC的处理过程感兴趣，说明你已经具备较大规模应用的开发经验。如果你曾经">
+<meta name="keywords" content="java语言,gc">
+<meta property="og:type" content="article">
+<meta property="og:title" content="成为JavaGC专家（1）—深入浅出Java垃圾回收机制">
+<meta property="og:url" content="http://governlee.github.io/2012/01/22/2012-12-27.gc-1/index.html">
+<meta property="og:site_name" content="Govern x Lab">
+<meta property="og:description" content="原文链接:http://www.importnew.com/1993.html 对于Java开发人员来说，了解垃圾回收机制（GC）有哪些好处呢？首先可以满足作为一名软件工程师的求知欲，其次，深入了解GC如何工作可以帮你写出更好的Java应用。 这仅仅代表我个人的意见，但我坚信一个精通GC的人往往是一个好的Java开发者。如果你对GC的处理过程感兴趣，说明你已经具备较大规模应用的开发经验。如果你曾经">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="http://www.importnew.com/wp-content/uploads/2012/12/Figure-1-GC-Area-Data-Flow.png">
+<meta property="og:image" content="http://www.importnew.com/wp-content/uploads/2012/12/Figure2-Card-Table-Structure.png">
+<meta property="og:image" content="http://www.importnew.com/wp-content/uploads/2012/12/Figure-3-Before-After-a-GC.png">
+<meta property="og:image" content="http://www.importnew.com/wp-content/uploads/2012/12/Figure-3-Before-After-a-GC.png">
+<meta property="og:image" content="http://www.importnew.com/wp-content/uploads/2012/12/Figure-4-Difference-between-the-Serial-GC-and-Parallel-GC.png">
+<meta property="og:image" content="http://www.importnew.com/wp-content/uploads/2012/12/Figure-5-Serial-GC-CMS-GC.png">
+<meta property="og:image" content="http://www.importnew.com/wp-content/uploads/2012/12/Figure-6-Layout-of-G1-GC.png">
+<meta property="og:updated_time" content="2018-05-09T01:44:43.076Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="成为JavaGC专家（1）—深入浅出Java垃圾回收机制">
+<meta name="twitter:description" content="原文链接:http://www.importnew.com/1993.html 对于Java开发人员来说，了解垃圾回收机制（GC）有哪些好处呢？首先可以满足作为一名软件工程师的求知欲，其次，深入了解GC如何工作可以帮你写出更好的Java应用。 这仅仅代表我个人的意见，但我坚信一个精通GC的人往往是一个好的Java开发者。如果你对GC的处理过程感兴趣，说明你已经具备较大规模应用的开发经验。如果你曾经">
+<meta name="twitter:image" content="http://www.importnew.com/wp-content/uploads/2012/12/Figure-1-GC-Area-Data-Flow.png">
+
+
+
+
+
+
+  <link rel="canonical" href="http://governlee.github.io/2012/01/22/2012-12-27.gc-1/"/>
+
+
+
+<script type="text/javascript" id="page.configurations">
+  CONFIG.page = {
+    sidebar: "",
+  };
+</script>
+  <title>成为JavaGC专家（1）—深入浅出Java垃圾回收机制 | Govern x Lab</title>
+  
+
+
+
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?f6804645172803d5efc7161f04df1d76";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+  <noscript>
+  <style type="text/css">
+    .use-motion .motion-element,
+    .use-motion .brand,
+    .use-motion .menu-item,
+    .sidebar-inner,
+    .use-motion .post-block,
+    .use-motion .pagination,
+    .use-motion .comments,
+    .use-motion .post-header,
+    .use-motion .post-body,
+    .use-motion .collection-title { opacity: initial; }
+
+    .use-motion .logo,
+    .use-motion .site-title,
+    .use-motion .site-subtitle {
+      opacity: initial;
+      top: initial;
+    }
+
+    .use-motion {
+      .logo-line-before i { left: initial; }
+      .logo-line-after i { right: initial; }
+    }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"> <div class="site-brand-wrapper">
+  <div class="site-meta custom-logo">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Govern x Lab</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <h1 class="site-subtitle" itemprop="description">I'm not the only one</h1>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-home"></i> <br />首页</a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-user"></i> <br />关于</a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />标签</a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-th"></i> <br />分类</a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />归档</a>
+        </li>
+      
+
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />搜索</a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  
+  <div class="algolia-popup popup search-popup">
+    <div class="algolia-search">
+      <div class="algolia-search-input-icon">
+        <i class="fa fa-search"></i>
+      </div>
+      <div class="algolia-search-input" id="algolia-search-input"></div>
+    </div>
+
+    <div class="algolia-results">
+      <div id="algolia-stats"></div>
+      <div id="algolia-hits"></div>
+      <div id="algolia-pagination" class="algolia-pagination"></div>
+    </div>
+
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+  </div>
+
+
+
+
+    </div>
+  
+</nav>
+
+
+  
+
+
+
+ </div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://governlee.github.io/2012/01/22/2012-12-27.gc-1/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Govern">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/logo.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Govern x Lab">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">成为JavaGC专家（1）—深入浅出Java垃圾回收机制</h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2012-01-22T08:00:00+08:00">2012-01-22</time>
+            
+
+            
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/JDK/" itemprop="url" rel="index"><span itemprop="name">JDK</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p><strong>原文链接</strong>:<a href="http://www.importnew.com/1993.html" target="_blank" rel="noopener">http://www.importnew.com/1993.html</a></p>
+<p>对于Java开发人员来说，了解垃圾回收机制（GC）有哪些好处呢？首先可以满足作为一名软件工程师的求知欲，其次，深入了解GC如何工作可以帮你写出更好的Java应用。</p>
+<p>这仅仅代表我个人的意见，但我坚信一个精通GC的人往往是一个好的Java开发者。如果你对GC的处理过程感兴趣，说明你已经具备较大规模应用的开发经验。如果你曾经想过如何正确的选择GC算法，那意味着你已经完全理解你所开发的应用的特点。当然，我们不能以偏概全，这不能作为评价一个好的开发人员的共通标准。但是，我要说的是，深入理解GC是成为一名伟大的程序员的必经之路。</p>
+<p>这是成为JavaGC专家系列文章的第一篇，本篇主要针对GC机制进行介绍，在下一篇中，我们将重点探讨分析GC状态以及来自NHN的GC调优的例子。</p>
+<p>本文的目的是以一种简单的方式向你介绍GC机制。我希望这些文章能够帮到你。实际上，我的学生已经在Twitter上发布了一些很好的关于Java内核的文章，并且大受欢迎。有兴趣的话，你也可以关注他们。</p>
+<p>回到正题，咱们继续谈垃圾回收，在学习GC之前，你首先应该记住一个单词：<strong>“stop-the-world”</strong>。Stop-the-world会在任何一种GC算法中发生。Stop-the-world意味着 JVM 因为要执行GC而停止了应用程序的执行。当Stop-the-world发生时，除了GC所需的线程以外，所有线程都处于等待状态，直到GC任务完成。<strong>GC优化很多时候就是指减少Stop-the-world发生的时间</strong>。</p>
+<h2 id="按代的垃圾回收机制"><a href="#按代的垃圾回收机制" class="headerlink" title="按代的垃圾回收机制"></a>按代的垃圾回收机制</h2><p>在Java程序中不能显式地分配和注销内存。有些人把相关的对象设置为null或者调用System.gc()来试图显式地清理内存。设置为null至少没什么坏处，但是调用System.gc()会显著地影响系统性能，必须彻底杜绝（还好，我还没有见到NHN的哪个开发者调用这个方法）。</p>
+<p>在Java中，开发人员无法直接在程序代码中清理内存，而是由垃圾回收器自动寻找不必要的垃圾对象，并且清理掉他们。<strong>垃圾回收器会在下面两种假设（hypotheses）成立的情况下被创建</strong>（称之为假设不如改为推测（suppositions）或者前提（preconditions））。</p>
+<ul>
+<li>大多数对象会很快变得不可达</li>
+<li>只有很少的由老对象（创建时间较长的对象）指向新生对象的引用</li>
+</ul>
+<p>这些假设我们称之为<strong>弱年代假设（ weak generational hypothesis）</strong>。为了强化这一假设，HotSpot虚拟机将其物理上划分为两个–<strong>新生代（young generation）</strong>和<strong>老年代（old generation）</strong>。<br><strong>新生代（Young generation）</strong>: 绝大多数最新被创建的对象会被分配到这里，由于大部分对象在创建后会很快变得不可到达，所以很多对象被创建在新生代，然后消失。对象从这个区域消失的过程我们称之为”<strong>minor GC</strong>“。</p>
+<p><strong>老年代（Old generation）</strong>: 对象没有变得不可达，并且从新生代中存活下来，会被拷贝到这里。其所占用的空间要比新生代多。也正由于其相对较大的空间，发生在老年代上的GC要比新生代少得多。对象从老年代中消失的过程，我们称之为<strong>”major GC“（或者”full GC“</strong>）</p>
+<p>请看下面这个图表。</p>
+<p><img src="http://www.importnew.com/wp-content/uploads/2012/12/Figure-1-GC-Area-Data-Flow.png" alt=""></p>
+<p><strong>图1 : GC 空间 &amp; 数据流</strong></p>
+<p>上图中的<strong>持久代（ permanent generation ）也被称为方法区（method area）</strong>。<strong>他用来保存类常量以及字符串常量。因此，这个区域不是用来永久的存储那些从老年代存活下来的对象。这个区域也可能发生GC</strong>。并且发生在这个区域上的GC事件也会被算为major GC。</p>
+<p>有些人可能会问：<br><strong>如果老年代的对象需要引用一个新生代的对象，会发生什么呢？</strong><br>为了解决这个问题，老年代中存在一个”<strong>card table</strong>“，他是一个512 byte大小的块。<strong>所有老年代的对象指向新生代对象的引用都会被记录在这个表中</strong>。当针对新生代执行GC的时候，只需要查询card table来决定是否可以被收集，而不用查询整个老年代。这个card table由一个write barrier来管理。write barrier给GC带来了很大的性能提升，虽然由此可能带来一些开销，但GC的整体时间被显著的减少。</p>
+<p><img src="http://www.importnew.com/wp-content/uploads/2012/12/Figure2-Card-Table-Structure.png" alt=""></p>
+<p><strong>图 2: Card Table 结构</strong></p>
+<h2 id="新生代的构成"><a href="#新生代的构成" class="headerlink" title="新生代的构成"></a>新生代的构成</h2><p>为了更好地理解GC，我们现在来学习新生代，新生代是用来保存那些第一次被创建的对象，他可以被分为三个空间</p>
+<ul>
+<li>一个伊甸园空间（Eden ）</li>
+<li>两个幸存者空间（Survivor ）<br>一共有三个空间，其中包含两个幸存者空间。每个空间的执行顺序如下：</li>
+</ul>
+<ol>
+<li>绝大多数刚刚被创建的对象会存放在伊甸园空间。</li>
+<li>在伊甸园空间执行了第一次GC之后，存活的对象被移动到其中一个幸存者空间。</li>
+<li>此后，在伊甸园空间执行GC之后，存活的对象会被堆积在同一个幸存者空间。</li>
+<li>当一个幸存者空间饱和，还在存活的对象会被移动到另一个幸存者空间。之后会清空已经饱和的那个幸存者空间。</li>
+<li>在以上的步骤中重复几次依然存活的对象，就会被移动到老年代。</li>
+</ol>
+<p>如果你仔细观察这些步骤就会发现，其中一个<strong>幸存者空间必须保持是空的</strong>。如果两个幸存者空间都有数据，或者两个空间都是空的，那一定标志着你的系统出现了某种错误。<br>通过频繁的minor GC将数据移动到老年代的过程可以用下图来描述：</p>
+<p><img src="http://www.importnew.com/wp-content/uploads/2012/12/Figure-3-Before-After-a-GC.png" alt=""></p>
+<p><img src="http://www.importnew.com/wp-content/uploads/2012/12/Figure-3-Before-After-a-GC.png" alt=""></p>
+<p><strong>图 3: GC执行前后对比</strong></p>
+<p>需要注意的是HotSpot虚拟机使用了两种技术来加快内存分配。他们分别是是”bump-the-pointer“和“TLABs（Thread-Local Allocation Buffers）”。</p>
+<p>Bump-the-pointer技术跟踪在伊甸园空间创建的最后一个对象。这个对象会被放在伊甸园空间的顶部。如果之后再需要创建对象，只需要检查伊甸园空间是否有足够的剩余空间。如果有足够的空间，对象就会被创建在伊甸园空间，并且被放置在顶部。这样以来，每次创建新的对象时，只需要检查最后被创建的对象。这将极大地加快内存分配速度。但是，如果我们在多线程的情况下，事情将截然不同。如果想要以线程安全的方式以多线程在伊甸园空间存储对象，不可避免的需要加锁，而这将极大地的影响性能。TLABs 是HotSpot虚拟机针对这一问题的解决方案。该方案为每一个线程在伊甸园空间分配一块独享的空间，这样每个线程只访问他们自己的TLAB空间，再与bump-the-pointer技术结合可以在不加锁的情况下分配内存。<br>以上是针对新生代空间GC技术的简要介绍，你不需要刻意记住我刚刚提到的两种技术。不知道他们不会对你产生什么影响，但是请务必记住在对象刚刚被创建之后，是保存在伊甸园空间的。那些长期存活的对象会经由幸存者空间转存在老年代空间。</p>
+<h2 id="老年代GC处理机制"><a href="#老年代GC处理机制" class="headerlink" title="老年代GC处理机制"></a>老年代GC处理机制</h2><p>老年代空间的GC事件基本上是在空间已满时发生，执行的过程根据GC类型不同而不同，因此，了解不同的GC类型将有助于你理解本节的内容。<br>JDK7一共有5种GC类型：</p>
+<ol>
+<li>Serial GC</li>
+<li>Parallel GC</li>
+<li>Parallel Old GC (Parallel Compacting GC)</li>
+<li>Concurrent Mark &amp; Sweep GC  (or “CMS”)</li>
+<li>Garbage First (G1) GC</li>
+</ol>
+<p>其中，Serial GC不应该被用在服务器上。这种GC类型在单核CPU的桌面电脑时代就存在了。使用Serial GC会显著的降低应用的性能指标。<br>现在，让我们共同学习每一种GC类型</p>
+<h3 id="1-Serial-GC-XX-UseSerialGC"><a href="#1-Serial-GC-XX-UseSerialGC" class="headerlink" title="1. Serial GC (-XX:+UseSerialGC)"></a>1. Serial GC (-XX:+UseSerialGC)</h3><p>新生代空间的GC方式我们在前面已经介绍过了，在老年代空间中的GC采取称之为”mark-sweep-compact“的算法。</p>
+<p>算法的第一步是标记老年代中依然存活对象。（标记）<br>第二步，从头开始检查堆内存空间，并且只留下依然幸存的对象。（清理）<br>最后一步，从头开始，顺序地填满堆内存空间，并且将对内存空间分成两部分：一个保存着对象，另一个空着（压缩）。</p>
+<h3 id="2-Parallel-GC-XX-UseParallelGC"><a href="#2-Parallel-GC-XX-UseParallelGC" class="headerlink" title="2. Parallel GC (-XX:+UseParallelGC)"></a>2. Parallel GC (-XX:+UseParallelGC)</h3><p><img src="http://www.importnew.com/wp-content/uploads/2012/12/Figure-4-Difference-between-the-Serial-GC-and-Parallel-GC.png" alt=""></p>
+<p><strong>图 4: Serial GC 与 Parallel GC的区别</strong></p>
+<p>从上图中，你可以轻易地看出serial GC和parallel GC的区别，serial GC只使用一个线程执行GC，而parallel GC使用多个线程，因此parallel GC更高效。这种GC在内存充足以及多核的情况下会很有用，因此我们也称之为”throughput GC“。</p>
+<h3 id="3-Parallel-Old-GC-XX-UseParallelOldGC"><a href="#3-Parallel-Old-GC-XX-UseParallelOldGC" class="headerlink" title="3. Parallel Old GC(-XX:+UseParallelOldGC)"></a>3. Parallel Old GC(-XX:+UseParallelOldGC)</h3><p>Parallel Old GC在JDK5之后出现。与parallel GC相比，唯一的区别在于针对老年代的GC算法。Parallel Old GC分为三步：标记-汇总-压缩（mark – summary – compaction）。汇总（summary）步骤与清理（sweep）的不同之处在于，其将依然幸存的对象分发到GC预先处理好的不同区域，算法相对清理来说略微复杂一点。</p>
+<h3 id="4-CMS-GC-XX-UseConcMarkSweepGC"><a href="#4-CMS-GC-XX-UseConcMarkSweepGC" class="headerlink" title="4. CMS GC (-XX:+UseConcMarkSweepGC)"></a>4. CMS GC (-XX:+UseConcMarkSweepGC)</h3><p><img src="http://www.importnew.com/wp-content/uploads/2012/12/Figure-5-Serial-GC-CMS-GC.png" alt=""></p>
+<p><strong>图 5: Serial GC &amp; CMS GC</strong></p>
+<p>就像你从上图看到的那样, CMS GC比我之前解释的各种算法都要复杂很多。第一步<strong>初始化标记（initial mark）</strong> 比较简单。这一步骤只是查找那些距离类加载器最近的幸存对象。因此，停顿的时间非常短暂。在之后的<strong>并行标记（ concurrent mark ）</strong>步骤，所有被幸存对象引用的对象会被确认是否已经被追踪和校验。这一步的不同之处在于，在标记的过程中，其他的线程依然在执行。在<strong>重新标记（remark）</strong>步骤，会再次检查那些在并行标记步骤中增加或者删除的与幸存对象引用的对象。最后，在<strong>并行交换（ concurrent sweep ）</strong>步骤，转交垃圾回收过程处理。垃圾回收工作会在其他线程的执行过程中展开。一旦采取了这种GC类型，由GC导致的暂停时间会极其短暂。CMS GC也被称为<strong>低延迟GC</strong>。它经常被用在那些对于响应时间要求十分苛刻的应用之上。</p>
+<p>当然，这种GC类型在拥有stop-the-world时间很短的优点的同时，也有如下缺点：</p>
+<ul>
+<li>它会比其他GC类型占用更多的内存和CPU</li>
+<li>默认情况下不支持压缩步骤</li>
+</ul>
+<p>在使用这个GC类型之前你需要慎重考虑。如果因为内存碎片过多而导致压缩任务不得不执行，那么stop-the-world的时间要比其他任何GC类型都长，你需要考虑压缩任务的发生频率以及执行时间。</p>
+<h3 id="5-G1-GC"><a href="#5-G1-GC" class="headerlink" title="5. G1 GC"></a>5. G1 GC</h3><p>最后，我们来学习垃圾回收优先（G1）GC类型。</p>
+<p><img src="http://www.importnew.com/wp-content/uploads/2012/12/Figure-6-Layout-of-G1-GC.png" alt=""></p>
+<p><strong>图 6:  G1 GC的结构</strong></p>
+<p> 如果你想要理解G1，首先你要忘记你所学过的新生代和老年代的概念。正如你在上图所看到的，每个对象被分配到不同的格子，随后GC执行。当一个区域装满之后，对象被分配到另一个区域，并执行GC。这中间不再有从新生代移动到老年代的三个步骤。这个类型是为了替代CMS GC而被创建的，因为CMS GC在长时间持续运作时会产生很多问题。</p>
+<p>G1最大的好处是性能，他比我们在上面讨论过的任何一种GC都要快。但是在JDK 6中，他还只是一个早期试用版本。在JDK7之后才由官方正式发布。就我个人看来，NHN在将JDK 7正式投入商用之前需要很长的一段测试期（至少一年）。因此你可能需要再等一段时间。并且，我也听过几次使用了JDK 6中的G1而导致Java虚拟机宕机的事件。请耐心的等到它更稳定吧。</p>
+<p>下一次我将讨论GC优化相关的问题，但是在此之前我要先明确一件事情，假如应用中创建的所有对象的大小和类型都是统一的，那么公司使用的WAS的GC参数可以是相同的。但是WAS所创建对象的大小和生命周期根据服务以及硬件的不同而不同。换句话说，不能因为某个应用使用的GC参数“A”，就说明同样的参数也能给其他服务带来最佳的效果。而是要因地制宜，有的放矢。我们需要找到适合每个WAS线程的参数，并且持续的监控和优化每个设备上的WAS实例。这并不是我的一家之谈，而是负责Oracle Java虚拟机研发的工程师在 JavaOne 2010上已经讨论过的。</p>
+<p>本文中我们简略的介绍了Java的GC机制，请继续关于我们的后续文章，我们将会讨论如何监控Java GC状态以及优化GC。</p>
+
+      
+    </div>
+
+    
+      
+
+
+    
+
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/java语言/" rel="tag"># java语言</a>
+          
+            <a href="/tags/gc/" rel="tag"># gc</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2012/12/28/2012-12-28.gc-2/" rel="prev" title="成为JavaGC专家（2）—如何监控Java垃圾回收机制">
+                成为JavaGC专家（2）—如何监控Java垃圾回收机制 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+  
+    <div class="comments" id="comments">
+      <div id="lv-container" data-id="city" data-uid="MTAyMC8zNDA5NS8xMDYzMw=="></div>
+    </div>
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image"
+                src="/images/logo.jpg"
+                alt="Govern" />
+            
+              <p class="site-author-name" itemprop="name">Govern</p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          
+            <nav class="site-state motion-element">
+              
+                <div class="site-state-item site-state-posts">
+                
+                  <a href="/archives/">
+                
+                    <span class="site-state-item-count">98</span>
+                    <span class="site-state-item-name">日志</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-categories">
+                  <a href="/categories/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">20</span>
+                    <span class="site-state-item-name">分类</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-tags">
+                  <a href="/tags/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">39</span>
+                    <span class="site-state-item-name">标签</span>
+                  </a>
+                </div>
+              
+            </nav>
+          
+
+          
+
+          
+
+          
+          
+
+          
+          
+
+          
+            
+          
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#按代的垃圾回收机制"><span class="nav-number">1.</span> <span class="nav-text">按代的垃圾回收机制</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#新生代的构成"><span class="nav-number">2.</span> <span class="nav-text">新生代的构成</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#老年代GC处理机制"><span class="nav-number">3.</span> <span class="nav-text">老年代GC处理机制</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-Serial-GC-XX-UseSerialGC"><span class="nav-number">3.1.</span> <span class="nav-text">1. Serial GC (-XX:+UseSerialGC)</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-Parallel-GC-XX-UseParallelGC"><span class="nav-number">3.2.</span> <span class="nav-text">2. Parallel GC (-XX:+UseParallelGC)</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-Parallel-Old-GC-XX-UseParallelOldGC"><span class="nav-number">3.3.</span> <span class="nav-text">3. Parallel Old GC(-XX:+UseParallelOldGC)</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4-CMS-GC-XX-UseConcMarkSweepGC"><span class="nav-number">3.4.</span> <span class="nav-text">4. CMS GC (-XX:+UseConcMarkSweepGC)</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#5-G1-GC"><span class="nav-number">3.5.</span> <span class="nav-text">5. G1 GC</span></a></li></ol></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+        <div class="back-to-top">
+          <i class="fa fa-arrow-up"></i>
+          
+            <span id="scrollpercent"><span>0</span>%</span>
+          
+        </div>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; 2012 &mdash; <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Govern</span>
+
+  
+
+  
+</div>
+
+
+  
+
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" rel="external nofollow" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" rel="external nofollow" href="https://github.com/theme-next/hexo-theme-next">NexT.Gemini</a> v6.0.3</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=6.0.3"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=6.0.3"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=6.0.3"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=6.0.3"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=6.0.3"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=6.0.3"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=6.0.3"></script>
+
+
+
+  
+
+
+
+
+
+
+
+  
+    <script type="text/javascript">
+      (function(d, s) {
+        var j, e = d.getElementsByTagName(s)[0];
+        if (typeof LivereTower === 'function') { return; }
+        j = d.createElement(s);
+        j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+        j.async = true;
+        e.parentNode.insertBefore(j, e);
+      })(document, 'script');
+    </script>
+  
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+  
+  
+  
+  <link rel="stylesheet" href="/lib/algolia-instant-search/instantsearch.min.css">
+
+  
+  
+  <script src="/lib/algolia-instant-search/instantsearch.min.js"></script>
+  
+
+  <script src="/js/src/algolia-search.js?v=6.0.3"></script>
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+  
+  
+  
+  <script src="/lib/bookmark/bookmark.min.js?v=1.0"></script>
+  <script type="text/javascript">
+  
+    bookmark.scrollToMark('auto', "#more");
+  
+  </script>
+
+
+</body>
+</html>

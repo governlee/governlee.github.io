@@ -1,0 +1,895 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next gemini use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=6.0.3" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=6.0.3">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/lights-32x32.png?v=6.0.3">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/lights-16x16.png?v=6.0.3">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=6.0.3" color="#222">
+
+
+
+
+
+
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Gemini',
+    version: '6.0.3',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":true,"scrollpercent":true,"onmobile":false},
+    fancybox: false,
+    fastclick: false,
+    lazyload: false,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    algolia: {
+      applicationID: '41NC33JUJG',
+      apiKey: '7362b84fed21bc83930f198a0927bb82',
+      indexName: 'blog',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+  
+
+
+
+
+  
+  <meta name="keywords" content="Govern,govern" />
+
+
+<meta name="description" content="1、拆分成哪些项目?几个工程?各几个服务器?几个数据库? 项目&amp;amp;工程：    小程序 官网组件 游戏数据处理应用 （2台服务器） 头条前台 （2台服务器） 头条后台  （2台服务器） 短内容服务 （2台服务器） 长内容服务 （2台服务器）  数据库：  短内容DB 长内容DB  说明： 为了保证高可用，所有应用和服务都需要部署至少2台服务器(虚拟机)，但不同的应用可以部署在同一台服务器(虚">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Govern x Lab">
+<meta property="og:url" content="http://governlee.github.io/temp/toutiao-question.html">
+<meta property="og:site_name" content="Govern x Lab">
+<meta property="og:description" content="1、拆分成哪些项目?几个工程?各几个服务器?几个数据库? 项目&amp;amp;工程：    小程序 官网组件 游戏数据处理应用 （2台服务器） 头条前台 （2台服务器） 头条后台  （2台服务器） 短内容服务 （2台服务器） 长内容服务 （2台服务器）  数据库：  短内容DB 长内容DB  说明： 为了保证高可用，所有应用和服务都需要部署至少2台服务器(虚拟机)，但不同的应用可以部署在同一台服务器(虚">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="http://governlab.cn/images/toutiao.png">
+<meta property="og:image" content="http://governlab.cn/images/toutiao2.png">
+<meta property="og:image" content="http://governlab.cn/images/toutiao3.png">
+<meta property="og:updated_time" content="2018-04-11T14:15:43.522Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Govern x Lab">
+<meta name="twitter:description" content="1、拆分成哪些项目?几个工程?各几个服务器?几个数据库? 项目&amp;amp;工程：    小程序 官网组件 游戏数据处理应用 （2台服务器） 头条前台 （2台服务器） 头条后台  （2台服务器） 短内容服务 （2台服务器） 长内容服务 （2台服务器）  数据库：  短内容DB 长内容DB  说明： 为了保证高可用，所有应用和服务都需要部署至少2台服务器(虚拟机)，但不同的应用可以部署在同一台服务器(虚">
+<meta name="twitter:image" content="http://governlab.cn/images/toutiao.png">
+
+
+
+
+
+
+  <link rel="canonical" href="http://governlee.github.io/temp/toutiao-question.html"/>
+
+
+
+<script type="text/javascript" id="page.configurations">
+  CONFIG.page = {
+    sidebar: "",
+  };
+</script>
+  <title> | Govern x Lab</title>
+  
+
+
+
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?f6804645172803d5efc7161f04df1d76";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+  <noscript>
+  <style type="text/css">
+    .use-motion .motion-element,
+    .use-motion .brand,
+    .use-motion .menu-item,
+    .sidebar-inner,
+    .use-motion .post-block,
+    .use-motion .pagination,
+    .use-motion .comments,
+    .use-motion .post-header,
+    .use-motion .post-body,
+    .use-motion .collection-title { opacity: initial; }
+
+    .use-motion .logo,
+    .use-motion .site-title,
+    .use-motion .site-subtitle {
+      opacity: initial;
+      top: initial;
+    }
+
+    .use-motion {
+      .logo-line-before i { left: initial; }
+      .logo-line-after i { right: initial; }
+    }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"> <div class="site-brand-wrapper">
+  <div class="site-meta custom-logo">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Govern x Lab</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <h1 class="site-subtitle" itemprop="description">I'm not the only one</h1>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-home"></i> <br />首页</a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-user"></i> <br />关于</a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />标签</a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-th"></i> <br />分类</a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />归档</a>
+        </li>
+      
+
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />搜索</a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  
+  <div class="algolia-popup popup search-popup">
+    <div class="algolia-search">
+      <div class="algolia-search-input-icon">
+        <i class="fa fa-search"></i>
+      </div>
+      <div class="algolia-search-input" id="algolia-search-input"></div>
+    </div>
+
+    <div class="algolia-results">
+      <div id="algolia-stats"></div>
+      <div id="algolia-hits"></div>
+      <div id="algolia-pagination" class="algolia-pagination"></div>
+    </div>
+
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+  </div>
+
+
+
+
+    </div>
+  
+</nav>
+
+
+  
+
+
+
+ </div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+    
+    
+    <div class="post-block page">
+      <header class="post-header">
+
+	<h2 class="post-title" itemprop="name headline"></h2>
+
+
+
+</header>
+
+      
+      
+      
+      <div class="post-body">
+        
+        
+          <h3 id="1、拆分成哪些项目-几个工程-各几个服务器-几个数据库"><a href="#1、拆分成哪些项目-几个工程-各几个服务器-几个数据库" class="headerlink" title="1、拆分成哪些项目?几个工程?各几个服务器?几个数据库?"></a>1、拆分成哪些项目?几个工程?各几个服务器?几个数据库?</h3><p><img src="http://governlab.cn/images/toutiao.png" alt=""></p>
+<p><strong>项目&amp;工程：</strong>  </p>
+<ol>
+<li>小程序</li>
+<li>官网组件</li>
+<li>游戏数据处理应用 （2台服务器）</li>
+<li>头条前台 （2台服务器）</li>
+<li>头条后台  （2台服务器）</li>
+<li>短内容服务 （2台服务器）</li>
+<li>长内容服务 （2台服务器）</li>
+</ol>
+<p><strong>数据库：</strong></p>
+<ol>
+<li>短内容DB</li>
+<li>长内容DB</li>
+</ol>
+<p>说明： 为了保证高可用，所有应用和服务都需要部署至少2台服务器(虚拟机)，但不同的应用可以部署在同一台服务器(虚拟机)，具体部署组合和机器数量需要跟SA商讨。</p>
+<h3 id="2、官网-的数据库与PAPA数据库是同一个么"><a href="#2、官网-的数据库与PAPA数据库是同一个么" class="headerlink" title="2、官网++ 的数据库与PAPA数据库是同一个么?"></a>2、官网++ 的数据库与PAPA数据库是同一个么?</h3><p>基于以下几点做出判断：</p>
+<ul>
+<li><p><strong>官网++ 数据库与PAPA数据有没有关联？有没有关联操作或查询的需要？</strong><br>根据数据特征和使用场景，可以把整个官网++项目数据划分为长内容（PAPA）和短内容(头条)。<br>目前看来，这两部数据没有关联，也没有需要在同一事务操作两个库的需求。可能有关联查询的需求，但可以(也建议）在程序中进行关联，而不是通过join sql。</p>
+</li>
+<li><p><strong>分两个库的弊端？</strong><br>架构复杂度增加，需要配置管理更多的数据源（开发人员考虑）。<br>数据库部署和管理成本增加（SA考虑）</p>
+</li>
+<li><p><strong>分两个库的好处？</strong><br>随着数据量增大，分库性能必然优于共库。<br>避免库耦合造成的安全性问题。</p>
+</li>
+</ul>
+<p><strong>结论</strong>： 应该把两个数据库独立拆分。</p>
+<h3 id="3、PAPA是否是一个单独的工程-PAPA通过访问官网-接口写入数据-还是直接连DB写入数据"><a href="#3、PAPA是否是一个单独的工程-PAPA通过访问官网-接口写入数据-还是直接连DB写入数据" class="headerlink" title="3、PAPA是否是一个单独的工程? PAPA通过访问官网++接口写入数据?还是直接连DB写入数据?"></a>3、PAPA是否是一个单独的工程? PAPA通过访问官网++接口写入数据?还是直接连DB写入数据?</h3><p>PAPA是一个单独工程，目前是直接连DB，引入服务层后，将通过统一服务层进行DB访问。</p>
+<h3 id="4-想象一下官网-的接口是怎样的HTTP接口-能给出点比较抽象的例子么-大致估算一下接口数量会有多少-会不会特别多"><a href="#4-想象一下官网-的接口是怎样的HTTP接口-能给出点比较抽象的例子么-大致估算一下接口数量会有多少-会不会特别多" class="headerlink" title="4. 想象一下官网++的接口是怎样的HTTP接口? 能给出点比较抽象的例子么? 大致估算一下接口数量会有多少(会不会特别多?)"></a>4. 想象一下官网++的接口是怎样的HTTP接口? 能给出点比较抽象的例子么? 大致估算一下接口数量会有多少(会不会特别多?)</h3><p>接口分为内部接口和外部接口两种，用于架构中不同层级间的通信。</p>
+<p>外部接口用于外部与接入层(头条前台，PAPA前台)之间的通信，使用HTTP接口，接口规范需要与外部(前端开发人员，外部系统开发人员)进行约定。</p>
+<p>内部接口用于接入层(头条前台，PAPA前台,头条后台)与服务层之间通信，使用RPC接口。</p>
+<blockquote>
+<p>为什么内部不同样使用HTTP接口？</p>
+<ul>
+<li>内部接口数量多，初期变动频繁。HTTP方式过于灵活，严重依赖接口文档，接口提供方和调用方都需花大量精力维护文档和调整代码。 RPC框架能根据接口定义文件（IDL），直接生成通信客户端和服务端的代码，开发人员只需关注IDL和业务代码即可。<br><br></li>
+<li>内部接口供多个接入层调用，调用并发量很大。RPC采用字节流的方式传输，性能是HTTP的10倍。<br><br></li>
+<li>RPC的采用轻量级部署，不需要依赖 webserver(tomcat)运行。</li>
+</ul>
+</blockquote>
+<p>这里官网++接口是指服务层提供的内部接口，因此不是HTTP接口，而是RPC接口。采用gRPC框架，一个简单的IDL定义如下：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">syntax=&quot;proto3&quot;;  </span><br><span class="line">package com.ntease.protobuf;  </span><br><span class="line">option java_outer_classname=&quot;PersonProbuf&quot;;  </span><br><span class="line"></span><br><span class="line">message Person &#123;  </span><br><span class="line">    string username=1;  </span><br><span class="line">    int32 age=2;  </span><br><span class="line">    string sex=3;  </span><br><span class="line">&#125;  </span><br><span class="line"></span><br><span class="line">message Req &#123;  </span><br><span class="line">    string username=1;  </span><br><span class="line">&#125;  </span><br><span class="line"></span><br><span class="line">message Resp &#123;  </span><br><span class="line">    Person person=1;  </span><br><span class="line">&#125;  </span><br><span class="line"></span><br><span class="line">service UserService &#123;  </span><br><span class="line">    rpc query(Req) returns (Resp) &#123;&#125;  </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>这里定义了一个UserService服务，提供一个query接口。RPC框架会根据这个IDL生成相应的类和接口，开发人员只需自定义业务类实现这些接口，即可填充内部逻辑。</p>
+<p><strong>服务会不会很多？</strong><br>对于稍微复杂的系统，服务应该按业务来划分，并且每个服务单独部署，例如用户服务，内容服务，订单服务等，因此服务并不会太多(10个以内)。</p>
+<p><strong>接口的数量会不会很多？</strong><br>个人认为这个问题在于接口设计的原则，是一个平衡的问题。</p>
+<p>接口功能越简单(只是封装一下DAO的CRUD，把业务逻辑放在接入层实现)，则接口越通用，数量也越少。</p>
+<p>接口功能越复杂(业务逻辑放在服务层)，则接口越难以复用，数量也越多。</p>
+<p>因此，需要在灵活性和可复用性之间做平衡。内部接口设计应做到尽可能通用，尽量满足不同接入层的需要，减少需求变动对服务层的影响。</p>
+<h3 id="5-各个project调用官网-接口-如何进行身份认证以防止攻击"><a href="#5-各个project调用官网-接口-如何进行身份认证以防止攻击" class="headerlink" title="5. 各个project调用官网++接口,如何进行身份认证以防止攻击?"></a>5. 各个project调用官网++接口,如何进行身份认证以防止攻击?</h3><p>内部接口只能在内网调用，也可以通过RPC框架自带的SSL/TLS协议进行加密认证。</p>
+<h3 id="6-“小程序-lt-–HTTP–-官网-”这个过程中-小程序是拉官网-数据-还是官网-向小程序推数据-通过接口拉数据-很难像SQL那样要查什么查什么-官网-的接口真的可以做到这么灵活-让外部系统能够个性化的查询数据"><a href="#6-“小程序-lt-–HTTP–-官网-”这个过程中-小程序是拉官网-数据-还是官网-向小程序推数据-通过接口拉数据-很难像SQL那样要查什么查什么-官网-的接口真的可以做到这么灵活-让外部系统能够个性化的查询数据" class="headerlink" title="6. “小程序 &lt;–HTTP– 官网++”这个过程中, 小程序是拉官网++数据? 还是官网++向小程序推数据? 通过接口拉数据, 很难像SQL那样要查什么查什么, 官网++的接口真的可以做到这么灵活, 让外部系统能够个性化的查询数据?"></a>6. “小程序 &lt;–HTTP– 官网++”这个过程中, 小程序是拉官网++数据? 还是官网++向小程序推数据? 通过接口拉数据, 很难像SQL那样要查什么查什么, 官网++的接口真的可以做到这么灵活, 让外部系统能够个性化的查询数据?</h3><p>我认为应该采用拉数据的方式。原因如下：</p>
+<ul>
+<li><p><strong>推数据并没有解决接口灵活性的问题</strong>。 按目前拉取的方式，若发现没有满足外部查询需求的接口，则需要开发新的新的接口。 而推数据，除非是不管外部需不需要，都把全量数据往外推，然后把过滤、组装等工作都交给外部处理（显然这是不可能的）。否则， 我们还是要先根据外部需要，制定好要推送哪些数据，然后开发相应的查询和推送功能。应对新的外部查询需求时，并没有增加灵活性或减少原来的工作量。</p>
+<blockquote>
+<p>无论推还是拉，要实现能一次满足各种个性化查询的接口都是不可能的，只能在设计接口的时候尽可能考虑可复用性和日后扩展性。  </p>
+</blockquote>
+</li>
+</ul>
+<ul>
+<li><strong>数据推送需要外部应用的支持</strong>。 HTTP是不支持反向请求的，因此我们要通过其他技术来实现，例如websocket,tcp长连接等，这些都需要外部应用提供支持。另一种方式是，外部应用提供数据接收的接口，官网++ 定时请求接口推送数据，但这要求外部系统提供相关的服务和存储支持。</li>
+</ul>
+<p><strong>总结：</strong> 推数据的优点是实时性高，一旦数据发生变化可以实时通知外部应用（我们的项目没有数据高实时性的要求）。另外，也能减少官网++ 前台的查询请求压力（查询压力可以通过其他手段解决）。 但是，对外部对接的应用有较高的技术要求，这是不可控的。因此，建议使用传统的拉数据方式。</p>
+<h3 id="7-会议上说到要用-消息队列-这个怎么考虑的？"><a href="#7-会议上说到要用-消息队列-这个怎么考虑的？" class="headerlink" title="7. 会议上说到要用 消息队列, 这个怎么考虑的？"></a>7. 会议上说到要用 消息队列, 这个怎么考虑的？</h3><p>当时考虑的场景是，若游戏数据请求并发量非常大，那我们的游戏数据搜集应用可能支撑不住。 这时可以考虑在数据接收和数据处理之间引入消息队列，起到削峰缓冲的作用。这个需要在了解实际并发量有多少，以及搜集数据应用的处理能力后，再评估是否需要引入。</p>
+<h3 id="8-小程序应该需要做一些配置性的功能-这部分功能应属于会上所属”后台”部分-这部分功能-属于哪位同学的工作范畴"><a href="#8-小程序应该需要做一些配置性的功能-这部分功能应属于会上所属”后台”部分-这部分功能-属于哪位同学的工作范畴" class="headerlink" title="8. 小程序应该需要做一些配置性的功能,这部分功能应属于会上所属”后台”部分,这部分功能,属于哪位同学的工作范畴?"></a>8. 小程序应该需要做一些配置性的功能,这部分功能应属于会上所属”后台”部分,这部分功能,属于哪位同学的工作范畴?</h3><p>通用的小程序配置功能：由微管家团队负责 （小程序通用配置平台）</p>
+<p>头条小程序个性配置功能： 由头条管理后台的开发人员负责。</p>
+<h3 id="9-推荐系统大致怎么样的接口-官网-头条系统如何来使用"><a href="#9-推荐系统大致怎么样的接口-官网-头条系统如何来使用" class="headerlink" title="9. 推荐系统大致怎么样的接口? 官网++, 头条系统如何来使用?"></a>9. 推荐系统大致怎么样的接口? 官网++, 头条系统如何来使用?</h3><p>推荐是与具体某类业务数据和用户行为数据紧密关联的计算，并不存在通用的推荐系统，所以我们需要针对不同的外部应用，开发不同的推荐服务。例如文章推荐服务，“根据当前用户的已知喜好文章，找出有相同已知喜好的其他用户，还会喜好哪些文章且是当前用户没读过的，则进行推荐”，那么这个推荐接口输入就是当前用户，输出就是推荐文章。我们现阶段能实现的推荐的服务，都是基于用户行为数据，能通过sql实现的简单规则，不涉及机器学习。当然，实现简单并不代表效果就不好，可以根据实际使用反馈进行调整。</p>
+<h3 id="10-新的架构对开发流程和分工有什么影响？需要调整么？"><a href="#10-新的架构对开发流程和分工有什么影响？需要调整么？" class="headerlink" title="10. 新的架构对开发流程和分工有什么影响？需要调整么？"></a>10. 新的架构对开发流程和分工有什么影响？需要调整么？</h3><p>在本次项目中，有一个内部的隐性需求，就是希望能进行技术架构的更新，伴随而来也会对开发流程和分工带来一定的影响。</p>
+<p>目前的开发分工，主要分为前端和后台两部分工作，由相应人员进行对接开发。</p>
+<p>在新的架构中引入服务层后，后台部分相当于引入了一个服务层开发的新工作。</p>
+<p>对于一个大型项目，我们目前是子项目或者功能模块垂直划分进行分工的：</p>
+<p><img src="http://governlab.cn/images/toutiao2.png" alt=""></p>
+<p>引入服务层后，我们当然可以沿用上面的这种方式。但我们引入服务层的目的，是希望它是相对稳定的，是可重用的，而无需为了满足一次性需求而进行频繁修改。 所以，同一个项目的服务层我们通常会由固定的开发人员来进行开发维护，以便更好地规划和管理接口，要求这名人员熟悉服务的各种接口用途，对接系统调用的场景、接口性能等等（当然，服务层的开发人员必要时还是要承担接入层的开发）。</p>
+<p><img src="http://governlab.cn/images/toutiao3.png" alt=""></p>
+<p>这样分工，极端情况下可能会增加一些成本，例如接入层的开发进度比服务层的快，造成接入层的开发人员要空等（工作不饱和）。但带来的收益是系统代码质量和可靠性的提升。因为服务层开发人员的关注点就是服务层，他的职责就是保证服务的可靠性、扩展性和性能，不会为了满足各种特殊业务需求而随意破坏这些原则。</p>
+<p>反面例子：<br>应用(模块)A的开发A为了满足某特殊需求， 搞了个超复杂的sql，上线后直接拖垮了数据库。应用(模块)B的用户因为系统用不了，直接向部门老大投诉应用B的开发B ,开发B无故背锅。</p>
+
+        
+      </div>
+      
+      
+      
+    </div>
+    
+    
+    
+  </div>
+
+
+          </div>
+          
+
+  
+    <div class="comments" id="comments">
+      <div id="lv-container" data-id="city" data-uid="MTAyMC8zNDA5NS8xMDYzMw=="></div>
+    </div>
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image"
+                src="/images/logo.jpg"
+                alt="Govern" />
+            
+              <p class="site-author-name" itemprop="name">Govern</p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          
+            <nav class="site-state motion-element">
+              
+                <div class="site-state-item site-state-posts">
+                
+                  <a href="/archives/">
+                
+                    <span class="site-state-item-count">98</span>
+                    <span class="site-state-item-name">日志</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-categories">
+                  <a href="/categories/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">20</span>
+                    <span class="site-state-item-name">分类</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-tags">
+                  <a href="/tags/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">39</span>
+                    <span class="site-state-item-name">标签</span>
+                  </a>
+                </div>
+              
+            </nav>
+          
+
+          
+
+          
+
+          
+          
+
+          
+          
+
+          
+            
+          
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#1、拆分成哪些项目-几个工程-各几个服务器-几个数据库"><span class="nav-number">1.</span> <span class="nav-text">1、拆分成哪些项目?几个工程?各几个服务器?几个数据库?</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2、官网-的数据库与PAPA数据库是同一个么"><span class="nav-number">2.</span> <span class="nav-text">2、官网++ 的数据库与PAPA数据库是同一个么?</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3、PAPA是否是一个单独的工程-PAPA通过访问官网-接口写入数据-还是直接连DB写入数据"><span class="nav-number">3.</span> <span class="nav-text">3、PAPA是否是一个单独的工程? PAPA通过访问官网++接口写入数据?还是直接连DB写入数据?</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4-想象一下官网-的接口是怎样的HTTP接口-能给出点比较抽象的例子么-大致估算一下接口数量会有多少-会不会特别多"><span class="nav-number">4.</span> <span class="nav-text">4. 想象一下官网++的接口是怎样的HTTP接口? 能给出点比较抽象的例子么? 大致估算一下接口数量会有多少(会不会特别多?)</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#5-各个project调用官网-接口-如何进行身份认证以防止攻击"><span class="nav-number">5.</span> <span class="nav-text">5. 各个project调用官网++接口,如何进行身份认证以防止攻击?</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#6-“小程序-lt-–HTTP–-官网-”这个过程中-小程序是拉官网-数据-还是官网-向小程序推数据-通过接口拉数据-很难像SQL那样要查什么查什么-官网-的接口真的可以做到这么灵活-让外部系统能够个性化的查询数据"><span class="nav-number">6.</span> <span class="nav-text">6. “小程序 &lt;–HTTP– 官网++”这个过程中, 小程序是拉官网++数据? 还是官网++向小程序推数据? 通过接口拉数据, 很难像SQL那样要查什么查什么, 官网++的接口真的可以做到这么灵活, 让外部系统能够个性化的查询数据?</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#7-会议上说到要用-消息队列-这个怎么考虑的？"><span class="nav-number">7.</span> <span class="nav-text">7. 会议上说到要用 消息队列, 这个怎么考虑的？</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#8-小程序应该需要做一些配置性的功能-这部分功能应属于会上所属”后台”部分-这部分功能-属于哪位同学的工作范畴"><span class="nav-number">8.</span> <span class="nav-text">8. 小程序应该需要做一些配置性的功能,这部分功能应属于会上所属”后台”部分,这部分功能,属于哪位同学的工作范畴?</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#9-推荐系统大致怎么样的接口-官网-头条系统如何来使用"><span class="nav-number">9.</span> <span class="nav-text">9. 推荐系统大致怎么样的接口? 官网++, 头条系统如何来使用?</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#10-新的架构对开发流程和分工有什么影响？需要调整么？"><span class="nav-number">10.</span> <span class="nav-text">10. 新的架构对开发流程和分工有什么影响？需要调整么？</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+        <div class="back-to-top">
+          <i class="fa fa-arrow-up"></i>
+          
+            <span id="scrollpercent"><span>0</span>%</span>
+          
+        </div>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; 2012 &mdash; <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Govern</span>
+
+  
+
+  
+</div>
+
+
+  
+
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" rel="external nofollow" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" rel="external nofollow" href="https://github.com/theme-next/hexo-theme-next">NexT.Gemini</a> v6.0.3</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=6.0.3"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=6.0.3"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=6.0.3"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=6.0.3"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=6.0.3"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=6.0.3"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=6.0.3"></script>
+
+
+
+  
+
+
+
+
+
+
+
+  
+    <script type="text/javascript">
+      (function(d, s) {
+        var j, e = d.getElementsByTagName(s)[0];
+        if (typeof LivereTower === 'function') { return; }
+        j = d.createElement(s);
+        j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+        j.async = true;
+        e.parentNode.insertBefore(j, e);
+      })(document, 'script');
+    </script>
+  
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+  
+  
+  
+  <link rel="stylesheet" href="/lib/algolia-instant-search/instantsearch.min.css">
+
+  
+  
+  <script src="/lib/algolia-instant-search/instantsearch.min.js"></script>
+  
+
+  <script src="/js/src/algolia-search.js?v=6.0.3"></script>
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+  
+  
+  
+  <script src="/lib/bookmark/bookmark.min.js?v=1.0"></script>
+  <script type="text/javascript">
+  
+    bookmark.loadBookmark();
+  
+  </script>
+
+
+</body>
+</html>

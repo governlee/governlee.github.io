@@ -1,0 +1,1033 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next gemini use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=6.0.3" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=6.0.3">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/lights-32x32.png?v=6.0.3">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/lights-16x16.png?v=6.0.3">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=6.0.3" color="#222">
+
+
+
+
+
+
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Gemini',
+    version: '6.0.3',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":true,"scrollpercent":true,"onmobile":false},
+    fancybox: false,
+    fastclick: false,
+    lazyload: false,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    algolia: {
+      applicationID: '41NC33JUJG',
+      apiKey: '7362b84fed21bc83930f198a0927bb82',
+      indexName: 'blog',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+  
+
+
+
+
+  
+  <meta name="keywords" content="字节码," />
+
+
+<meta name="description" content="原文链接:             https://blog.csdn.net/luanlouis/article/details/41046443 概述 字段表集合是指由若干个字段表（field_info）组成的集合。对于在类中定义的若干个字段，经过JVM编译成class文件后，会将相应的字段信息组织到一个叫做字段表集合的结构中，字段表集合是一个类数组结构，如下图所示：   这里所讲的字段是指在">
+<meta name="keywords" content="字节码">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Java虚拟机原理：(四) class文件中的字段集合">
+<meta property="og:url" content="http://governlee.github.io/2014/11/12/2014-11-14-jvm-theory-4/index.html">
+<meta property="og:site_name" content="Govern x Lab">
+<meta property="og:description" content="原文链接:             https://blog.csdn.net/luanlouis/article/details/41046443 概述 字段表集合是指由若干个字段表（field_info）组成的集合。对于在类中定义的若干个字段，经过JVM编译成class文件后，会将相应的字段信息组织到一个叫做字段表集合的结构中，字段表集合是一个类数组结构，如下图所示：   这里所讲的字段是指在">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="https://img-blog.csdn.net/20141112171057806">
+<meta property="og:image" content="https://img-blog.csdn.net/20141112171939923">
+<meta property="og:image" content="https://img-blog.csdn.net/20141113094738764">
+<meta property="og:image" content="https://img-blog.csdn.net/20141113103118835">
+<meta property="og:image" content="https://img-blog.csdn.net/20141113150228416">
+<meta property="og:image" content="https://img-blog.csdn.net/20141113104136471">
+<meta property="og:image" content="https://img-blog.csdn.net/20141113104926703">
+<meta property="og:image" content="https://img-blog.csdn.net/20141113131808047">
+<meta property="og:image" content="https://img-blog.csdn.net/20141113132510495">
+<meta property="og:image" content="https://img-blog.csdn.net/20141113141534249">
+<meta property="og:image" content="https://img-blog.csdn.net/20141113154008360">
+<meta property="og:image" content="https://img-blog.csdn.net/20141113162348750">
+<meta property="og:updated_time" content="2018-03-29T14:03:31.148Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Java虚拟机原理：(四) class文件中的字段集合">
+<meta name="twitter:description" content="原文链接:             https://blog.csdn.net/luanlouis/article/details/41046443 概述 字段表集合是指由若干个字段表（field_info）组成的集合。对于在类中定义的若干个字段，经过JVM编译成class文件后，会将相应的字段信息组织到一个叫做字段表集合的结构中，字段表集合是一个类数组结构，如下图所示：   这里所讲的字段是指在">
+<meta name="twitter:image" content="https://img-blog.csdn.net/20141112171057806">
+
+
+
+
+
+
+  <link rel="canonical" href="http://governlee.github.io/2014/11/12/2014-11-14-jvm-theory-4/"/>
+
+
+
+<script type="text/javascript" id="page.configurations">
+  CONFIG.page = {
+    sidebar: "",
+  };
+</script>
+  <title>Java虚拟机原理：(四) class文件中的字段集合 | Govern x Lab</title>
+  
+
+
+
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?f6804645172803d5efc7161f04df1d76";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+  <noscript>
+  <style type="text/css">
+    .use-motion .motion-element,
+    .use-motion .brand,
+    .use-motion .menu-item,
+    .sidebar-inner,
+    .use-motion .post-block,
+    .use-motion .pagination,
+    .use-motion .comments,
+    .use-motion .post-header,
+    .use-motion .post-body,
+    .use-motion .collection-title { opacity: initial; }
+
+    .use-motion .logo,
+    .use-motion .site-title,
+    .use-motion .site-subtitle {
+      opacity: initial;
+      top: initial;
+    }
+
+    .use-motion {
+      .logo-line-before i { left: initial; }
+      .logo-line-after i { right: initial; }
+    }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"> <div class="site-brand-wrapper">
+  <div class="site-meta custom-logo">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Govern x Lab</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <h1 class="site-subtitle" itemprop="description">I'm not the only one</h1>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-home"></i> <br />首页</a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-user"></i> <br />关于</a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />标签</a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-th"></i> <br />分类</a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />归档</a>
+        </li>
+      
+
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />搜索</a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  
+  <div class="algolia-popup popup search-popup">
+    <div class="algolia-search">
+      <div class="algolia-search-input-icon">
+        <i class="fa fa-search"></i>
+      </div>
+      <div class="algolia-search-input" id="algolia-search-input"></div>
+    </div>
+
+    <div class="algolia-results">
+      <div id="algolia-stats"></div>
+      <div id="algolia-hits"></div>
+      <div id="algolia-pagination" class="algolia-pagination"></div>
+    </div>
+
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+  </div>
+
+
+
+
+    </div>
+  
+</nav>
+
+
+  
+
+
+
+ </div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://governlee.github.io/2014/11/12/2014-11-14-jvm-theory-4/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Govern">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/logo.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Govern x Lab">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">Java虚拟机原理：(四) class文件中的字段集合</h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2014-11-12T08:00:00+08:00">2014-11-12</time>
+            
+
+            
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/JVM/" itemprop="url" rel="index"><span itemprop="name">JVM</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p><strong>原文链接:</strong>             <a href="https://blog.csdn.net/luanlouis/article/details/41046443" target="_blank" rel="noopener">https://blog.csdn.net/luanlouis/article/details/41046443</a></p>
+<h3 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h3><p> <strong>字段表集合</strong>是指由若干个字段表（<strong>field_info</strong>）组成的集合。对于在类中定义的若干个字段，经过JVM编译成class文件后，会将相应的字段信息组织到一个叫做字段表集合的结构中，字段表集合是一个类数组结构，如下图所示：</p>
+<p> <img src="https://img-blog.csdn.net/20141112171057806" alt=""></p>
+<p>这里所讲的字段是指在类中定义的<strong>静态或者非静态的变量</strong>，而不是在类中的方法内定义的变量。请注意区别。</p>
+<p>比如，如果某个类中定义了5个字段，那么，JVM在编译此类的时候，会生成5个字段表（field_info）信息,然后将字段表集合中的字段计数器的值设置成5，将5个字段表信息依次放置到字段计数器的后面。</p>
+<h3 id="字段表集合在class文件中的位置"><a href="#字段表集合在class文件中的位置" class="headerlink" title="字段表集合在class文件中的位置"></a>字段表集合在class文件中的位置</h3><p>字段表集合紧跟在class文件的接口索引集合结构的后面，如下图所示：</p>
+<p><img src="https://img-blog.csdn.net/20141112171939923" alt=""></p>
+<h3 id="Java中的一个Field字段应该包含那些信息？-字段表field-info结构体的定义"><a href="#Java中的一个Field字段应该包含那些信息？-字段表field-info结构体的定义" class="headerlink" title="Java中的一个Field字段应该包含那些信息？(字段表field_info结构体的定义)"></a>Java中的一个Field字段应该包含那些信息？(字段表field_info结构体的定义)</h3><p><img src="https://img-blog.csdn.net/20141113094738764" alt=""></p>
+<p>针对上述的字段表示，JVM虚拟机规范规定了field_info结构体来描述字段，其表示信息如下：</p>
+<p><img src="https://img-blog.csdn.net/20141113103118835" alt=""></p>
+<p><img src="https://img-blog.csdn.net/20141113150228416" alt=""></p>
+<p>下面我将一一讲解FIeld_info的组成元素： <strong>访问标志（access_flags）、名称索引（name_index）、描述索引（descriptor_index）、属性表集合 </strong></p>
+<h3 id="field字段的访问标志"><a href="#field字段的访问标志" class="headerlink" title="field字段的访问标志"></a>field字段的访问标志</h3><p>如上图所示定义的field_info结构体，field字段的访问标志(access_flags)占有两个字节，它能够表述的信息如下所示：</p>
+<p><img src="https://img-blog.csdn.net/20141113104136471" alt=""></p>
+<p>举例：如果我们在某个类中有定义field域：private static String str;，那么在访问标志上，第15位ACC_PRIVATE和第13位ACC_STATIC标志位都应该为1。field域str的访问标志信息应该是如下所示：</p>
+<p><img src="https://img-blog.csdn.net/20141113104926703" alt=""></p>
+<p>如上图所示，str字段的访问标志的值为0x000A，它由两个修饰符<strong>ACC_PRIVATE</strong>和<strong>ACC_STATIC</strong>组成。</p>
+<p>根据给定的访问标志（access_flags），我们可以通过以下运算来得到这个域有哪些修饰符：</p>
+<p><img src="https://img-blog.csdn.net/20141113131808047" alt=""></p>
+<p>上面列举的str字段的访问标志的值为000A，那么分别域上述的标志符的特征值取&amp;，结果为1的只有ACC_PRIVATE和ACC_STATIC，所以该字段的标志符只有有ACC_PRIVATE和ACC_STATIC。</p>
+<p><img src="https://img-blog.csdn.net/20141113132510495" alt=""></p>
+<h3 id="字段的数据类型表示和字段名称表示"><a href="#字段的数据类型表示和字段名称表示" class="headerlink" title="字段的数据类型表示和字段名称表示"></a>字段的数据类型表示和字段名称表示</h3><p>class文件对数据类型的表示如下图所示：</p>
+<p><img src="https://img-blog.csdn.net/20141113141534249" alt=""></p>
+<p>field字段名称，我们定义了一个形如<strong>private static String str</strong>的field字段，其中”str”就是这个字段的名称。</p>
+<p>class文件将字段名称和field字段的数据类型表示作为字符串存储在常量池中。在field_info结构体中，紧接着访问标志的，就是<strong>字段名称索引</strong>和<strong>字段描述符索引</strong>，它们分别占有两个字节，其内部存储的是指向了常量池中的某个常量池项的索引，对应的常量池项中存储的字符串，分别表示该字段的名称和字段描述符。</p>
+<h3 id="属性表集合—–静态field字段的初始化"><a href="#属性表集合—–静态field字段的初始化" class="headerlink" title="属性表集合—–静态field字段的初始化"></a>属性表集合—–静态field字段的初始化</h3><p>在定义field字段的过程中，我们有时候会很自然地对field字段直接赋值，如下所示：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">int</span> MAX=<span class="number">100</span>;  </span><br><span class="line"><span class="keyword">public</span>  <span class="keyword">int</span> count=<span class="number">0</span>;</span><br></pre></td></tr></table></figure></p>
+<p>对于虚拟机而言，上述的两个field字段赋值的时机是不同的：</p>
+<ul>
+<li><p>对于非静态（即无static修饰）的field字段的赋值将会出现在<strong>实例构造方法&lt; init &gt;()</strong>中</p>
+</li>
+<li><p>对于静态的field字段，有两个选择：1、在静态构造方法<cinit>()中进行；2 、使用ConstantValue属性进行赋值</cinit></p>
+</li>
+</ul>
+<blockquote>
+<p>Sun javac编译器对于静态field字段的初始化赋值策略</p>
+<p>目前的Sun javac编译器的选择是：如果使用final和static同时修饰一个field字段，并且这个字段是基本类型或者String类型的，那么编译器在编译这个字段的时候，会在对应的field_info结构体中增加一个<strong>ConstantValue</strong>类型的结构体，在赋值的时候使用这个ConstantValue进行赋值；如果该field字段并没有被final修饰，或者不是基本类型或者String类型，那么将在类构造方法&lt; cinit &gt;()中赋值。</p>
+</blockquote>
+<p>对于上述的<strong>public static final init MAX=100;</strong>   javac编译器在编译此field字段构建field_info结构体时，除了访问标志、名称索引、描述符索引外，会增加一个<strong>ConstantValue</strong>类型的<strong>属性表</strong>。</p>
+<p><img src="https://img-blog.csdn.net/20141113154008360" alt=""></p>
+<h3 id="实例解析："><a href="#实例解析：" class="headerlink" title="实例解析："></a>实例解析：</h3><p>定义如下一个简单的Simple类，然后通过查看Simple.class文件内容并结合<code>javap -v Simple</code>生成的常量池内容，分析str field字段的结构：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">Simple</span> </span>&#123;  </span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span>  <span class="keyword">transient</span> <span class="keyword">static</span> <span class="keyword">final</span> String str =<span class="string">"This is a test"</span>;  </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p><img src="https://img-blog.csdn.net/20141113162348750" alt=""></p>
+<ol>
+<li><p>字段计数器中的值为0x0001,表示这个类就定义了1个field字段</p>
+</li>
+<li><p>字段的访问标志是0x009A,二进制是00000000 10011010，即第9、12、13、15位标志位为1，这个字段的标志符有：ACC_TRANSIENT、ACC_FINAL、ACC_STATIC、ACC_PRIVATE;</p>
+</li>
+<li><p>名称索引中的值为0x0005,指向了常量池中的第5项，为“str”,表明这个field字段的名称是str；</p>
+</li>
+<li><p>描述索引中的值为0x0006,指向了常量池中的第6项，为”Ljava/lang/String;”，表明这个field字段的数据类型是java.lang.String类型；</p>
+</li>
+<li><p>属性表计数器中的值为0x0001,表明field_info还有一个属性表；</p>
+</li>
+<li><p>属性表名称索引中的值为0x0007,指向常量池中的第7项，为“ConstantValue”,表明这个属性表的名称是ConstantValue，即属性表的类型是ConstantValue类型的；</p>
+</li>
+<li><p>属性长度中的值为0x0002，因为此属性表是ConstantValue类型，它的值<strong>固定为2</strong>；</p>
+</li>
+<li><p>常量值索引 中的值为0x0008,指向了常量池中的第8项，为<strong>CONSTANT_String_info</strong>类型的项，表示“This is a test” 的常量。在对此field赋值时，会使用此常量对field赋值。</p>
+</li>
+</ol>
+<h3 id="您还需要了解什么"><a href="#您还需要了解什么" class="headerlink" title="您还需要了解什么"></a>您还需要了解什么</h3><p>简单地说，对于一个类而言，它有两部分组成：field字段和 method方法。本文主要介绍了field字段，那还剩些一个method方法啦。method方法可是说是class文件中最为重要的一部分了，它包含了方法的实现代码，即机器指令，<strong>机器指令是整个class文件的核心</strong>。</p>
+
+      
+    </div>
+
+    
+      
+
+
+    
+
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/字节码/" rel="tag"># 字节码</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2014/10/12/2014-10-12-understanding-weak-references/" rel="next" title="译文：理解Java中的弱引用">
+                <i class="fa fa-chevron-left"></i> 译文：理解Java中的弱引用
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2014/11/12/2014-11-12-jvm-theory-3/" rel="prev" title="Java虚拟机原理：(三) class访问标志、类索引、父类索引、接口索引集合">
+                Java虚拟机原理：(三) class访问标志、类索引、父类索引、接口索引集合 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+  
+    <div class="comments" id="comments">
+      <div id="lv-container" data-id="city" data-uid="MTAyMC8zNDA5NS8xMDYzMw=="></div>
+    </div>
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image"
+                src="/images/logo.jpg"
+                alt="Govern" />
+            
+              <p class="site-author-name" itemprop="name">Govern</p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          
+            <nav class="site-state motion-element">
+              
+                <div class="site-state-item site-state-posts">
+                
+                  <a href="/archives/">
+                
+                    <span class="site-state-item-count">98</span>
+                    <span class="site-state-item-name">日志</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-categories">
+                  <a href="/categories/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">20</span>
+                    <span class="site-state-item-name">分类</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-tags">
+                  <a href="/tags/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">39</span>
+                    <span class="site-state-item-name">标签</span>
+                  </a>
+                </div>
+              
+            </nav>
+          
+
+          
+
+          
+
+          
+          
+
+          
+          
+
+          
+            
+          
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#概述"><span class="nav-number">1.</span> <span class="nav-text">概述</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#字段表集合在class文件中的位置"><span class="nav-number">2.</span> <span class="nav-text">字段表集合在class文件中的位置</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Java中的一个Field字段应该包含那些信息？-字段表field-info结构体的定义"><span class="nav-number">3.</span> <span class="nav-text">Java中的一个Field字段应该包含那些信息？(字段表field_info结构体的定义)</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#field字段的访问标志"><span class="nav-number">4.</span> <span class="nav-text">field字段的访问标志</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#字段的数据类型表示和字段名称表示"><span class="nav-number">5.</span> <span class="nav-text">字段的数据类型表示和字段名称表示</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#属性表集合—–静态field字段的初始化"><span class="nav-number">6.</span> <span class="nav-text">属性表集合—–静态field字段的初始化</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#实例解析："><span class="nav-number">7.</span> <span class="nav-text">实例解析：</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#您还需要了解什么"><span class="nav-number">8.</span> <span class="nav-text">您还需要了解什么</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+        <div class="back-to-top">
+          <i class="fa fa-arrow-up"></i>
+          
+            <span id="scrollpercent"><span>0</span>%</span>
+          
+        </div>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; 2012 &mdash; <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Govern</span>
+
+  
+
+  
+</div>
+
+
+  
+
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" rel="external nofollow" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" rel="external nofollow" href="https://github.com/theme-next/hexo-theme-next">NexT.Gemini</a> v6.0.3</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=6.0.3"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=6.0.3"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=6.0.3"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=6.0.3"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=6.0.3"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=6.0.3"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=6.0.3"></script>
+
+
+
+  
+
+
+
+
+
+
+
+  
+    <script type="text/javascript">
+      (function(d, s) {
+        var j, e = d.getElementsByTagName(s)[0];
+        if (typeof LivereTower === 'function') { return; }
+        j = d.createElement(s);
+        j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+        j.async = true;
+        e.parentNode.insertBefore(j, e);
+      })(document, 'script');
+    </script>
+  
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+  
+  
+  
+  <link rel="stylesheet" href="/lib/algolia-instant-search/instantsearch.min.css">
+
+  
+  
+  <script src="/lib/algolia-instant-search/instantsearch.min.js"></script>
+  
+
+  <script src="/js/src/algolia-search.js?v=6.0.3"></script>
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+  
+  
+  
+  <script src="/lib/bookmark/bookmark.min.js?v=1.0"></script>
+  <script type="text/javascript">
+  
+    bookmark.scrollToMark('auto', "#more");
+  
+  </script>
+
+
+</body>
+</html>

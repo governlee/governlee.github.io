@@ -1,0 +1,971 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next gemini use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=6.0.3" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=6.0.3">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/lights-32x32.png?v=6.0.3">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/lights-16x16.png?v=6.0.3">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=6.0.3" color="#222">
+
+
+
+
+
+
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Gemini',
+    version: '6.0.3',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":true,"scrollpercent":true,"onmobile":false},
+    fancybox: false,
+    fastclick: false,
+    lazyload: false,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    algolia: {
+      applicationID: '41NC33JUJG',
+      apiKey: '7362b84fed21bc83930f198a0927bb82',
+      indexName: 'blog',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+  
+
+
+
+
+  
+  <meta name="keywords" content="java语言,gc," />
+
+
+<meta name="description" content="原文链接:http://www.importnew.com/2057.html 本文是成为Java GC专家系列文章的第二篇。在第一篇《深入浅出Java垃圾回收机制》中我们学习了不同GC算法的执行过程，GC是如何工作的，什么是新生代和老年代，你应该了解的JDK7中的5种GC类型，以及这5种类型对于应用性能的影响。 在本文中，我将解释JVM到底是如何执行垃圾回收处理的。 什么是GC监控？ 垃圾回收收">
+<meta name="keywords" content="java语言,gc">
+<meta property="og:type" content="article">
+<meta property="og:title" content="成为JavaGC专家（2）—如何监控Java垃圾回收机制">
+<meta property="og:url" content="http://governlee.github.io/2012/12/28/2012-12-28.gc-2/index.html">
+<meta property="og:site_name" content="Govern x Lab">
+<meta property="og:description" content="原文链接:http://www.importnew.com/2057.html 本文是成为Java GC专家系列文章的第二篇。在第一篇《深入浅出Java垃圾回收机制》中我们学习了不同GC算法的执行过程，GC是如何工作的，什么是新生代和老年代，你应该了解的JDK7中的5种GC类型，以及这5种类型对于应用性能的影响。 在本文中，我将解释JVM到底是如何执行垃圾回收处理的。 什么是GC监控？ 垃圾回收收">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="http://www.importnew.com/wp-content/uploads/2012/12/Figure-1-VisualVM-Screenshot..png">
+<meta property="og:image" content="http://www.importnew.com/wp-content/uploads/2012/12/Figure-2-Viusal-GC-Installation-Screenshot.png">
+<meta property="og:image" content="http://www.importnew.com/wp-content/uploads/2012/12/Figure-3-Visual-GC-execution-screenshot.png">
+<meta property="og:updated_time" content="2018-05-09T11:06:59.038Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="成为JavaGC专家（2）—如何监控Java垃圾回收机制">
+<meta name="twitter:description" content="原文链接:http://www.importnew.com/2057.html 本文是成为Java GC专家系列文章的第二篇。在第一篇《深入浅出Java垃圾回收机制》中我们学习了不同GC算法的执行过程，GC是如何工作的，什么是新生代和老年代，你应该了解的JDK7中的5种GC类型，以及这5种类型对于应用性能的影响。 在本文中，我将解释JVM到底是如何执行垃圾回收处理的。 什么是GC监控？ 垃圾回收收">
+<meta name="twitter:image" content="http://www.importnew.com/wp-content/uploads/2012/12/Figure-1-VisualVM-Screenshot..png">
+
+
+
+
+
+
+  <link rel="canonical" href="http://governlee.github.io/2012/12/28/2012-12-28.gc-2/"/>
+
+
+
+<script type="text/javascript" id="page.configurations">
+  CONFIG.page = {
+    sidebar: "",
+  };
+</script>
+  <title>成为JavaGC专家（2）—如何监控Java垃圾回收机制 | Govern x Lab</title>
+  
+
+
+
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?f6804645172803d5efc7161f04df1d76";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+  <noscript>
+  <style type="text/css">
+    .use-motion .motion-element,
+    .use-motion .brand,
+    .use-motion .menu-item,
+    .sidebar-inner,
+    .use-motion .post-block,
+    .use-motion .pagination,
+    .use-motion .comments,
+    .use-motion .post-header,
+    .use-motion .post-body,
+    .use-motion .collection-title { opacity: initial; }
+
+    .use-motion .logo,
+    .use-motion .site-title,
+    .use-motion .site-subtitle {
+      opacity: initial;
+      top: initial;
+    }
+
+    .use-motion {
+      .logo-line-before i { left: initial; }
+      .logo-line-after i { right: initial; }
+    }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"> <div class="site-brand-wrapper">
+  <div class="site-meta custom-logo">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Govern x Lab</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <h1 class="site-subtitle" itemprop="description">I'm not the only one</h1>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-home"></i> <br />首页</a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-user"></i> <br />关于</a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />标签</a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-th"></i> <br />分类</a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />归档</a>
+        </li>
+      
+
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />搜索</a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  
+  <div class="algolia-popup popup search-popup">
+    <div class="algolia-search">
+      <div class="algolia-search-input-icon">
+        <i class="fa fa-search"></i>
+      </div>
+      <div class="algolia-search-input" id="algolia-search-input"></div>
+    </div>
+
+    <div class="algolia-results">
+      <div id="algolia-stats"></div>
+      <div id="algolia-hits"></div>
+      <div id="algolia-pagination" class="algolia-pagination"></div>
+    </div>
+
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+  </div>
+
+
+
+
+    </div>
+  
+</nav>
+
+
+  
+
+
+
+ </div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://governlee.github.io/2012/12/28/2012-12-28.gc-2/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Govern">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/logo.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Govern x Lab">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">成为JavaGC专家（2）—如何监控Java垃圾回收机制</h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2012-12-28T08:00:00+08:00">2012-12-28</time>
+            
+
+            
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/JDK/" itemprop="url" rel="index"><span itemprop="name">JDK</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p><strong>原文链接</strong>:<a href="http://www.importnew.com/2057.html" target="_blank" rel="noopener">http://www.importnew.com/2057.html</a></p>
+<p>本文是成为Java GC专家系列文章的第二篇。在第一篇《深入浅出Java垃圾回收机制》中我们学习了不同GC算法的执行过程，GC是如何工作的，什么是新生代和老年代，你应该了解的JDK7中的5种GC类型，以及这5种类型对于应用性能的影响。</p>
+<p>在本文中，我将解释<strong>JVM到底是如何执行垃圾回收处理的</strong>。</p>
+<p><strong>什么是GC监控？</strong></p>
+<p>垃圾回收收集监控指的是搞清楚JVM如何执行GC的过程，例如，我们可以查明：</p>
+<ul>
+<li><p>何时一个新生代中的对象被移动到老年代时，所花费的时间。</p>
+</li>
+<li><p>Stop-the-world 何时发生的，持续了多长时间。</p>
+</li>
+</ul>
+<p><strong>GC监控是为了鉴别JVM是否在高效地执行GC，以及是否有必要进行额外的性能调优</strong>。基于以上信息，我们可以修改应用程序或者调整GC算法（GC优化）。</p>
+<p><strong>如何监控GC</strong></p>
+<p>有很多种方法可以监控GC，但其差别仅仅是GC操作通过何种方式展现而已。GC操作是由JVM来完成，而GC监控工具只是将JVM提供的GC信息展现给你，因此，<strong>不论你使用何种方式监控GC都将得到相同的结果</strong>。所以你也就不必去学习所有的监控GC的方法。但是因为学习每种监控方法不会占用太多时间，了解多一点可以帮助你根据不同的场景选择最为合适的方式。</p>
+<p>下面所列的工具以及JVM参数并不适用于所有的HVM供应商。这是因为并没有关于GC信息的强制标准。本文我们将使用HotSpot JVM (Oracle JVM)。因为NHN 一直在使用Oracle (Sun) JVM，所以用它作为示例来解释我们提到的工具和JVM参数更容易些。<br>首先，GC监控方法根据访问的接口不同，可以分成<strong>CUI 和GUI </strong>两大类。<br>CUI GC监控方法使用一个独立的叫做”<strong>jstat</strong>”的CUI应用，或者在启动JVM的时候选择JVM参数”verbosegc”。<br>GUI GC监控由一个单独的图形化应用来完成，其中三个最常用的应用是<strong>”jconsole”, “jvisualvm” 和 “Visual GC”</strong>。<br>下面我们来详细学习每种方法。</p>
+<p><strong>jstat</strong></p>
+<p>jstat 是HotSpot JVM提供的一个监控工具。其他监控工具还有jps 和jstatd。有些时候，你可能需要同时使用三种工具来监控你的应用。jstat 不仅提供GC操作的信息，还提供类装载操作的信息以及运行时编译器操作的信息。本文将只涉及jstat能够提供的信息中与监控GC操作信息相关的功能。<br>jstat 被放置在$JDK_HOME/bin。因此只要java 和 javac能执行，jstat 同样可以执行。<br>你可以在命令行环境下执行如下语句。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">$&gt; jstat –gc  $&lt;vmid$&gt; 1000</span><br><span class="line"> S0C       S1C       S0U    S1U      EC         EU          OC         OU         PC         PU         YGC     YGCT    FGC      FGCT     GCT</span><br><span class="line">3008.0   3072.0    0.0     1511.1   343360.0   46383.0     699072.0   283690.2   75392.0    41064.3    2540    18.454    4      1.133    19.588</span><br><span class="line">3008.0   3072.0    0.0     1511.1   343360.0   47530.9     699072.0   283690.2   75392.0    41064.3    2540    18.454    4      1.133    19.588</span><br><span class="line">3008.0   3072.0    0.0     1511.1   343360.0   47793.0     699072.0   283690.2   75392.0    41064.3    2540    18.454    4      1.133    19.588</span><br><span class="line">``` </span><br><span class="line">在上图的例子中，实际的数据会按照如下列输出：</span><br></pre></td></tr></table></figure></p>
+<p>1  S0C    S1C     S0U     S1U    EC     EU     OC     OU     PC<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">**vmid (虚拟机 ID)**，正如其名字描述的，它是虚拟机的ID，Java应用不论运行在本地还是远程的机器都会拥有自己独立的vmid。运行在本地机器上的vmid称之为lvmid (本地vmid)，通常是PID。如果想得到PID的值你可以使用ps命令或者windows任务管理器，但我们推荐使用**jps**来获取，因为PID和lvmid有时会不一致。jps 通过Java PS实现，**jps命令会返回vmids和main方法的信息**，正如ps命令展现PIDS和进程名字那样。</span><br><span class="line"></span><br><span class="line">首先通过jps命令找到你要监控的Java应用的vmid，并把它作为jstat的参数。当几个WAS实例运行在同一台设备上时，如果你只使用jps命令，将只能看到启动（bootstrap）信息。我们建议在这种情况下使用ps -ef | grep java与jps配合使用。</span><br><span class="line">想要得到GC性能相关的数据需要持续不断地监控，因此在执行jstat时，要规则地输出GC监控的信息。</span><br><span class="line"></span><br><span class="line">例如，执行”jstat –gc 1000″ (或 1s)会每隔一秒展示GC监控数据。”jstat –gc 1000 10″会每隔1秒展现一次，且一共10次。</span><br><span class="line"></span><br><span class="line">![](http://governlab.cn/images/gc-1.png)</span><br><span class="line"></span><br><span class="line">**你可以只关心那些最常用的命令，你会经常用到 -gcutil (或-gccause), -gc and –gccapacity。**</span><br><span class="line"></span><br><span class="line">· -gcutil 被用于检查堆间的使用情况，GC执行的次数以及GC操作所花费的时间。</span><br><span class="line"></span><br><span class="line">· -gccapacity以及其他的参数可以用于检查实际分配内存的大小。</span><br><span class="line"></span><br><span class="line">使用-gc 参数你可以看到如下输出：</span><br></pre></td></tr></table></figure></p>
+<p>S0C      S1C    …   GCT<br>1248.0   896.0  …   1.246<br>1248.0   896.0  …   1.246<br>…        …      …   …<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br></pre></td><td class="code"><pre><span class="line">不同的jstat参数输出不同类型的列，如下表所示，根据你使用的”jstat option”会输出不同列的信息。</span><br><span class="line"></span><br><span class="line">|列|说明|Jstat参数|</span><br><span class="line">|--|--|--|</span><br><span class="line">|S0C|	输出Survivor0空间的大小。单位KB。|	-gc -gccapacity -gcnew -gcnewcapacity|</span><br><span class="line">|S1C| 输出Survivor1空间的大小。单位KB。|	-gc -gccapacity -gcnew -gcnewcapacity|</span><br><span class="line">|S0U|	输出Survivor0已用空间的大小。单位KB。|	-gc -gcnew|</span><br><span class="line">|S1U|	输出Survivor1已用空间的大小。单位KB。|	-gc -gcnew|</span><br><span class="line">|EC|输出Eden空间的大小。单位KB。|	-gc -gccapacity -gcnew -gcnewcapacity|</span><br><span class="line">|EU	|输出Eden已用空间的大小。单位KB。|	-gc  -gcnew|</span><br><span class="line">|OC|	输出老年代空间的大小。单位KB。|-gc -gccapacity -gcold -gcoldcapacity|</span><br><span class="line">|OU|	输出老年代已用空间的大小。单位KB。|	-gc -gcold|</span><br><span class="line">|PC|输出持久代空间的大小。单位KB。|	-gc -gccapacity -gcold -gcoldcapacity|</span><br><span class="line">|PU|输出持久代已用空间的大小。单位KB。|	-gc -gcold|</span><br><span class="line">|YGC|	新生代空间GC时间发生的次数。|	-gc -gccapacity -gcnew -gcnewcapacity -gcold -gcoldcapacity -gcpermcapacity  -gcutil  -gccause|</span><br><span class="line">|YGCT|	新生代GC处理花费的时间。	|-gc -gcnew -gcutil -gccause|</span><br><span class="line">|FGC|	full GC发生的次数。|	-gc -gccapacity -gcnew -gcnewcapacity -gcold -gcoldcapacity -gcpermcapacity -gcutil -gccause|</span><br><span class="line">|FGCT|	full GC操作花费的时间|	-gc -gcold -gcoldcapacity -gcpermcapacity -gcutil -gccause|</span><br><span class="line">|GCT|	GC操作花费的总时间。|	-gc -gcold -gcoldcapacity -gcpermcapacity -gcutil -gccause|</span><br><span class="line">|NGCMN|	新生代最小空间容量，单位KB。|	-gccapacity -gcnewcapacity|</span><br><span class="line">|NGCMX|	新生代最大空间容量，单位KB。|	-gccapacity -gcnewcapacity|</span><br><span class="line">|NGC|	新生代当前空间容量，单位KB。	|-gccapacity -gcnewcapacity|</span><br><span class="line">|OGCMN|	老年代最小空间容量，单位KB。|	-gccapacity -gcoldcapacity|</span><br><span class="line">|OGCMX|	老年代最大空间容量，单位KB。|	-gccapacity -gcoldcapacity|</span><br><span class="line">|OGC|	老年代当前空间容量制，单位KB。|	-gccapacity -gcoldcapacity|</span><br><span class="line">|PGCMN|	持久代最小空间容量，单位KB。|	-gccapacity -gcpermcapacity|</span><br><span class="line">|PGCMX|	持久代最大空间容量，单位KB。|	-gccapacity -gcpermcapacity|</span><br><span class="line">|PGC|	持久代当前空间容量，单位KB。|	-gccapacity -gcpermcapacity|</span><br><span class="line">|PC|	持久代当前空间大小，单位KB|	-gccapacity -gcpermcapacity|</span><br><span class="line">|PU|	持久代当前已用空间大小，单位KB|	-gc -gcold|</span><br><span class="line">|LGCC	|最后一次GC发生的原因|	-gccause|</span><br><span class="line">|GCC|	当前GC发生的原因	|-gccause|</span><br><span class="line">|TT	|老年化阈值。被移动到老年代之前，在新生代空存活的次数。|	-gcnew|</span><br><span class="line">|MTT|	最大老年化阈值。被移动到老年代之前，在新生代空存活的次数。|	-gcnew|</span><br><span class="line">|DSS	|幸存者区所需空间大小，单位KB。	|-gcnew|</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">jstat 的好处是它可以持续的监控GC操作数据，不论Java应用是运行在本地还是远程，只要有控制台的地方就可以使用。当使用–gcutil 会输出如下信息。在GC优化的时候，你需要特别注意YGC, YGCT, FGC, FGCT 和GCT。</span><br></pre></td></tr></table></figure></p>
+<p>S0      S1       E        O        P        YGC    YGCT     FGC    FGCT     GCT<br>0.00    66.44    54.12    10.58    86.63    217    0.928     2     0.067    0.995<br>0.00    66.44    54.12    10.58    86.63    217    0.928     2     0.067    0.995<br>0.00    66.44    54.12    10.58    86.63    217    0.928     2     0.067    0.995<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line">这些信息很重要，因为它们展示了GC处理到底花费了多少时间。  </span><br><span class="line">在这个例子中，YGC 是217而YGCT 是0.928，这样在简单的计算数据平均数后(YGCT/YGC)，你可以知道每次新生代的GC大概需要4ms（0.004秒），而full GC的平均时间为33ms。</span><br><span class="line">但是，只看数据平均数经常无法分析出真正的GC问题。这是主要是因为**GC操作时间严重的偏差**（换句话说，假如两次full GC的时间是 67ms，那么其中的一次full GC可能执行了10ms而另一个可能执行了57ms。）为了更好地检测每次GC处理时间，最好使用 –verbosegc来替代数据平均数。</span><br><span class="line"></span><br><span class="line">**-verbosegc**</span><br><span class="line"></span><br><span class="line">**-verbosegc 是在启动一个Java应用时可以指定的JVM参数之一**。而jstat 可以监控任何JVM应用，即便它没有制定任何参数。 -verbosegc 需要在启动的时候指定，因此你可能会认为它没有必要（因为jstat可以替代之）。但是， -verbosegc 会以更浅显易懂的方式展现GC发生的结果，因此他对于监控监控GC信息十分有用。</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">|jstat|	-verbosegc|</span><br><span class="line">|--|--|--|</span><br><span class="line">|监控对象|	运行在本机的Java应用可以把日志输出到终端上，或者借助jstatd命令通过网络连接远程的Java应用。|	只有那些把-verbogc作为启动参数的JVM。|</span><br><span class="line">|输出信息|	堆状态（已用空间，最大限制，GC执行次数/时间，等等）|	执行GC前后新生代和老年代空间大小，GC执行时间。|</span><br><span class="line">|输出时间|	Every designated time 每次设定好的时间。	|每次GC发生的时候。|</span><br><span class="line">|何时有用|	当你试图观察堆空间变化情况|	当你试图了解单次GC产生的效果。|</span><br><span class="line"></span><br><span class="line">下面是-verbosegc 的可用参数</span><br><span class="line">* -XX:+PrintGCDetails</span><br><span class="line">* -XX:+PrintGCTimeStamps</span><br><span class="line">* -XX:+PrintHeapAtGC</span><br><span class="line">* -XX:+PrintGCDateStamps (from JDK 6 update 4)</span><br><span class="line"></span><br><span class="line">如果只是用了 -verbosegc 。那么默认会加上 -XX:+PrintGCDetails。 –verbosgc 的附加参数并不是独立的。而是经常组合起来使用。  </span><br><span class="line">使用 –verbosegc后，每次GC发生你都会看到如下格式的结果。</span><br></pre></td></tr></table></figure></p>
+<p>[GC [<collector>: <starting occupancy1=""> -&gt; <ending occupancy1="">, <pause time1=""> secs] <starting occupancy3=""> -&gt; <ending occupancy3="">, <pause time3=""> secs]<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">|收集器	|minor gc使用的收集器的名字。|</span><br><span class="line">|--|--|</span><br><span class="line">|starting occupancy1|	GC执行前新生代空间大小。|</span><br><span class="line">|ending occupancy1|	GC执行后新生代空间大小。|</span><br><span class="line">|pause time1	|因为执行minor GC，Java应用暂停的时间。|</span><br><span class="line">|starting occupancy3|	GC执行前堆区域总大小|</span><br><span class="line">|ending occupancy3|	GC执行后堆区域总大小|</span><br><span class="line">|pause time3	|Java应用由于执行堆空间GC（包括major GC）而停止的时间。|</span><br><span class="line">这是 Full GC发生时的例子</span><br></pre></td></tr></table></figure></pause></ending></starting></pause></ending></starting></collector></p>
+<p>[Full GC [Tenured: 3485K-&gt;4095K(4096K), 0.1745373 secs] 61244K-&gt;7418K(63104K), [Perm : 10756K-&gt;10756K(12288K)], 0.1762129 secs] [Times: user=0.19 sys=0.00, real=0.19 secs]<br>```<br>如果使用了 CMS collector，那么如下CMS信息也会被输出。<br>由于 –verbosegc 参数在每次GC事件发生的时候都会输出日志，我们可以很轻易地观察到GC操作对于堆空间的影响。</p>
+<p><strong>(Java) VisualVM  + Visual GC</strong></p>
+<p>Java Visual VM是由Oracle JDK提供的图形化的汇总和监控工具。<br><img src="http://www.importnew.com/wp-content/uploads/2012/12/Figure-1-VisualVM-Screenshot..png" alt=""></p>
+<p><strong>图1: VisualVM 截图</strong></p>
+<p>除了JDK中自带的版本，你还可以直接从官网下载Visual VM。出于便利性的考虑，JDK中包含的版本被命名为Java VisualVM (jvisualvm),而官网提供的版本被命名为Visual VM (visualvm)。两者的功能基本相同，只有一些细小的差别，例如安装组件的时候。就个人而言，我更喜欢可以从官网下载的Visual VM。</p>
+<p><img src="http://www.importnew.com/wp-content/uploads/2012/12/Figure-2-Viusal-GC-Installation-Screenshot.png" alt=""></p>
+<p>通过Visual GC，你可以更直观的看到执行jstatd 所得到的信息。</p>
+<p><img src="http://www.importnew.com/wp-content/uploads/2012/12/Figure-3-Visual-GC-execution-screenshot.png" alt=""></p>
+<p>本文我们主要讲述了如果监控GC操作信息，这将是GC优化的前提。就我个人经验而言，我推荐使用jstat 来监控GC操作，如果你感觉到GC操作的执行时间过长，那就可以使用verbosegc 参数来分析GC。GC优化的大体步骤就是在添加verbosegc 参数后，调整GC参数，分析修改后的结果。在下一篇文章中，我们将通过真实的例子来讲解优化GC的最佳选择。</p>
+
+      
+    </div>
+
+    
+      
+
+
+    
+
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/java语言/" rel="tag"># java语言</a>
+          
+            <a href="/tags/gc/" rel="tag"># gc</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2012/01/22/2012-12-27.gc-1/" rel="next" title="成为JavaGC专家（1）—深入浅出Java垃圾回收机制">
+                <i class="fa fa-chevron-left"></i> 成为JavaGC专家（1）—深入浅出Java垃圾回收机制
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2013/01/22/2013-01-22-java-memory-model-1/" rel="prev" title="深入理解Java内存模型（一）——基础">
+                深入理解Java内存模型（一）——基础 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+  
+    <div class="comments" id="comments">
+      <div id="lv-container" data-id="city" data-uid="MTAyMC8zNDA5NS8xMDYzMw=="></div>
+    </div>
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+
+      <section class="site-overview-wrap sidebar-panel sidebar-panel-active">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image"
+                src="/images/logo.jpg"
+                alt="Govern" />
+            
+              <p class="site-author-name" itemprop="name">Govern</p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          
+            <nav class="site-state motion-element">
+              
+                <div class="site-state-item site-state-posts">
+                
+                  <a href="/archives/">
+                
+                    <span class="site-state-item-count">98</span>
+                    <span class="site-state-item-name">日志</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-categories">
+                  <a href="/categories/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">20</span>
+                    <span class="site-state-item-name">分类</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-tags">
+                  <a href="/tags/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">39</span>
+                    <span class="site-state-item-name">标签</span>
+                  </a>
+                </div>
+              
+            </nav>
+          
+
+          
+
+          
+
+          
+          
+
+          
+          
+
+          
+            
+          
+          
+
+        </div>
+      </section>
+
+      
+
+      
+        <div class="back-to-top">
+          <i class="fa fa-arrow-up"></i>
+          
+            <span id="scrollpercent"><span>0</span>%</span>
+          
+        </div>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; 2012 &mdash; <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Govern</span>
+
+  
+
+  
+</div>
+
+
+  
+
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" rel="external nofollow" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" rel="external nofollow" href="https://github.com/theme-next/hexo-theme-next">NexT.Gemini</a> v6.0.3</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=6.0.3"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=6.0.3"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=6.0.3"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=6.0.3"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=6.0.3"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=6.0.3"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=6.0.3"></script>
+
+
+
+  
+
+
+
+
+
+
+
+  
+    <script type="text/javascript">
+      (function(d, s) {
+        var j, e = d.getElementsByTagName(s)[0];
+        if (typeof LivereTower === 'function') { return; }
+        j = d.createElement(s);
+        j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+        j.async = true;
+        e.parentNode.insertBefore(j, e);
+      })(document, 'script');
+    </script>
+  
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+  
+  
+  
+  <link rel="stylesheet" href="/lib/algolia-instant-search/instantsearch.min.css">
+
+  
+  
+  <script src="/lib/algolia-instant-search/instantsearch.min.js"></script>
+  
+
+  <script src="/js/src/algolia-search.js?v=6.0.3"></script>
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+  
+  
+  
+  <script src="/lib/bookmark/bookmark.min.js?v=1.0"></script>
+  <script type="text/javascript">
+  
+    bookmark.scrollToMark('auto', "#more");
+  
+  </script>
+
+
+</body>
+</html>

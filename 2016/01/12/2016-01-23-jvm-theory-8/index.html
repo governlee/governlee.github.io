@@ -1,0 +1,1122 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next gemini use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=6.0.3" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=6.0.3">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/lights-32x32.png?v=6.0.3">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/lights-16x16.png?v=6.0.3">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=6.0.3" color="#222">
+
+
+
+
+
+
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Gemini',
+    version: '6.0.3',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":true,"scrollpercent":true,"onmobile":false},
+    fancybox: false,
+    fastclick: false,
+    lazyload: false,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    algolia: {
+      applicationID: '41NC33JUJG',
+      apiKey: '7362b84fed21bc83930f198a0927bb82',
+      indexName: 'blog',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+  
+
+
+
+
+  
+  <meta name="keywords" content="字节码," />
+
+
+<meta name="description" content="原文链接:             https://blog.csdn.net/luanlouis/article/details/50529868 为什么说Java语言是跨平台的？Java语言之所以说它是跨平台的、可以在当前绝大部分的操作系统平台下运行，是因为Java语言的运行环境是在Java虚拟机中。Java虚拟机消除了各个平台之间的差异，只要操作系统平台下安装了Java虚拟机，那么使用Jav">
+<meta name="keywords" content="字节码">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Java虚拟机原理：(八) JVM类加载器机制与类加载过程">
+<meta property="og:url" content="http://governlee.github.io/2016/01/12/2016-01-23-jvm-theory-8/index.html">
+<meta property="og:site_name" content="Govern x Lab">
+<meta property="og:description" content="原文链接:             https://blog.csdn.net/luanlouis/article/details/50529868 为什么说Java语言是跨平台的？Java语言之所以说它是跨平台的、可以在当前绝大部分的操作系统平台下运行，是因为Java语言的运行环境是在Java虚拟机中。Java虚拟机消除了各个平台之间的差异，只要操作系统平台下安装了Java虚拟机，那么使用Jav">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="https://img-blog.csdn.net/20160116155453906">
+<meta property="og:image" content="https://img-blog.csdn.net/20160116190623705">
+<meta property="og:image" content="https://img-blog.csdn.net/20160116204532583">
+<meta property="og:image" content="https://img-blog.csdn.net/20160117105550022">
+<meta property="og:image" content="https://img-blog.csdn.net/20160119193940660">
+<meta property="og:image" content="https://img-blog.csdn.net/20160117130521757">
+<meta property="og:image" content="https://img-blog.csdn.net/20160117135740987">
+<meta property="og:image" content="https://img-blog.csdn.net/20160117150008559">
+<meta property="og:image" content="https://img-blog.csdn.net/20160119193940660">
+<meta property="og:image" content="https://img-blog.csdn.net/20160123160945853">
+<meta property="og:image" content="https://img-blog.csdn.net/20160123173750315">
+<meta property="og:updated_time" content="2018-04-02T13:46:26.971Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Java虚拟机原理：(八) JVM类加载器机制与类加载过程">
+<meta name="twitter:description" content="原文链接:             https://blog.csdn.net/luanlouis/article/details/50529868 为什么说Java语言是跨平台的？Java语言之所以说它是跨平台的、可以在当前绝大部分的操作系统平台下运行，是因为Java语言的运行环境是在Java虚拟机中。Java虚拟机消除了各个平台之间的差异，只要操作系统平台下安装了Java虚拟机，那么使用Jav">
+<meta name="twitter:image" content="https://img-blog.csdn.net/20160116155453906">
+
+
+
+
+
+
+  <link rel="canonical" href="http://governlee.github.io/2016/01/12/2016-01-23-jvm-theory-8/"/>
+
+
+
+<script type="text/javascript" id="page.configurations">
+  CONFIG.page = {
+    sidebar: "",
+  };
+</script>
+  <title>Java虚拟机原理：(八) JVM类加载器机制与类加载过程 | Govern x Lab</title>
+  
+
+
+
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?f6804645172803d5efc7161f04df1d76";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+  <noscript>
+  <style type="text/css">
+    .use-motion .motion-element,
+    .use-motion .brand,
+    .use-motion .menu-item,
+    .sidebar-inner,
+    .use-motion .post-block,
+    .use-motion .pagination,
+    .use-motion .comments,
+    .use-motion .post-header,
+    .use-motion .post-body,
+    .use-motion .collection-title { opacity: initial; }
+
+    .use-motion .logo,
+    .use-motion .site-title,
+    .use-motion .site-subtitle {
+      opacity: initial;
+      top: initial;
+    }
+
+    .use-motion {
+      .logo-line-before i { left: initial; }
+      .logo-line-after i { right: initial; }
+    }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"> <div class="site-brand-wrapper">
+  <div class="site-meta custom-logo">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Govern x Lab</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <h1 class="site-subtitle" itemprop="description">I'm not the only one</h1>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-home"></i> <br />首页</a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-user"></i> <br />关于</a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />标签</a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-th"></i> <br />分类</a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />归档</a>
+        </li>
+      
+
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />搜索</a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  
+  <div class="algolia-popup popup search-popup">
+    <div class="algolia-search">
+      <div class="algolia-search-input-icon">
+        <i class="fa fa-search"></i>
+      </div>
+      <div class="algolia-search-input" id="algolia-search-input"></div>
+    </div>
+
+    <div class="algolia-results">
+      <div id="algolia-stats"></div>
+      <div id="algolia-hits"></div>
+      <div id="algolia-pagination" class="algolia-pagination"></div>
+    </div>
+
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+  </div>
+
+
+
+
+    </div>
+  
+</nav>
+
+
+  
+
+
+
+ </div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://governlee.github.io/2016/01/12/2016-01-23-jvm-theory-8/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Govern">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/logo.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Govern x Lab">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">Java虚拟机原理：(八) JVM类加载器机制与类加载过程</h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2016-01-12T08:00:00+08:00">2016-01-12</time>
+            
+
+            
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/JVM/" itemprop="url" rel="index"><span itemprop="name">JVM</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p><strong>原文链接:</strong>             <a href="https://blog.csdn.net/luanlouis/article/details/50529868" target="_blank" rel="noopener">https://blog.csdn.net/luanlouis/article/details/50529868</a></p>
+<h3 id="为什么说Java语言是跨平台的？"><a href="#为什么说Java语言是跨平台的？" class="headerlink" title="为什么说Java语言是跨平台的？"></a>为什么说Java语言是跨平台的？</h3><p>Java语言之所以说它是跨平台的、可以在当前绝大部分的操作系统平台下运行，是因为Java语言的运行环境是在Java虚拟机中。<br>Java虚拟机消除了各个平台之间的差异，只要操作系统平台下安装了Java虚拟机，那么使用Java开发的东西都能在其上面运行。如下图所示：</p>
+<p><img src="https://img-blog.csdn.net/20160116155453906" alt=""></p>
+<p>Java虚拟机对各个平台而言，实质上是各个平台上的一个可执行程序。例如在windows平台下，java虚拟机对于windows而言，就是一个java.exe进程而已。</p>
+<h3 id="Java虚拟机启动、加载类过程分析"><a href="#Java虚拟机启动、加载类过程分析" class="headerlink" title="Java虚拟机启动、加载类过程分析"></a>Java虚拟机启动、加载类过程分析</h3><p>下面我将定义一个非常简单的java程序并运行它，来逐步分析java虚拟机启动的过程。<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> org.luanlouis.jvm.load;  </span><br><span class="line"><span class="keyword">import</span> sun.security.pkcs11.P11Util;  </span><br><span class="line"></span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * Created by louis on 2016/1/16.</span></span><br><span class="line"><span class="comment"> */</span>  </span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">Main</span></span>&#123;  </span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> </span>&#123;  </span><br><span class="line">        System.out.println(<span class="string">"Hello,World!"</span>);  </span><br><span class="line"></span><br><span class="line">        ClassLoader loader = P11Util.class.getClassLoader();  </span><br><span class="line"></span><br><span class="line">        System.out.println(loader);  </span><br><span class="line">    &#125;  </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>在windows命令行下输入：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">java    org.luanlouis.jvm.load.Main</span><br></pre></td></tr></table></figure></p>
+<p>当输入上述的命令时：<br>windows开始运行{JRE_HOME}/bin/java.exe程序，java.exe 程序将完成以下步骤：</p>
+<ol>
+<li><p>根据JVM内存配置要求，为JVM申请特定大小的内存空间；</p>
+</li>
+<li><p>创建一个<strong>引导类加载器实例</strong>，初步加载系统类到内存<strong>方法区</strong>区域中；</p>
+</li>
+<li><p>创建JVM<strong>启动器实例 Launcher</strong>,并取得<strong>类加载器ClassLoader</strong>；</p>
+</li>
+<li><p>使用上述获取的ClassLoader实例加载我们定义的 org.luanlouis.jvm.load.Main类；</p>
+</li>
+<li><p>加载完成时候JVM会执行Main类的main方法入口，执行Main类的main方法；</p>
+</li>
+<li><p>结束，java程序运行结束，JVM销毁。</p>
+</li>
+</ol>
+<p><strong>Step 1.根据JVM内存配置要求，为JVM申请特定大小的内存空间</strong></p>
+<p>为了降低本文的理解难度，这里就不详细介绍JVM内存配置要求的话题，只概括地介绍一下内存的功能划分。</p>
+<p>JVM启动时，按功能划分，其内存应该由以下几部分组成：</p>
+<p><img src="https://img-blog.csdn.net/20160116190623705" alt=""></p>
+<p>如上图所示，JVM内存按照功能上的划分，可以粗略地划分为<strong>方法区(Method Area)</strong> 和<strong>堆(Heap)</strong>,而所有的类的定义信息都会被加载到方法区中。</p>
+<p><strong>Step 2. 创建一个引导类加载器实例，初步加载系统类到内存方法区区域中；</strong></p>
+<p>JVM申请好内存空间后，JVM会创建一个<strong>引导类加载器（Bootstrap Classloader）实例</strong>，引导类加载器是使用C++语言实现的，负责加载JVM虚拟机运行时所需的基本系统级别的类，如java.lang.String, java.lang.Object等等。<br>引导类加载器(Bootstrap Classloader)会读取 <strong>{JRE_HOME}/lib</strong> 下的jar包和配置，然后将这些<strong>系统类加载到方法区内</strong>。</p>
+<p>本例中，引导类加载器是用 {JRE_HOME}/lib加载类的，不过，你也可以使用参数 <strong>-Xbootclasspath</strong> 或 系统变量<strong>sun.boot.class.path</strong>来指定的目录来加载类。</p>
+<p>一般而言，<strong>{JRE_HOME}/lib下存放着JVM正常工作所需要的系统类</strong>，如下表所示：</p>
+<table>
+<thead>
+<tr>
+<th>文件名</th>
+<th>描述</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>rt.jar</td>
+<td>运行环境包，rt即runtime，J2SE 的类定义都在这个包内</td>
+</tr>
+<tr>
+<td>charsets.jar</td>
+<td>字符集支持包</td>
+</tr>
+<tr>
+<td>jce.jar</td>
+<td>是一组包，它们提供用于加密、密钥生成和协商以及 Message Authentication Code（MAC）算法的框架和实现</td>
+</tr>
+<tr>
+<td>jsse.jar</td>
+<td>安全套接字拓展包Java(TM) Secure Socket Extension</td>
+</tr>
+<tr>
+<td>classlist</td>
+<td><strong>该文件内表示是引导类加载器应该加载的类的清单</strong></td>
+</tr>
+<tr>
+<td>net.properties</td>
+<td>JVM 网络配置信息</td>
+</tr>
+</tbody>
+</table>
+<p>引导类加载器(Bootstrap ClassLoader） 加载系统类后，JVM内存会呈现如下格局：</p>
+<p><img src="https://img-blog.csdn.net/20160116204532583" alt=""></p>
+<ul>
+<li><p>引导类加载器将类信息加载到方法区中，以特定方式组织，对于某一个特定的类而言，在方法区中它应该有<strong>运行时常量池、类型信息、字段信息、方法信息、类加载器的引用，对应class实例的引用</strong>等信息。</p>
+</li>
+<li><p><strong>类加载器的引用</strong>,由于这些类是由引导类加载器(Bootstrap Classloader)进行加载的，而<strong>引导类加载器是有C++语言实现的，所以是无法访问的，故而该引用为NULL</strong></p>
+</li>
+<li><p><strong>对应class实例的引用 </strong>， 类加载器在加载类信息放到方法区中后，会创建一个<strong>对应的Class 类型的实例放到堆(Heap)中, 作为开发人员访问方法区中类定义的入口和切入点</strong>。</p>
+</li>
+</ul>
+<p>当我们在代码中尝试获取系统类如java.lang.Object的类加载器时，你会始终得到NULL：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">System.out.println(String.class.getClassLoader());<span class="comment">//null  </span></span><br><span class="line">System.out.println(Object.class.getClassLoader());<span class="comment">//null  </span></span><br><span class="line">System.out.println(Math.class.getClassLoader());<span class="comment">//null  </span></span><br><span class="line">System.out.println(System.class.getClassLoader());<span class="comment">//null</span></span><br></pre></td></tr></table></figure></p>
+<p><strong>Step 3. 创建JVM 启动器实例 Launcher,并取得类加载器ClassLoader</strong></p>
+<p>上述步骤完成，JVM基本运行环境就准备就绪了。接着，我们要让JVM工作起来了：运行我们定义的程序 org.luanlouis,jvm.load.Main。</p>
+<p>此时，JVM虚拟机调用已经加载在方法区的类<strong>sun.misc.Launcher</strong>的静态方法<strong>getLauncher()</strong>,  获取sun.misc.Launcher 实例：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">sun.misc.Launcher launcher = sun.misc.Launcher.getLauncher(); <span class="comment">//获取Java启动器  </span></span><br><span class="line">ClassLoader classLoader = launcher.getClassLoader();          <span class="comment">//获取类加载器ClassLoader用来加载class到内存来</span></span><br></pre></td></tr></table></figure></p>
+<p><strong>sun.misc.Launcher</strong> 使用了<strong>单例模式</strong>设计，保证一个JVM虚拟机内只有一个sun.misc.Launcher实例。<br>在Launcher的内部，其定义了<strong>两个类加载器(ClassLoader)</strong>,分别是<strong>sun.misc.Launcher.ExtClassLoader</strong>和s<strong>un.misc.Launcher.AppClassLoader</strong>，这两个类加载器分别被称为<strong>拓展类加载器(Extension ClassLoader)</strong> 和<strong> 应用类加载器(Application ClassLoader)</strong>.如下图所示：</p>
+<p><img src="https://img-blog.csdn.net/20160117105550022" alt=""></p>
+<p>除了引导类加载器(Bootstrap Class Loader )的所有类加载器，都有一个能力，就是判断某一个类是否被引导类加载器加载过，如果加载过，可以直接返回对应的Class<t> instance，如果没有，则返回null.  图上的指向引导类加载器的虚线表示类加载器的这个有限的访问 引导类加载器的功能。</t></p>
+<p>此时的<strong>launcher.getClassLoader()</strong>方法将会返回<strong>AppClassLoader</strong>实例，AppClassLoader将ExtClassLoader作为自己的父加载器。</p>
+<p>当AppClassLoader加载类时，会<strong>首先尝试让父加载器ExtClassLoader进行加载</strong>，如果父加载器ExtClassLoader加载成功，则AppClassLoader直接返回父加载器ExtClassLoader加载的结果；如果父加载器ExtClassLoader加载失败，AppClassLoader则会判断该类是否是引导的系统类(即是否是通过Bootstrap类加载器加载，这会调用Native方法进行查找)；若要加载的类不是系统引导类，那么ClassLoader将会尝试自己加载，加载失败将会抛出“<strong>ClassNotFoundException</strong>”。</p>
+<p>具体AppClassLoader的工作流程如下所示：</p>
+<p><img src="https://img-blog.csdn.net/20160119193940660" alt=""></p>
+<p><strong>双亲委派模型(parent-delegation model)：</strong></p>
+<p>上面讨论的应用类加载器AppClassLoader的加载类的模式就是我们常说的<strong>双亲委派模型(parent-delegation model)</strong>.</p>
+<p><strong>对于某个特定的类加载器而言，应该为其指定一个父类加载器</strong>，当用其进行加载类的时候：</p>
+<ol>
+<li><p>委托父类加载器帮忙加载；</p>
+</li>
+<li><p>父类加载器加载不了，则查询引导类加载器(Bootstrap classLoader)有没有加载过该类；</p>
+</li>
+<li><p>如果引导类加载器没有加载过该类，则当前的类加载器应该自己加载该类；</p>
+</li>
+<li><p>若加载成功，返回 对应的Class<t> 对象；若失败，抛出异常“ClassNotFoundException”。</t></p>
+</li>
+</ol>
+<p>请注意：<br><strong>双亲委派模型</strong>中的”双亲”并不是指它有两个父类加载器的意思，<strong>一个类加载器只应该有一个父加载器</strong>。上面的步骤中，有两个角色：</p>
+<ol>
+<li><p>父类加载器(parent classloader)：它可以替子加载器尝试加载类</p>
+</li>
+<li><p>引导类加载器（bootstrap classloader）: 子类加载器只能判断某个类是否被引导类加载器加载过，而不能委托它加载某个类；换句话说，就是子类加载器不能接触到引导类加载器，<strong>引导类加载器对其他类加载器而言是透明的</strong>。</p>
+</li>
+</ol>
+<p>一般情况下，双亲加载模型如下所示：</p>
+<p><img src="https://img-blog.csdn.net/20160117130521757" alt=""></p>
+<p><strong>Step 4. 使用类加载器ClassLoader加载Main类</strong></p>
+<p>通过 launcher.getClassLoader()方法返回AppClassLoader实例，接着就是AppClassLoader加载 org.luanlouis.jvm.load.Main类的时候了。<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">ClassLoader classloader = launcher.getClassLoader();<span class="comment">//取得AppClassLoader类  </span></span><br><span class="line">classLoader.loadClass(<span class="string">"org.luanlouis.jvm.load.Main"</span>);<span class="comment">//加载自定义类</span></span><br></pre></td></tr></table></figure></p>
+<p>上述定义的org.luanlouis.jvm.load.Main类被编译成org.luanlouis.jvm.load.Main class二进制文件，这个class文件中有一个叫<strong>常量池(Constant Pool)</strong>的结构体来存储该class的常量信息。常量池中有<strong>CONSTANT_CLASS_INFO</strong>类型的常量，<strong>表示该class中声明了要用到那些类</strong>：</p>
+<p><img src="https://img-blog.csdn.net/20160117135740987" alt=""></p>
+<p>当AppClassLoader要加载 org.luanlouis.jvm.load.Main类时，会去查看该类的定义，发现它内部声明使用了其它的类： sun.security.pkcs11.P11Util、java.lang.Object、java.lang.System、java.io.PrintStream、java.lang.Class；org.luanlouis.jvm.load.Main类要想正常工作，首先要能够保证这些其内部声明的类加载成功。所以AppClassLoader要先将这些类加载到内存中。（注：为了理解方便，这里没有考虑懒加载的情况，事实上的JVM加载类过程比这复杂的多）</p>
+<p>加载顺序：</p>
+<ol>
+<li><p>加载java.lang.Object、java.lang.System、java.io.PrintStream、java,lang.Class</p>
+<p>AppClassLoader尝试加载这些类的时候，会先委托ExtClassLoader进行加载；而ExtClassLoader发现不是其加载范围，抛出异常；AppClassLoader发现父类加载器ExtClassLoader无法加载，则会查询这些类是否已经被BootstrapClassLoader加载过，结果表明这些类已经被BootstrapClassLoader加载过，则无需重复加载，直接返回对应的Class<t>实例；</t></p>
+</li>
+<li><p>加载sun.security.pkcs11.P11Util</p>
+<p>此在{JRE_HOME}/lib/ext/sunpkcs11.jar包内，属于ExtClassLoader负责加载的范畴。AppClassLoader尝试加载这些类的时候，会先委托ExtClassLoader进行加载；而ExtClassLoader发现其正好属于加载范围，故ExtClassLoader负责将其加载到内存中。ExtClassLoader在加载sun.security.pkcs11.P11Util时也分析这个类内都使用了哪些类，并将这些类先加载内存后，才开始加载sun.security.pkcs11.P11Util，加载成功后直接返回对应的Class<sun.security.pkcs11.p11util>实例；</sun.security.pkcs11.p11util></p>
+</li>
+<li><p>加载org.luanlouis.jvm.load.Main</p>
+<p>AppClassLoader尝试加载这些类的时候，会先委托ExtClassLoader进行加载；而ExtClassLoader发现不是其加载范围，抛出异常；AppClassLoader发现父类加载器ExtClassLoader无法加载，则会查询这些类是否已经被BootstrapClassLoader加载过。而结果表明BootstrapClassLoader 没有加载过它，这时候AppClassLoader只能自己动手负责将其加载到内存中，然后返回对应的Class<org.luanlouis.jvm.load.main>实例引用；</org.luanlouis.jvm.load.main></p>
+</li>
+</ol>
+<p>以上三步骤都成功，才表示classLoader.loadClass(“org.luanlouis.jvm.load.Main”)完成，上述操作完成后，JVM内存方法区的格局会如下所示：</p>
+<p><img src="https://img-blog.csdn.net/20160117150008559" alt="">  </p>
+<p>如上图所示：</p>
+<ul>
+<li><p><strong>JVM方法区的类信息区是按照类加载器进行划分的</strong>，每个类加载器会维护自己加载类信息；</p>
+</li>
+<li><p>某个类加载器在加载相应的类时，会相应地在JVM内存堆（Heap）中创建一个对应的Class<t>，用来表示访问该类信息的入口</t></p>
+</li>
+</ul>
+<p><strong>Step 5. 使用Main类的main方法作为程序入口运行程序</strong></p>
+<p><strong>Step 6. 方法执行完毕，JVM销毁，释放内存</strong></p>
+<h3 id="三、类加载器有哪些？其组织结构是怎样的？"><a href="#三、类加载器有哪些？其组织结构是怎样的？" class="headerlink" title="三、类加载器有哪些？其组织结构是怎样的？"></a>三、类加载器有哪些？其组织结构是怎样的？</h3><p><strong>类加载器(Class Loader)</strong>：顾名思义，指的是可以加载类的工具。JVM自身定义了三个类加载器：引导类加载器(Bootstrap Class Loader)、拓展类加载器(Extension Class Loader )、应用加载器(Application Class Loader)。当然，我们有时候也会自己定义一些类加载器来满足自身的需要。</p>
+<p><strong>引导类加载器(Bootstrap Class Loader)</strong>: 该类加载器使JVM<strong>使用C/C++</strong>底层代码实现的加载器，用以加载JVM运行时所需要的<strong>系统类</strong>，这些系统类在<strong>{JRE_HOME}/lib</strong>目录下。由于类加载器是使用平台相关的底层C/C++语言实现的， 所以<strong>该加载器不能被Java代码访问到</strong>。但是，<strong>我们可以查询某个类是否被引导类加载器加载过</strong>。我们经常使用的系统类如：java.lang.String,java.lang.Object,java.lang.<em>……. 这些都被放在 {JRE_HOME}/lib/rt.jar包内， 当JVM系统启动的时候，引导类加载器会将其加载到 JVM内存的<em>*方法区</em></em>中。</p>
+<p><strong>拓展类加载器(Extension Class Loader)</strong>: 该加载器是用于加载 java 的拓展类 ，拓展类一般会放在 <strong>{JRE_HOME}/lib/ext/</strong> 目录下，用来提供除了系统类之外的额外功能。<strong>拓展类加载器是是整个JVM加载器的Java代码可以访问到的类加载器的最顶端，即是超级父加载器，拓展类加载器是没有父类加载器的</strong>。</p>
+<p><strong>应用类加载器(Applocatoin Class Loader)</strong>: 该类加载器是用于加载用户自定义的类，是用户代码的入口。我经常执行指令<code>java   xxx.x.xxx.x.x.XClass</code>, 实际上，JVM就是使用的AppClassLoader加载 xxx.x.xxx.x.x.XClass 类的。<strong>应用类加载器将拓展类加载器当成自己的父类加载器，当其尝试加载类的时候，首先尝试让其父加载器-拓展类加载器加载；如果拓展类加载器加载成功，则直接返回加载结果Class<t> instance,加载失败，则会询问是否引导类加载器已经加载了该类；只有没有加载的时候，应用类加载器才会尝试自己加载</t></strong>。由于xxx.x.xxx.x.x.XClass是整个用户代码的入口，在Java虚拟机规范中，称其为<strong>初始类(Initial Class)</strong>.</p>
+<p><strong>用户自定义类加载器（Customized Class Loader）</strong>：用户可以自己定义类加载器来加载类。<strong>所有的类加载器都要继承java.lang.ClassLoader类</strong>。</p>
+<h3 id="双亲加载模型的逻辑和底层代码实现是怎样的？"><a href="#双亲加载模型的逻辑和底层代码实现是怎样的？" class="headerlink" title="双亲加载模型的逻辑和底层代码实现是怎样的？"></a>双亲加载模型的逻辑和底层代码实现是怎样的？</h3><p>上面已经不厌其烦地讲解什么是双亲加载模型，以及其机制是什么，这些东西都是可以通过底层代码查看到的。</p>
+<p>我们也可以通过JDK源码看java.lang.ClassLoader的核心方法 loadClass()的实现：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//提供class类的二进制名称表示，加载对应class，加载成功，则返回表示该类对应的Class&lt;T&gt; instance 实例  </span></span><br><span class="line"><span class="keyword">public</span> Class&lt;?&gt; loadClass(String name) <span class="keyword">throws</span> ClassNotFoundException &#123;  </span><br><span class="line">    <span class="keyword">return</span> loadClass(name, <span class="keyword">false</span>);  </span><br><span class="line">&#125;  </span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">protected</span> Class&lt;?&gt; loadClass(String name, <span class="keyword">boolean</span> resolve)  </span><br><span class="line">    <span class="keyword">throws</span> ClassNotFoundException  </span><br><span class="line">&#123;  </span><br><span class="line">    <span class="keyword">synchronized</span> (getClassLoadingLock(name)) &#123;  </span><br><span class="line">        <span class="comment">// 首先，检查是否已经被当前的类加载器记载过了，如果已经被加载，直接返回对应的Class&lt;T&gt;实例  </span></span><br><span class="line">        Class&lt;?&gt; c = findLoadedClass(name);  </span><br><span class="line">            <span class="comment">//初次加载  </span></span><br><span class="line">            <span class="keyword">if</span> (c == <span class="keyword">null</span>) &#123;  </span><br><span class="line">            <span class="keyword">long</span> t0 = System.nanoTime();  </span><br><span class="line">            <span class="keyword">try</span> &#123;  </span><br><span class="line">                <span class="keyword">if</span> (parent != <span class="keyword">null</span>) &#123;  </span><br><span class="line">                    <span class="comment">//如果有父类加载器，则先让父类加载器加载  </span></span><br><span class="line">                    c = parent.loadClass(name, <span class="keyword">false</span>);  </span><br><span class="line">                &#125; <span class="keyword">else</span> &#123;  </span><br><span class="line">                    <span class="comment">// 没有父加载器，则查看是否已经被引导类加载器加载，有则直接返回  </span></span><br><span class="line">                    c = findBootstrapClassOrNull(name);  </span><br><span class="line">                &#125;  </span><br><span class="line">            &#125; <span class="keyword">catch</span> (ClassNotFoundException e) &#123;  </span><br><span class="line">                <span class="comment">// ClassNotFoundException thrown if class not found  </span></span><br><span class="line">                <span class="comment">// from the non-null parent class loader  </span></span><br><span class="line">            &#125;  </span><br><span class="line">            <span class="comment">// 父加载器加载失败，并且没有被引导类加载器加载，则尝试该类加载器自己尝试加载  </span></span><br><span class="line">            <span class="keyword">if</span> (c == <span class="keyword">null</span>) &#123;  </span><br><span class="line">                <span class="comment">// If still not found, then invoke findClass in order  </span></span><br><span class="line">                <span class="comment">// to find the class.  </span></span><br><span class="line">                <span class="keyword">long</span> t1 = System.nanoTime();  </span><br><span class="line">                <span class="comment">// 自己尝试加载  </span></span><br><span class="line">                c = findClass(name);  </span><br><span class="line"></span><br><span class="line">                <span class="comment">// this is the defining class loader; record the stats  </span></span><br><span class="line">                sun.misc.PerfCounter.getParentDelegationTime().addTime(t1 - t0);  </span><br><span class="line">                sun.misc.PerfCounter.getFindClassTime().addElapsedTimeFrom(t1);  </span><br><span class="line">                sun.misc.PerfCounter.getFindClasses().increment();  </span><br><span class="line">            &#125;  </span><br><span class="line">        &#125;  </span><br><span class="line">        <span class="comment">//是否解析类   </span></span><br><span class="line">        <span class="keyword">if</span> (resolve) &#123;  </span><br><span class="line">            resolveClass(c);  </span><br><span class="line">        &#125;  </span><br><span class="line">        <span class="keyword">return</span> c;  </span><br><span class="line">    &#125;  </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>相对应地，我们可以整理出双亲模型的工作流程图：</p>
+<p><img src="https://img-blog.csdn.net/20160119193940660" alt=""></p>
+<p>相信读者看过这张图后会对双亲加载模型有了非常清晰的脉络。当然，这是JDK自身默认的加载类的行为，<strong>我们可以通过继承复写该方法，改变其行为</strong>。</p>
+<h3 id="类加载器与Class-实例的关系"><a href="#类加载器与Class-实例的关系" class="headerlink" title="类加载器与Class  实例的关系"></a>类加载器与Class<t>  实例的关系</t></h3><p><img src="https://img-blog.csdn.net/20160123160945853" alt=""></p>
+<h3 id="线程上下文加载器"><a href="#线程上下文加载器" class="headerlink" title="线程上下文加载器"></a>线程上下文加载器</h3><p>Java 任何一段代码的执行，都有对应的<strong>线程上下文</strong>。如果我们在代码中，想看当前是哪一个线程在执行当前代码，我们经常是使用如下方法：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Thread  thread = Thread.currentThread();<span class="comment">//返回对当当前运行线程的引用</span></span><br></pre></td></tr></table></figure></p>
+<p><img src="https://img-blog.csdn.net/20160123173750315" alt=""></p>
+<p>相应地，我们可以为<strong>当前的线程指定类加载器</strong>。在上述的例子中， 当执行<code>java    org.luanlouis.jvm.load.Main</code>的时候，JVM会创建一个Main线程，而创建应用类加载器AppClassLoader的时候，会将AppClassLoader设置成Main线程的上下文类加载器：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="title">Launcher</span><span class="params">()</span> </span>&#123;  </span><br><span class="line">     Launcher.ExtClassLoader var1;  </span><br><span class="line">     <span class="keyword">try</span> &#123;  </span><br><span class="line">         var1 = Launcher.ExtClassLoader.getExtClassLoader();  </span><br><span class="line">     &#125; <span class="keyword">catch</span> (IOException var10) &#123;  </span><br><span class="line">         <span class="keyword">throw</span> <span class="keyword">new</span> InternalError(<span class="string">"Could not create extension class loader"</span>, var10);  </span><br><span class="line">     &#125;  </span><br><span class="line"></span><br><span class="line">     <span class="keyword">try</span> &#123;  </span><br><span class="line">         <span class="keyword">this</span>.loader = Launcher.AppClassLoader.getAppClassLoader(var1);  </span><br><span class="line">     &#125; <span class="keyword">catch</span> (IOException var9) &#123;  </span><br><span class="line">         <span class="keyword">throw</span> <span class="keyword">new</span> InternalError(<span class="string">"Could not create application class loader"</span>, var9);  </span><br><span class="line">     &#125;  </span><br><span class="line">     <span class="comment">//将AppClassLoader设置成当前线程的上下文加载器  </span></span><br><span class="line">     Thread.currentThread().setContextClassLoader(<span class="keyword">this</span>.loader);  </span><br><span class="line">     <span class="comment">//.......  </span></span><br><span class="line"> &#125;</span><br></pre></td></tr></table></figure></p>
+<p>线程上下文类加载器是从线程的角度来看待类的加载，为每一个线程绑定一个类加载器，可以将类的加载从单纯的 双亲加载模型解放出来，进而实现特定的加载需求。</p>
+
+      
+    </div>
+
+    
+      
+
+
+    
+
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/字节码/" rel="tag"># 字节码</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2015/12/08/2015-12-08-use-optional-avoid-nullpointexception/" rel="next" title="[译]厌倦了NullPointException？Optional拯救你！">
+                <i class="fa fa-chevron-left"></i> [译]厌倦了NullPointException？Optional拯救你！
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2016/03/06/2018-03-06-linux-command/" rel="prev" title="Linux 实用命令(持续更新)">
+                Linux 实用命令(持续更新) <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+  
+    <div class="comments" id="comments">
+      <div id="lv-container" data-id="city" data-uid="MTAyMC8zNDA5NS8xMDYzMw=="></div>
+    </div>
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image"
+                src="/images/logo.jpg"
+                alt="Govern" />
+            
+              <p class="site-author-name" itemprop="name">Govern</p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          
+            <nav class="site-state motion-element">
+              
+                <div class="site-state-item site-state-posts">
+                
+                  <a href="/archives/">
+                
+                    <span class="site-state-item-count">98</span>
+                    <span class="site-state-item-name">日志</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-categories">
+                  <a href="/categories/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">20</span>
+                    <span class="site-state-item-name">分类</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-tags">
+                  <a href="/tags/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">39</span>
+                    <span class="site-state-item-name">标签</span>
+                  </a>
+                </div>
+              
+            </nav>
+          
+
+          
+
+          
+
+          
+          
+
+          
+          
+
+          
+            
+          
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#为什么说Java语言是跨平台的？"><span class="nav-number">1.</span> <span class="nav-text">为什么说Java语言是跨平台的？</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Java虚拟机启动、加载类过程分析"><span class="nav-number">2.</span> <span class="nav-text">Java虚拟机启动、加载类过程分析</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#三、类加载器有哪些？其组织结构是怎样的？"><span class="nav-number">3.</span> <span class="nav-text">三、类加载器有哪些？其组织结构是怎样的？</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#双亲加载模型的逻辑和底层代码实现是怎样的？"><span class="nav-number">4.</span> <span class="nav-text">双亲加载模型的逻辑和底层代码实现是怎样的？</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#类加载器与Class-实例的关系"><span class="nav-number">5.</span> <span class="nav-text">类加载器与Class  实例的关系</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#线程上下文加载器"><span class="nav-number">6.</span> <span class="nav-text">线程上下文加载器</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+        <div class="back-to-top">
+          <i class="fa fa-arrow-up"></i>
+          
+            <span id="scrollpercent"><span>0</span>%</span>
+          
+        </div>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; 2012 &mdash; <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Govern</span>
+
+  
+
+  
+</div>
+
+
+  
+
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" rel="external nofollow" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" rel="external nofollow" href="https://github.com/theme-next/hexo-theme-next">NexT.Gemini</a> v6.0.3</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=6.0.3"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=6.0.3"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=6.0.3"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=6.0.3"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=6.0.3"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=6.0.3"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=6.0.3"></script>
+
+
+
+  
+
+
+
+
+
+
+
+  
+    <script type="text/javascript">
+      (function(d, s) {
+        var j, e = d.getElementsByTagName(s)[0];
+        if (typeof LivereTower === 'function') { return; }
+        j = d.createElement(s);
+        j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+        j.async = true;
+        e.parentNode.insertBefore(j, e);
+      })(document, 'script');
+    </script>
+  
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+  
+  
+  
+  <link rel="stylesheet" href="/lib/algolia-instant-search/instantsearch.min.css">
+
+  
+  
+  <script src="/lib/algolia-instant-search/instantsearch.min.js"></script>
+  
+
+  <script src="/js/src/algolia-search.js?v=6.0.3"></script>
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+  
+  
+  
+  <script src="/lib/bookmark/bookmark.min.js?v=1.0"></script>
+  <script type="text/javascript">
+  
+    bookmark.scrollToMark('auto', "#more");
+  
+  </script>
+
+
+</body>
+</html>

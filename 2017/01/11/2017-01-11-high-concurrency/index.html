@@ -1,0 +1,999 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next gemini use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=6.0.3" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=6.0.3">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/lights-32x32.png?v=6.0.3">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/lights-16x16.png?v=6.0.3">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=6.0.3" color="#222">
+
+
+
+
+
+
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Gemini',
+    version: '6.0.3',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":true,"scrollpercent":true,"onmobile":false},
+    fancybox: false,
+    fastclick: false,
+    lazyload: false,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    algolia: {
+      applicationID: '41NC33JUJG',
+      apiKey: '7362b84fed21bc83930f198a0927bb82',
+      indexName: 'blog',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+  
+
+
+
+
+  
+  <meta name="keywords" content="架构师之路,高并发," />
+
+
+<meta name="description" content="转自: 架构师之路 一、什么是高并发高并发（High Concurrency）是互联网分布式系统架构设计中必须考虑的因素之一，它通常是指，通过设计保证系统能够同时并行处理很多请求。 高并发相关常用的一些指标有响应时间（Response Time），吞吐量（Throughput），每秒查询率QPS（Query Per Second），并发用户数等。 响应时间：系统对请求做出响应的时间。例如系统处理一">
+<meta name="keywords" content="架构师之路,高并发">
+<meta property="og:type" content="article">
+<meta property="og:title" content="究竟啥才是互联网架构“高并发”">
+<meta property="og:url" content="http://governlee.github.io/2017/01/11/2017-01-11-high-concurrency/index.html">
+<meta property="og:site_name" content="Govern x Lab">
+<meta property="og:description" content="转自: 架构师之路 一、什么是高并发高并发（High Concurrency）是互联网分布式系统架构设计中必须考虑的因素之一，它通常是指，通过设计保证系统能够同时并行处理很多请求。 高并发相关常用的一些指标有响应时间（Response Time），吞吐量（Throughput），每秒查询率QPS（Query Per Second），并发用户数等。 响应时间：系统对请求做出响应的时间。例如系统处理一">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="http://mmbiz.qpic.cn/mmbiz_png/YrezxckhYOzhYFaiaBYrHFsYH8xiaRBvoibvKYatFicUCQoXQNx9XpQL3sMP9icNY4CQoHFSiaPperAeynDsNDEAkK4w/640?wx_fmt=png&tp=webp&wxfrom=5&wx_lazy=1">
+<meta property="og:image" content="http://mmbiz.qpic.cn/mmbiz_png/YrezxckhYOzhYFaiaBYrHFsYH8xiaRBvoibic2hUdJC52WITLf8A8ZrECJqwIORIJfaW4fBGruntoKkfnibKsS0I1mA/640?wx_fmt=png&tp=webp&wxfrom=5&wx_lazy=1">
+<meta property="og:image" content="http://mmbiz.qpic.cn/mmbiz_png/YrezxckhYOzhYFaiaBYrHFsYH8xiaRBvoibuhibyicgBn4mibqBPlyOQABtn1koEh7OyibP6pIvQ3R7zicbUFiaSkGDXOYg/640?wx_fmt=png&tp=webp&wxfrom=5&wx_lazy=1">
+<meta property="og:image" content="http://mmbiz.qpic.cn/mmbiz_png/YrezxckhYOzhYFaiaBYrHFsYH8xiaRBvoibTEqFRMGicpcoELwHwXx0dryYqR8iavCsVutSH023aaiao4Yvn3asekzlg/640?wx_fmt=png&tp=webp&wxfrom=5&wx_lazy=1">
+<meta property="og:image" content="http://mmbiz.qpic.cn/mmbiz_png/YrezxckhYOzhYFaiaBYrHFsYH8xiaRBvoibwvQqAs5KmBTurs211r6IaxS7hgACQFrjYc2mJVdREz9GEEiaicoP13LA/640?wx_fmt=png&tp=webp&wxfrom=5&wx_lazy=1">
+<meta property="og:updated_time" content="2018-04-20T15:13:39.095Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="究竟啥才是互联网架构“高并发”">
+<meta name="twitter:description" content="转自: 架构师之路 一、什么是高并发高并发（High Concurrency）是互联网分布式系统架构设计中必须考虑的因素之一，它通常是指，通过设计保证系统能够同时并行处理很多请求。 高并发相关常用的一些指标有响应时间（Response Time），吞吐量（Throughput），每秒查询率QPS（Query Per Second），并发用户数等。 响应时间：系统对请求做出响应的时间。例如系统处理一">
+<meta name="twitter:image" content="http://mmbiz.qpic.cn/mmbiz_png/YrezxckhYOzhYFaiaBYrHFsYH8xiaRBvoibvKYatFicUCQoXQNx9XpQL3sMP9icNY4CQoHFSiaPperAeynDsNDEAkK4w/640?wx_fmt=png&tp=webp&wxfrom=5&wx_lazy=1">
+
+
+
+
+
+
+  <link rel="canonical" href="http://governlee.github.io/2017/01/11/2017-01-11-high-concurrency/"/>
+
+
+
+<script type="text/javascript" id="page.configurations">
+  CONFIG.page = {
+    sidebar: "",
+  };
+</script>
+  <title>究竟啥才是互联网架构“高并发” | Govern x Lab</title>
+  
+
+
+
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?f6804645172803d5efc7161f04df1d76";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+  <noscript>
+  <style type="text/css">
+    .use-motion .motion-element,
+    .use-motion .brand,
+    .use-motion .menu-item,
+    .sidebar-inner,
+    .use-motion .post-block,
+    .use-motion .pagination,
+    .use-motion .comments,
+    .use-motion .post-header,
+    .use-motion .post-body,
+    .use-motion .collection-title { opacity: initial; }
+
+    .use-motion .logo,
+    .use-motion .site-title,
+    .use-motion .site-subtitle {
+      opacity: initial;
+      top: initial;
+    }
+
+    .use-motion {
+      .logo-line-before i { left: initial; }
+      .logo-line-after i { right: initial; }
+    }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"> <div class="site-brand-wrapper">
+  <div class="site-meta custom-logo">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Govern x Lab</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <h1 class="site-subtitle" itemprop="description">I'm not the only one</h1>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-home"></i> <br />首页</a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-user"></i> <br />关于</a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />标签</a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-th"></i> <br />分类</a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />归档</a>
+        </li>
+      
+
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />搜索</a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  
+  <div class="algolia-popup popup search-popup">
+    <div class="algolia-search">
+      <div class="algolia-search-input-icon">
+        <i class="fa fa-search"></i>
+      </div>
+      <div class="algolia-search-input" id="algolia-search-input"></div>
+    </div>
+
+    <div class="algolia-results">
+      <div id="algolia-stats"></div>
+      <div id="algolia-hits"></div>
+      <div id="algolia-pagination" class="algolia-pagination"></div>
+    </div>
+
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+  </div>
+
+
+
+
+    </div>
+  
+</nav>
+
+
+  
+
+
+
+ </div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://governlee.github.io/2017/01/11/2017-01-11-high-concurrency/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Govern">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/logo.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Govern x Lab">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">究竟啥才是互联网架构“高并发”</h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-01-11T08:00:00+08:00">2017-01-11</time>
+            
+
+            
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/架构/" itemprop="url" rel="index"><span itemprop="name">架构</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p><strong>转自: 架构师之路</strong></p>
+<h2 id="一、什么是高并发"><a href="#一、什么是高并发" class="headerlink" title="一、什么是高并发"></a>一、什么是高并发</h2><p><strong>高并发（High Concurrency）</strong>是互联网分布式系统架构设计中必须考虑的因素之一，它通常是指，<strong>通过设计保证系统能够同时并行处理很多请求</strong>。</p>
+<p>高并发相关常用的一些指标有响应时间（Response Time），吞吐量（Throughput），每秒查询率QPS（Query Per Second），并发用户数等。</p>
+<p><strong>响应时间</strong>：系统对请求做出响应的时间。例如系统处理一个HTTP请求需要200ms，这个200ms就是系统的响应时间。<br><strong>吞吐量</strong>：单位时间内处理的请求数量。<br><strong>QPS</strong>：每秒响应请求数。在互联网领域，这个指标和吞吐量区分的没有这么明显。<br><strong>并发用户数</strong>：同时承载正常使用系统功能的用户数量。例如一个即时通讯系统，同时在线量一定程度上代表了系统的并发用户数。</p>
+<h2 id="二、如何提升系统的并发能力"><a href="#二、如何提升系统的并发能力" class="headerlink" title="二、如何提升系统的并发能力"></a>二、如何提升系统的并发能力</h2><p>互联网分布式架构设计，<strong>提高系统并发能力的方式，方法论上主要有两种：垂直扩展（Scale Up）与水平扩展（Scale Out）</strong>。</p>
+<p><strong>垂直扩展</strong>：提升单机处理能力。垂直扩展的方式又有两种：<br>（1）增强单机硬件性能，例如：增加CPU核数如32核，升级更好的网卡如万兆，升级更好的硬盘如SSD，扩充硬盘容量如2T，扩充系统内存如128G；<br>（2）提升单机架构性能，例如：使用Cache来减少IO次数，使用异步来增加单服务吞吐量，使用无锁数据结构来减少响应时间；</p>
+<p>在互联网业务发展非常迅猛的早期，如果预算不是问题，强烈建议使用“增强单机硬件性能”的方式提升系统并发能力，因为这个阶段，公司的战略往往是发展业务抢时间，而“增强单机硬件性能”往往是最快的方法。</p>
+<p>不管是提升单机硬件性能，还是提升单机架构性能，都有一个致命的不足：<strong>单机性能总是有极限的。所以互联网分布式架构设计高并发终极解决方案还是水平扩展</strong>。</p>
+<p><strong>水平扩展</strong>：只要增加服务器数量，就能线性扩充系统性能。<strong>水平扩展对系统架构设计是有要求的</strong>，如何在架构各层进行可水平扩展的设计，以及互联网公司架构各层常见的水平扩展实践，是本文重点讨论的内容。</p>
+<h2 id="三、常见的互联网分层架构"><a href="#三、常见的互联网分层架构" class="headerlink" title="三、常见的互联网分层架构"></a>三、常见的互联网分层架构</h2><p><img src="http://mmbiz.qpic.cn/mmbiz_png/YrezxckhYOzhYFaiaBYrHFsYH8xiaRBvoibvKYatFicUCQoXQNx9XpQL3sMP9icNY4CQoHFSiaPperAeynDsNDEAkK4w/640?wx_fmt=png&amp;tp=webp&amp;wxfrom=5&amp;wx_lazy=1" alt=""></p>
+<p>常见互联网分布式架构如上，分为：<br>（1）客户端层：典型调用方是浏览器browser或者手机应用APP<br>（2）反向代理层：系统入口，反向代理<br>（3）站点应用层：实现核心应用逻辑，返回html或者json<br>（4）服务层：如果实现了服务化，就有这一层<br>（5）数据-缓存层：缓存加速访问存储<br>（6）数据-数据库层：数据库固化数据存储</p>
+<p>整个系统各层次的水平扩展，又分别是如何实施的呢？</p>
+<h2 id="四、分层水平扩展架构实践"><a href="#四、分层水平扩展架构实践" class="headerlink" title="四、分层水平扩展架构实践"></a>四、分层水平扩展架构实践</h2><h3 id="反向代理层的水平扩展"><a href="#反向代理层的水平扩展" class="headerlink" title="反向代理层的水平扩展"></a>反向代理层的水平扩展</h3><p><img src="http://mmbiz.qpic.cn/mmbiz_png/YrezxckhYOzhYFaiaBYrHFsYH8xiaRBvoibic2hUdJC52WITLf8A8ZrECJqwIORIJfaW4fBGruntoKkfnibKsS0I1mA/640?wx_fmt=png&amp;tp=webp&amp;wxfrom=5&amp;wx_lazy=1" alt=""></p>
+<p><strong>反向代理层的水平扩展，是通过“DNS轮询”实现的</strong>：dns-server对于一个域名配置了多个解析ip，每次DNS解析请求来访问dns-server，会轮询返回这些ip。<br>当nginx成为瓶颈的时候，只要增加服务器数量，新增nginx服务的部署，增加一个外网ip，就能扩展反向代理层的性能，做到理论上的无限高并发。</p>
+<h3 id="站点层的水平扩展"><a href="#站点层的水平扩展" class="headerlink" title="站点层的水平扩展"></a>站点层的水平扩展</h3><p><img src="http://mmbiz.qpic.cn/mmbiz_png/YrezxckhYOzhYFaiaBYrHFsYH8xiaRBvoibuhibyicgBn4mibqBPlyOQABtn1koEh7OyibP6pIvQ3R7zicbUFiaSkGDXOYg/640?wx_fmt=png&amp;tp=webp&amp;wxfrom=5&amp;wx_lazy=1" alt=""></p>
+<p>站点层的水平扩展，是通过“nginx”实现的。通过修改nginx.conf，可以设置多个web后端。<br>当web后端成为瓶颈的时候，只要增加服务器数量，新增web服务的部署，在nginx配置中配置上新的web后端，就能扩展站点层的性能，做到理论上的无限高并发。</p>
+<h3 id="服务层的水平扩展"><a href="#服务层的水平扩展" class="headerlink" title="服务层的水平扩展"></a>服务层的水平扩展</h3><p><img src="http://mmbiz.qpic.cn/mmbiz_png/YrezxckhYOzhYFaiaBYrHFsYH8xiaRBvoibTEqFRMGicpcoELwHwXx0dryYqR8iavCsVutSH023aaiao4Yvn3asekzlg/640?wx_fmt=png&amp;tp=webp&amp;wxfrom=5&amp;wx_lazy=1" alt=""></p>
+<p>服务层的水平扩展，是通过<strong>“服务连接池”</strong>实现的。<br>站点层通过RPC-client调用下游的服务层RPC-server时，RPC-client中的连接池会建立与下游服务多个连接，当服务成为瓶颈的时候，只要增加服务器数量，新增服务部署，在RPC-client处建立新的下游服务连接，就能扩展服务层性能，做到理论上的无限高并发。如果需要优雅的进行服务层自动扩容，这里可能需要配置中心里<strong>服务自动发现</strong>功能的支持。</p>
+<h3 id="数据层的水平扩展"><a href="#数据层的水平扩展" class="headerlink" title="数据层的水平扩展"></a>数据层的水平扩展</h3><p>在数据量很大的情况下，数据层（缓存，数据库）涉及数据的水平扩展，将原本存储在一台服务器上的数据（缓存，数据库）水平拆分到不同服务器上去，以达到扩充系统性能的目的。</p>
+<p>互联网数据层常见的水平拆分方式有这么几种，以数据库为例：</p>
+<p><strong>按照范围水平拆分</strong><br><img src="http://mmbiz.qpic.cn/mmbiz_png/YrezxckhYOzhYFaiaBYrHFsYH8xiaRBvoibwvQqAs5KmBTurs211r6IaxS7hgACQFrjYc2mJVdREz9GEEiaicoP13LA/640?wx_fmt=png&amp;tp=webp&amp;wxfrom=5&amp;wx_lazy=1" alt="">  </p>
+<p>每一个数据服务，存储一定范围的数据，上图为例：<br>user0库，存储uid范围1-1kw<br>user1库，存储uid范围1kw-2kw<br>好处是：<br>（1）<strong>规则简单</strong>，service只需判断一下uid范围就能路由到对应的存储服务；<br>（2）<strong>数据均衡性较好</strong>；<br>（3）<strong>比较容易扩展</strong>，可以随时加一个uid[2kw,3kw]的数据服务;  </p>
+<p>不足是：<br>（1）<strong>请求的负载不一定均衡</strong>，一般来说，新注册的用户会比老用户更活跃，大range的服务请求压力会更大；</p>
+<p><strong> 按照哈希水平拆分</strong><br>每一个数据库，存储某个key值hash后的部分数据，上图为例：<br>user0库，存储偶数uid数据<br>user1库，存储奇数uid数据<br>好处是：<br>（1）<strong>规则简单</strong>，service只需对uid进行hash能路由到对应的存储服务；<br>（2）<strong>数据均衡性较好</strong>；<br>（3）<strong>请求均匀性较好</strong>；</p>
+<p>不足是：<br>（1）<strong>不容易扩展</strong>，扩展一个数据服务，hash方法改变时候，可能需要进行数据迁移；</p>
+<p>这里需要注意的是，通过水平拆分来扩充系统性能，与主从同步读写分离来扩充数据库性能的方式有本质的不同。</p>
+<p><strong>通过水平拆分扩展数据库性能</strong>：<br>（1）每个服务器上存储的数据量是总量的1/n，所以单机的性能也会有提升；<br>（2）n个服务器上的数据没有交集，那个服务器上数据的并集是数据的全集；<br>（3）数据水平拆分到了n个服务器上，理论上读性能扩充了n倍，写性能也扩充了n倍（其实远不止n倍，因为单机的数据量变为了原来的1/n）；</p>
+<p><strong>通过主从同步读写分离扩展数据库性能</strong>：<br>（1）每个服务器上存储的数据量是和总量相同；<br>（2）n个服务器上的数据都一样，都是全集；<br>（3）理论上读性能扩充了n倍，写仍然是单点，写性能不变；</p>
+<p><strong>缓存层的水平拆分和数据库层的水平拆分类似</strong>，也是以范围拆分和哈希拆分的方式居多，就不再展开。</p>
+<h2 id="五、总结"><a href="#五、总结" class="headerlink" title="五、总结"></a>五、总结</h2><p><strong>高并发（High Concurrency）</strong>是互联网分布式系统架构设计中必须考虑的因素之一，它通常是指，通过设计保证系统能够同时并行处理很多请求。<br>提高系统并发能力的方式，方法论上主要有两种：<strong>垂直扩展（Scale Up）</strong>与<strong>水平扩展（Scale Out）</strong>。前者垂直扩展可以通过提升单机硬件性能，或者提升单机架构性能，来提高并发性，但单机性能总是有极限的，互联网分布式架构设计高并发终极解决方案还是后者：水平扩展。</p>
+<p>互联网分层架构中，各层次水平扩展的实践又有所不同：<br>（1）反向代理层可以通过“DNS轮询”的方式来进行水平扩展；<br>（2）站点层可以通过nginx来进行水平扩展；<br>（3）服务层可以通过服务连接池来进行水平扩展；<br>（4）数据库可以按照数据范围，或者数据哈希的方式来进行水平扩展；<br>各层实施水平扩展后，能够通过增加服务器数量的方式来提升系统的性能，做到理论上的性能无限。</p>
+
+      
+    </div>
+
+    
+      
+
+
+    
+
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/架构师之路/" rel="tag"># 架构师之路</a>
+          
+            <a href="/tags/高并发/" rel="tag"># 高并发</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2017/01/11/2017-05-07-architecture/" rel="next" title="TCP接入层的负载均衡、高可用、扩展性架构">
+                <i class="fa fa-chevron-left"></i> TCP接入层的负载均衡、高可用、扩展性架构
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2017/02/04/2017-02-04-http-keep-alive/" rel="prev" title="HTTP长连接、短连接究竟是什么？">
+                HTTP长连接、短连接究竟是什么？ <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+  
+    <div class="comments" id="comments">
+      <div id="lv-container" data-id="city" data-uid="MTAyMC8zNDA5NS8xMDYzMw=="></div>
+    </div>
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image"
+                src="/images/logo.jpg"
+                alt="Govern" />
+            
+              <p class="site-author-name" itemprop="name">Govern</p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          
+            <nav class="site-state motion-element">
+              
+                <div class="site-state-item site-state-posts">
+                
+                  <a href="/archives/">
+                
+                    <span class="site-state-item-count">98</span>
+                    <span class="site-state-item-name">日志</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-categories">
+                  <a href="/categories/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">20</span>
+                    <span class="site-state-item-name">分类</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-tags">
+                  <a href="/tags/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">39</span>
+                    <span class="site-state-item-name">标签</span>
+                  </a>
+                </div>
+              
+            </nav>
+          
+
+          
+
+          
+
+          
+          
+
+          
+          
+
+          
+            
+          
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#一、什么是高并发"><span class="nav-number">1.</span> <span class="nav-text">一、什么是高并发</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#二、如何提升系统的并发能力"><span class="nav-number">2.</span> <span class="nav-text">二、如何提升系统的并发能力</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#三、常见的互联网分层架构"><span class="nav-number">3.</span> <span class="nav-text">三、常见的互联网分层架构</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#四、分层水平扩展架构实践"><span class="nav-number">4.</span> <span class="nav-text">四、分层水平扩展架构实践</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#反向代理层的水平扩展"><span class="nav-number">4.1.</span> <span class="nav-text">反向代理层的水平扩展</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#站点层的水平扩展"><span class="nav-number">4.2.</span> <span class="nav-text">站点层的水平扩展</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#服务层的水平扩展"><span class="nav-number">4.3.</span> <span class="nav-text">服务层的水平扩展</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#数据层的水平扩展"><span class="nav-number">4.4.</span> <span class="nav-text">数据层的水平扩展</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#五、总结"><span class="nav-number">5.</span> <span class="nav-text">五、总结</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+        <div class="back-to-top">
+          <i class="fa fa-arrow-up"></i>
+          
+            <span id="scrollpercent"><span>0</span>%</span>
+          
+        </div>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; 2012 &mdash; <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Govern</span>
+
+  
+
+  
+</div>
+
+
+  
+
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" rel="external nofollow" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" rel="external nofollow" href="https://github.com/theme-next/hexo-theme-next">NexT.Gemini</a> v6.0.3</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=6.0.3"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=6.0.3"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=6.0.3"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=6.0.3"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=6.0.3"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=6.0.3"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=6.0.3"></script>
+
+
+
+  
+
+
+
+
+
+
+
+  
+    <script type="text/javascript">
+      (function(d, s) {
+        var j, e = d.getElementsByTagName(s)[0];
+        if (typeof LivereTower === 'function') { return; }
+        j = d.createElement(s);
+        j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+        j.async = true;
+        e.parentNode.insertBefore(j, e);
+      })(document, 'script');
+    </script>
+  
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+  
+  
+  
+  <link rel="stylesheet" href="/lib/algolia-instant-search/instantsearch.min.css">
+
+  
+  
+  <script src="/lib/algolia-instant-search/instantsearch.min.js"></script>
+  
+
+  <script src="/js/src/algolia-search.js?v=6.0.3"></script>
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+  
+  
+  
+  <script src="/lib/bookmark/bookmark.min.js?v=1.0"></script>
+  <script type="text/javascript">
+  
+    bookmark.scrollToMark('auto', "#more");
+  
+  </script>
+
+
+</body>
+</html>

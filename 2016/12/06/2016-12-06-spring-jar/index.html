@@ -1,0 +1,1026 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next gemini use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=6.0.3" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=6.0.3">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/lights-32x32.png?v=6.0.3">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/lights-16x16.png?v=6.0.3">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=6.0.3" color="#222">
+
+
+
+
+
+
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Gemini',
+    version: '6.0.3',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":true,"scrollpercent":true,"onmobile":false},
+    fancybox: false,
+    fastclick: false,
+    lazyload: false,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    algolia: {
+      applicationID: '41NC33JUJG',
+      apiKey: '7362b84fed21bc83930f198a0927bb82',
+      indexName: 'blog',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+  
+
+
+
+
+  
+  <meta name="keywords" content="spring framework," />
+
+
+<meta name="description" content="很多人都在用spring开发java项目，但是配置maven依赖的时候并不能明确要配置哪些spring的jar，经常是胡乱添加一堆，编译或运行报错就继续配置jar依赖，导致spring依赖混乱，甚至下一次创建相同类型的工程时也不知道要配置哪些spring的依赖，只有拷贝，其实，当初我就是这么干的！ spring的jar包只有20个左右，每个都有相应的功能，一个jar还可能依赖了若干其他jar，所以">
+<meta name="keywords" content="spring framework">
+<meta property="og:type" content="article">
+<meta property="og:title" content="spring framework模块maven依赖关系">
+<meta property="og:url" content="http://governlee.github.io/2016/12/06/2016-12-06-spring-jar/index.html">
+<meta property="og:site_name" content="Govern x Lab">
+<meta property="og:description" content="很多人都在用spring开发java项目，但是配置maven依赖的时候并不能明确要配置哪些spring的jar，经常是胡乱添加一堆，编译或运行报错就继续配置jar依赖，导致spring依赖混乱，甚至下一次创建相同类型的工程时也不知道要配置哪些spring的依赖，只有拷贝，其实，当初我就是这么干的！ spring的jar包只有20个左右，每个都有相应的功能，一个jar还可能依赖了若干其他jar，所以">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="https://images2015.cnblogs.com/blog/797930/201612/797930-20161206100125351-1845487709.png">
+<meta property="og:image" content="https://images2015.cnblogs.com/blog/797930/201612/797930-20161206101318569-352180177.png">
+<meta property="og:image" content="https://images2015.cnblogs.com/blog/797930/201612/797930-20161206102118366-1545880227.png">
+<meta property="og:image" content="https://images2015.cnblogs.com/blog/797930/201612/797930-20161206102441772-1998211727.png">
+<meta property="og:image" content="https://images2015.cnblogs.com/blog/797930/201612/797930-20161206102753335-1304605445.png">
+<meta property="og:image" content="https://images2015.cnblogs.com/blog/797930/201612/797930-20161206103031929-91169155.png">
+<meta property="og:image" content="https://images2015.cnblogs.com/blog/797930/201612/797930-20161206103240788-1769881977.png">
+<meta property="og:image" content="https://images2015.cnblogs.com/blog/797930/201612/797930-20161206103624788-826654956.png">
+<meta property="og:updated_time" content="2018-03-29T14:03:31.150Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="spring framework模块maven依赖关系">
+<meta name="twitter:description" content="很多人都在用spring开发java项目，但是配置maven依赖的时候并不能明确要配置哪些spring的jar，经常是胡乱添加一堆，编译或运行报错就继续配置jar依赖，导致spring依赖混乱，甚至下一次创建相同类型的工程时也不知道要配置哪些spring的依赖，只有拷贝，其实，当初我就是这么干的！ spring的jar包只有20个左右，每个都有相应的功能，一个jar还可能依赖了若干其他jar，所以">
+<meta name="twitter:image" content="https://images2015.cnblogs.com/blog/797930/201612/797930-20161206100125351-1845487709.png">
+
+
+
+
+
+
+  <link rel="canonical" href="http://governlee.github.io/2016/12/06/2016-12-06-spring-jar/"/>
+
+
+
+<script type="text/javascript" id="page.configurations">
+  CONFIG.page = {
+    sidebar: "",
+  };
+</script>
+  <title>spring framework模块maven依赖关系 | Govern x Lab</title>
+  
+
+
+
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?f6804645172803d5efc7161f04df1d76";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+  <noscript>
+  <style type="text/css">
+    .use-motion .motion-element,
+    .use-motion .brand,
+    .use-motion .menu-item,
+    .sidebar-inner,
+    .use-motion .post-block,
+    .use-motion .pagination,
+    .use-motion .comments,
+    .use-motion .post-header,
+    .use-motion .post-body,
+    .use-motion .collection-title { opacity: initial; }
+
+    .use-motion .logo,
+    .use-motion .site-title,
+    .use-motion .site-subtitle {
+      opacity: initial;
+      top: initial;
+    }
+
+    .use-motion {
+      .logo-line-before i { left: initial; }
+      .logo-line-after i { right: initial; }
+    }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"> <div class="site-brand-wrapper">
+  <div class="site-meta custom-logo">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Govern x Lab</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <h1 class="site-subtitle" itemprop="description">I'm not the only one</h1>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-home"></i> <br />首页</a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-user"></i> <br />关于</a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />标签</a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-th"></i> <br />分类</a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />归档</a>
+        </li>
+      
+
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />搜索</a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  
+  <div class="algolia-popup popup search-popup">
+    <div class="algolia-search">
+      <div class="algolia-search-input-icon">
+        <i class="fa fa-search"></i>
+      </div>
+      <div class="algolia-search-input" id="algolia-search-input"></div>
+    </div>
+
+    <div class="algolia-results">
+      <div id="algolia-stats"></div>
+      <div id="algolia-hits"></div>
+      <div id="algolia-pagination" class="algolia-pagination"></div>
+    </div>
+
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+  </div>
+
+
+
+
+    </div>
+  
+</nav>
+
+
+  
+
+
+
+ </div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://governlee.github.io/2016/12/06/2016-12-06-spring-jar/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Govern">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/logo.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Govern x Lab">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">spring framework模块maven依赖关系</h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2016-12-06T08:00:00+08:00">2016-12-06</time>
+            
+
+            
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/Spring/" itemprop="url" rel="index"><span itemprop="name">Spring</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>很多人都在用spring开发java项目，但是配置maven依赖的时候并不能明确要配置哪些spring的jar，经常是胡乱添加一堆，编译或运行报错就继续配置jar依赖，导致spring依赖混乱，甚至下一次创建相同类型的工程时也不知道要配置哪些spring的依赖，只有拷贝，其实，当初我就是这么干的！</p>
+<p>spring的jar包只有20个左右，每个都有相应的功能，一个jar还可能依赖了若干其他jar，所以，搞清楚它们之间的关系，配置maven依赖就可以简洁明了，下面举个例子，要在普通java工程使用spring框架，需要哪些jar呢？其实只要一个:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">&lt;dependency&gt;</span><br><span class="line">    &lt;groupId&gt;org.springframework&lt;/groupId&gt;</span><br><span class="line">    &lt;artifactId&gt;spring-context&lt;/artifactId&gt;</span><br><span class="line">    &lt;version&gt;3.2.17.RELEASE&lt;/version&gt;</span><br><span class="line">&lt;/dependency&gt;</span><br></pre></td></tr></table></figure></p>
+<p>那要在web工程中引入spring mvc呢？也只要配置一个依赖:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">&lt;dependency&gt;</span><br><span class="line">    &lt;groupId&gt;org.springframework&lt;/groupId&gt;</span><br><span class="line">    &lt;artifactId&gt;spring-webmvc&lt;/artifactId&gt;</span><br><span class="line">    &lt;version&gt;3.2.17.RELEASE&lt;/version&gt;</span><br><span class="line">&lt;/dependency&gt;</span><br></pre></td></tr></table></figure></p>
+<p>为什么可以这样配置？接下来我们以spring 3.2.17.RELEASE版本为例，介绍spring框架结构，spring 4稍有不同，将在最后介绍。spring官网给出了一张spring3的结构图:</p>
+<p><img src="https://images2015.cnblogs.com/blog/797930/201612/797930-20161206100125351-1845487709.png" alt=""></p>
+<p>图中将spring分为5个部分：core、aop、data access、web、test，图中每个圆角矩形都对应一个jar，如果在maven中配置，所有这些jar的“groupId”都是“org.springframework”，每个jar有一个不同的“artifactId”，另外，“instrumentation”有两个jar，还有一个“spring-context-support”图中没有列出，所以spring3的jar包一共是19个。</p>
+<h2 id="Spring3-jar包依赖关系。"><a href="#Spring3-jar包依赖关系。" class="headerlink" title="Spring3 jar包依赖关系。"></a>Spring3 jar包依赖关系。</h2><h3 id="core"><a href="#core" class="headerlink" title="core"></a>core</h3><p>core部分包含4个模块</p>
+<ol>
+<li>spring-core：依赖注入IoC与DI的最基本实现</li>
+<li>spring-beans：Bean工厂与bean的装配</li>
+<li>spring-context：spring的context上下文即IoC容器</li>
+<li>spring-expression：spring表达式语言</li>
+</ol>
+<p>它们的完整依赖关系:</p>
+<p><img src="https://images2015.cnblogs.com/blog/797930/201612/797930-20161206101318569-352180177.png" alt=""></p>
+<p>因为spring-core依赖了commons-logging，而其他模块都依赖了spring-core，所以整个spring框架都依赖了commons-logging，如果有自己的日志实现如log4j，可以排除对commons-logging的依赖，没有日志实现而排除了commons-logging依赖，编译会报错<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">&lt;dependency&gt;</span><br><span class="line">   &lt;groupId&gt;org.springframework&lt;/groupId&gt;</span><br><span class="line">   &lt;artifactId&gt;spring-context&lt;/artifactId&gt;</span><br><span class="line">   &lt;version&gt;3.2.17.RELEASE&lt;/version&gt;</span><br><span class="line">   &lt;exclusions&gt;</span><br><span class="line">       &lt;exclusion&gt;</span><br><span class="line">           &lt;groupId&gt;commons-logging&lt;/groupId&gt;</span><br><span class="line">           &lt;artifactId&gt;commons-logging&lt;/artifactId&gt;</span><br><span class="line">       &lt;/exclusion&gt;</span><br><span class="line">   &lt;/exclusions&gt;</span><br><span class="line">&lt;/dependency&gt;</span><br></pre></td></tr></table></figure></p>
+<h3 id="aop"><a href="#aop" class="headerlink" title="aop"></a>aop</h3><p>aop部分包含4个模块</p>
+<ol>
+<li>spring-aop：面向切面编程</li>
+<li>spring-aspects：集成AspectJ</li>
+<li>spring-instrument：提供一些类级的工具支持和ClassLoader级的实现，用于服务器</li>
+<li>spring-instrument-tomcat：针对tomcat的instrument实现</li>
+</ol>
+<p>它们的依赖关系</p>
+<p><img src="https://images2015.cnblogs.com/blog/797930/201612/797930-20161206102118366-1545880227.png" alt=""></p>
+<h3 id="data-access"><a href="#data-access" class="headerlink" title="data access"></a>data access</h3><p>data access部分包含5个模块</p>
+<ol>
+<li>spring-jdbc：jdbc的支持</li>
+<li>spring-tx：事务控制</li>
+<li>spring-orm：对象关系映射，集成orm框架</li>
+<li>spring-oxm：对象xml映射</li>
+<li>spring-jms：java消息服务</li>
+</ol>
+<p>它们的依赖关系</p>
+<p><img src="https://images2015.cnblogs.com/blog/797930/201612/797930-20161206102441772-1998211727.png" alt=""></p>
+<h3 id="web"><a href="#web" class="headerlink" title="web"></a>web</h3><p>web部分包含4个模块</p>
+<ol>
+<li>spring-web：基础web功能，如文件上传</li>
+<li>spring-webmvc：mvc实现</li>
+<li>spring-webmvc-portlet：基于portlet的mvc实现</li>
+<li>spring-struts：与struts的集成，不推荐，spring4不再提供</li>
+</ol>
+<p><img src="https://images2015.cnblogs.com/blog/797930/201612/797930-20161206102753335-1304605445.png" alt=""></p>
+<h3 id="test"><a href="#test" class="headerlink" title="test"></a>test</h3><p>test部分只有一个模块，我将spring-context-support也放在这吧</p>
+<ol>
+<li>spring-test：spring测试，提供junit与mock测试功能</li>
+<li>spring-context-support：spring额外支持包，比如邮件服务、视图解析等</li>
+</ol>
+<p><img src="https://images2015.cnblogs.com/blog/797930/201612/797930-20161206103031929-91169155.png" alt=""></p>
+<p>到这里，spring3的介绍就完了，看着这些图我相信你在maven中配置spring依赖时不会再混乱了</p>
+<h2 id="Spring4-jar包依赖关系。"><a href="#Spring4-jar包依赖关系。" class="headerlink" title="Spring4 jar包依赖关系。"></a>Spring4 jar包依赖关系。</h2><p>下面介绍spring4，与spring3结构基本相同，下面是官网给出的结构图<br><img src="https://images2015.cnblogs.com/blog/797930/201612/797930-20161206103240788-1769881977.png" alt=""></p>
+<p>可以看到，图中去掉了spring3的struts，添加了messaging和websocket，其他模块保持不变，因此，spring4的jar有20个。</p>
+<ol>
+<li>spring-websocket：为web应用提供的高效通信工具</li>
+<li>spring-messaging：用于构建基于消息的应用程序</li>
+</ol>
+<p><img src="https://images2015.cnblogs.com/blog/797930/201612/797930-20161206103624788-826654956.png" alt=""></p>
+
+      
+    </div>
+
+    
+      
+
+
+    
+
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/spring-framework/" rel="tag"># spring framework</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2016/11/03/2016-11-03-blog/" rel="next" title="有感">
+                <i class="fa fa-chevron-left"></i> 有感
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2016/12/15/2016-12-15-linkedhashmap/" rel="prev" title="LinkedHashMap分析(Java8)">
+                LinkedHashMap分析(Java8) <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+  
+    <div class="comments" id="comments">
+      <div id="lv-container" data-id="city" data-uid="MTAyMC8zNDA5NS8xMDYzMw=="></div>
+    </div>
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image"
+                src="/images/logo.jpg"
+                alt="Govern" />
+            
+              <p class="site-author-name" itemprop="name">Govern</p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          
+            <nav class="site-state motion-element">
+              
+                <div class="site-state-item site-state-posts">
+                
+                  <a href="/archives/">
+                
+                    <span class="site-state-item-count">98</span>
+                    <span class="site-state-item-name">日志</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-categories">
+                  <a href="/categories/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">20</span>
+                    <span class="site-state-item-name">分类</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-tags">
+                  <a href="/tags/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">39</span>
+                    <span class="site-state-item-name">标签</span>
+                  </a>
+                </div>
+              
+            </nav>
+          
+
+          
+
+          
+
+          
+          
+
+          
+          
+
+          
+            
+          
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Spring3-jar包依赖关系。"><span class="nav-number">1.</span> <span class="nav-text">Spring3 jar包依赖关系。</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#core"><span class="nav-number">1.1.</span> <span class="nav-text">core</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#aop"><span class="nav-number">1.2.</span> <span class="nav-text">aop</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#data-access"><span class="nav-number">1.3.</span> <span class="nav-text">data access</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#web"><span class="nav-number">1.4.</span> <span class="nav-text">web</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#test"><span class="nav-number">1.5.</span> <span class="nav-text">test</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Spring4-jar包依赖关系。"><span class="nav-number">2.</span> <span class="nav-text">Spring4 jar包依赖关系。</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+        <div class="back-to-top">
+          <i class="fa fa-arrow-up"></i>
+          
+            <span id="scrollpercent"><span>0</span>%</span>
+          
+        </div>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; 2012 &mdash; <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Govern</span>
+
+  
+
+  
+</div>
+
+
+  
+
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" rel="external nofollow" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" rel="external nofollow" href="https://github.com/theme-next/hexo-theme-next">NexT.Gemini</a> v6.0.3</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=6.0.3"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=6.0.3"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=6.0.3"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=6.0.3"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=6.0.3"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=6.0.3"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=6.0.3"></script>
+
+
+
+  
+
+
+
+
+
+
+
+  
+    <script type="text/javascript">
+      (function(d, s) {
+        var j, e = d.getElementsByTagName(s)[0];
+        if (typeof LivereTower === 'function') { return; }
+        j = d.createElement(s);
+        j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+        j.async = true;
+        e.parentNode.insertBefore(j, e);
+      })(document, 'script');
+    </script>
+  
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+  
+  
+  
+  <link rel="stylesheet" href="/lib/algolia-instant-search/instantsearch.min.css">
+
+  
+  
+  <script src="/lib/algolia-instant-search/instantsearch.min.js"></script>
+  
+
+  <script src="/js/src/algolia-search.js?v=6.0.3"></script>
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+  
+  
+  
+  <script src="/lib/bookmark/bookmark.min.js?v=1.0"></script>
+  <script type="text/javascript">
+  
+    bookmark.scrollToMark('auto', "#more");
+  
+  </script>
+
+
+</body>
+</html>

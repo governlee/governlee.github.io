@@ -1,0 +1,1016 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next gemini use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=6.0.3" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=6.0.3">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/lights-32x32.png?v=6.0.3">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/lights-16x16.png?v=6.0.3">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=6.0.3" color="#222">
+
+
+
+
+
+
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Gemini',
+    version: '6.0.3',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":true,"scrollpercent":true,"onmobile":false},
+    fancybox: false,
+    fastclick: false,
+    lazyload: false,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    algolia: {
+      applicationID: '41NC33JUJG',
+      apiKey: '7362b84fed21bc83930f198a0927bb82',
+      indexName: 'blog',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+  
+
+
+
+
+  
+  <meta name="keywords" content="架构师之路,高并发," />
+
+
+<meta name="description" content="转自: 架构师之路 一、缘起随着互联网业务的越来越复杂，用户量与流量越来越大，“服务化分层”是架构演进的必由之路。  如上图：站点应用会调用服务，上游服务调用底层服务，依赖关系会变得非常复杂。 对于同一个服务，它有多个上游调用。为了保证高可用，一个底层服务往往是若干个节点形成一个集群提供服务。  如上图：用户中心服务user-service有三个节点，ip1/ip2/ip3对上游提供服务，任何一个">
+<meta name="keywords" content="架构师之路,高并发">
+<meta property="og:type" content="article">
+<meta property="og:title" content="TCP接入层的负载均衡、高可用、扩展性架构">
+<meta property="og:url" content="http://governlee.github.io/2017/01/11/2017-04-20-configuration/index.html">
+<meta property="og:site_name" content="Govern x Lab">
+<meta property="og:description" content="转自: 架构师之路 一、缘起随着互联网业务的越来越复杂，用户量与流量越来越大，“服务化分层”是架构演进的必由之路。  如上图：站点应用会调用服务，上游服务调用底层服务，依赖关系会变得非常复杂。 对于同一个服务，它有多个上游调用。为了保证高可用，一个底层服务往往是若干个节点形成一个集群提供服务。  如上图：用户中心服务user-service有三个节点，ip1/ip2/ip3对上游提供服务，任何一个">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="http://mmbiz.qpic.cn/mmbiz_png/YrezxckhYOzDcHEhdKSZ6qp2Hdld7NqdDWgLEoqstSFaic2NINorOReGh5E5DHOsuaF0xve5LuBibANib6nQsibqUg/640?wx_fmt=png&tp=webp&wxfrom=5&wx_lazy=1">
+<meta property="og:image" content="http://mmbiz.qpic.cn/mmbiz_png/YrezxckhYOzDcHEhdKSZ6qp2Hdld7NqdTWGFB8F1cgHgjSwUPtvbCyqKJJaRD5ebb1icRicqHicx6NHVOpRD1mVnQ/640?wx_fmt=png&tp=webp&wxfrom=5&wx_lazy=1">
+<meta property="og:image" content="http://mmbiz.qpic.cn/mmbiz_png/YrezxckhYOzDcHEhdKSZ6qp2Hdld7NqdehSKSxiaHtibpGmhiazUEmPzgDmqwbLib5fBJodPqItMAxj65l76FXM7YQ/640?wx_fmt=png&tp=webp&wxfrom=5&wx_lazy=1">
+<meta property="og:image" content="http://mmbiz.qpic.cn/mmbiz_png/YrezxckhYOzDcHEhdKSZ6qp2Hdld7NqdJhv4OicZgxkckl9quWFEu0C9JhkTtEP0B9iaibc0Q7DMnia2D0aB0l4fKg/640?wx_fmt=png&tp=webp&wxfrom=5&wx_lazy=1">
+<meta property="og:image" content="http://mmbiz.qpic.cn/mmbiz_png/YrezxckhYOzDcHEhdKSZ6qp2Hdld7Nqdr2JagsmUsl4Nibzm0Dibs6Cj0iaX2dKm5Zibo4fgjUCK0ZA4QiasZkhQ15g/640?wx_fmt=png&tp=webp&wxfrom=5&wx_lazy=1">
+<meta property="og:image" content="http://mmbiz.qpic.cn/mmbiz_png/YrezxckhYOzDcHEhdKSZ6qp2Hdld7Nqdcp913vBfueK7H2HGuXxaicVHWwaZoDwAo7kkCR6ePtncyWjKsmSAU9g/640?wx_fmt=png&tp=webp&wxfrom=5&wx_lazy=1">
+<meta property="og:image" content="http://mmbiz.qpic.cn/mmbiz_png/YrezxckhYOzDcHEhdKSZ6qp2Hdld7NqdfxvlMrpEPqXvlTFtX6ceib0zg9fwjDCfjdKMrY6rJ6K5D6y52OnLQJg/640?wx_fmt=png&tp=webp&wxfrom=5&wx_lazy=1">
+<meta property="og:image" content="http://mmbiz.qpic.cn/mmbiz_png/YrezxckhYOzDcHEhdKSZ6qp2Hdld7NqdAAx9ys3aUpQ8rlSX0BO00tciar7uJ8VLVYB1Up2R4MNgO6JIKiabCLjQ/640?wx_fmt=png&tp=webp&wxfrom=5&wx_lazy=1">
+<meta property="og:image" content="http://mmbiz.qpic.cn/mmbiz_png/YrezxckhYOzDcHEhdKSZ6qp2Hdld7Nqd8B8msCcRUo7HECJUZvINliahLYfmoBSuxIYKsrbplTmjlvPiaTGGeT1g/640?wx_fmt=png&tp=webp&wxfrom=5&wx_lazy=1">
+<meta property="og:updated_time" content="2018-04-21T06:14:01.462Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="TCP接入层的负载均衡、高可用、扩展性架构">
+<meta name="twitter:description" content="转自: 架构师之路 一、缘起随着互联网业务的越来越复杂，用户量与流量越来越大，“服务化分层”是架构演进的必由之路。  如上图：站点应用会调用服务，上游服务调用底层服务，依赖关系会变得非常复杂。 对于同一个服务，它有多个上游调用。为了保证高可用，一个底层服务往往是若干个节点形成一个集群提供服务。  如上图：用户中心服务user-service有三个节点，ip1/ip2/ip3对上游提供服务，任何一个">
+<meta name="twitter:image" content="http://mmbiz.qpic.cn/mmbiz_png/YrezxckhYOzDcHEhdKSZ6qp2Hdld7NqdDWgLEoqstSFaic2NINorOReGh5E5DHOsuaF0xve5LuBibANib6nQsibqUg/640?wx_fmt=png&tp=webp&wxfrom=5&wx_lazy=1">
+
+
+
+
+
+
+  <link rel="canonical" href="http://governlee.github.io/2017/01/11/2017-04-20-configuration/"/>
+
+
+
+<script type="text/javascript" id="page.configurations">
+  CONFIG.page = {
+    sidebar: "",
+  };
+</script>
+  <title>TCP接入层的负载均衡、高可用、扩展性架构 | Govern x Lab</title>
+  
+
+
+
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?f6804645172803d5efc7161f04df1d76";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+  <noscript>
+  <style type="text/css">
+    .use-motion .motion-element,
+    .use-motion .brand,
+    .use-motion .menu-item,
+    .sidebar-inner,
+    .use-motion .post-block,
+    .use-motion .pagination,
+    .use-motion .comments,
+    .use-motion .post-header,
+    .use-motion .post-body,
+    .use-motion .collection-title { opacity: initial; }
+
+    .use-motion .logo,
+    .use-motion .site-title,
+    .use-motion .site-subtitle {
+      opacity: initial;
+      top: initial;
+    }
+
+    .use-motion {
+      .logo-line-before i { left: initial; }
+      .logo-line-after i { right: initial; }
+    }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"> <div class="site-brand-wrapper">
+  <div class="site-meta custom-logo">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Govern x Lab</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <h1 class="site-subtitle" itemprop="description">I'm not the only one</h1>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-home"></i> <br />首页</a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-user"></i> <br />关于</a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />标签</a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-th"></i> <br />分类</a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />归档</a>
+        </li>
+      
+
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />搜索</a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  
+  <div class="algolia-popup popup search-popup">
+    <div class="algolia-search">
+      <div class="algolia-search-input-icon">
+        <i class="fa fa-search"></i>
+      </div>
+      <div class="algolia-search-input" id="algolia-search-input"></div>
+    </div>
+
+    <div class="algolia-results">
+      <div id="algolia-stats"></div>
+      <div id="algolia-hits"></div>
+      <div id="algolia-pagination" class="algolia-pagination"></div>
+    </div>
+
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+  </div>
+
+
+
+
+    </div>
+  
+</nav>
+
+
+  
+
+
+
+ </div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://governlee.github.io/2017/01/11/2017-04-20-configuration/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Govern">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/logo.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Govern x Lab">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">TCP接入层的负载均衡、高可用、扩展性架构</h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-01-11T08:00:00+08:00">2017-01-11</time>
+            
+
+            
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/架构/" itemprop="url" rel="index"><span itemprop="name">架构</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p><strong>转自: 架构师之路</strong></p>
+<h2 id="一、缘起"><a href="#一、缘起" class="headerlink" title="一、缘起"></a>一、缘起</h2><p>随着互联网业务的越来越复杂，用户量与流量越来越大，<strong>“服务化分层”是架构演进的必由之路</strong>。</p>
+<p><img src="http://mmbiz.qpic.cn/mmbiz_png/YrezxckhYOzDcHEhdKSZ6qp2Hdld7NqdDWgLEoqstSFaic2NINorOReGh5E5DHOsuaF0xve5LuBibANib6nQsibqUg/640?wx_fmt=png&amp;tp=webp&amp;wxfrom=5&amp;wx_lazy=1" alt=""></p>
+<p>如上图：站点应用会调用服务，上游服务调用底层服务，<strong>依赖关系会变得非常复杂</strong>。</p>
+<p>对于同一个服务，它有多个上游调用。为了保证高可用，一个底层服务往往是若干个节点形成一个<strong>集群提供服务</strong>。</p>
+<p><img src="http://mmbiz.qpic.cn/mmbiz_png/YrezxckhYOzDcHEhdKSZ6qp2Hdld7NqdTWGFB8F1cgHgjSwUPtvbCyqKJJaRD5ebb1icRicqHicx6NHVOpRD1mVnQ/640?wx_fmt=png&amp;tp=webp&amp;wxfrom=5&amp;wx_lazy=1" alt=""></p>
+<p>如上图：用户中心服务user-service有三个节点，ip1/ip2/ip3对上游提供服务，任何一个节点当机，都不影响服务的可用性。</p>
+<p>那么问题来了，当服务集群增减节点的时候，是否存在“反向依赖”，是否“耦合”，<strong>是否上游调用方需要修改配置重启</strong>，是否能做到上游无感知，即“配置的架构变迁”，是今天需要讨论的问题。</p>
+<h2 id="二、配置私藏"><a href="#二、配置私藏" class="headerlink" title="二、配置私藏"></a>二、配置私藏</h2><p>“配置私藏”是配置文件架构的最初级阶段，上游调用下游，<strong>每个上游都有一个专属的私有配置文件</strong>，记录被调用下游的每个节点配置信息。<br><img src="http://mmbiz.qpic.cn/mmbiz_png/YrezxckhYOzDcHEhdKSZ6qp2Hdld7NqdehSKSxiaHtibpGmhiazUEmPzgDmqwbLib5fBJodPqItMAxj65l76FXM7YQ/640?wx_fmt=png&amp;tp=webp&amp;wxfrom=5&amp;wx_lazy=1" alt=""></p>
+<p>如上图：</p>
+<ol>
+<li>用户中心user-service有ip1/ip2/ip3三个节点  </li>
+<li>service1调用了用户中心，它有一个专属配置文件s1.conf，里面配置了us的集群是ip1/ip2/ip3</li>
+<li>service2也调用了用户中心，同理有个配置文件s2.conf，记录了us集群是ip1/ip2/ip3</li>
+<li>web2也调用了用户中心，同理w2.conf，配置了us集群是ip1/ip2/ip3</li>
+</ol>
+<p>是不是很熟悉？<br>没错，绝大部分公司，初期都是这么玩的。</p>
+<p><strong>配置私藏架构的缺点是什么呢？</strong><br><img src="http://mmbiz.qpic.cn/mmbiz_png/YrezxckhYOzDcHEhdKSZ6qp2Hdld7NqdJhv4OicZgxkckl9quWFEu0C9JhkTtEP0B9iaibc0Q7DMnia2D0aB0l4fKg/640?wx_fmt=png&amp;tp=webp&amp;wxfrom=5&amp;wx_lazy=1" alt=""></p>
+<p>来看一个容量变化的需求：<br>1）运维检测出ip1节点的硬盘性能下降，通知研发未来要将ip1节点下线<br>2）由于5月8日要做大促运营活动，未来流量会激增，研发准备增加两个节点ip4和ip5</p>
+<p>此时要怎么做呢？<br><img src="http://mmbiz.qpic.cn/mmbiz_png/YrezxckhYOzDcHEhdKSZ6qp2Hdld7Nqdr2JagsmUsl4Nibzm0Dibs6Cj0iaX2dKm5Zibo4fgjUCK0ZA4QiasZkhQ15g/640?wx_fmt=png&amp;tp=webp&amp;wxfrom=5&amp;wx_lazy=1" alt=""></p>
+<p>需要用户中心的负责人通知所有上游调用者，<strong>修改“私藏”的配置，并重启上游</strong>，连接到新的集群上去。在ip1上没有流量之后，通知运维将ip1节点下线，以完成整个缩容扩容过程。</p>
+<p>大伙是这么做的么？当业务复杂度较高，研发人数较多，服务依赖关系较复杂的时候，就没这么简单了。</p>
+<p><strong>问题一：</strong><font color="orange">调用方很痛，容量变化的是你，凭啥修改配置重启的是我？</font>这是一个典型的<strong>“反向依赖”</strong>架构设计，上下游通过配置耦合，值得优化（特别是上层服务，ta依赖的服务很多的时候，可能每周都有类似的配合重启需求）。</p>
+<p><strong>问题二：</strong><font color="orange">服务方很痛，ta不知道有多少个上游调用了自己</font>（特别是底层基础服务，像用户中心这种，调用ta的上游很多），往往只能通过以下方式来定位上游：<br>a）群里吼<br>b）发邮件询问<br>c）通过连接找到ip，通过ip问运维，找到机器负责人，再通过机器负责人找到对应调用服务</p>
+<p>不管哪种方式，都很有可能遗漏，导致ip1一直有流量难以下线，ip4/ip5的流量难以均匀迁移过来。该如何优化呢？</p>
+<h2 id="三、全局配置"><a href="#三、全局配置" class="headerlink" title="三、全局配置"></a>三、全局配置</h2><p>架构的升级并不是一步到位的，先来用最低的成本来解决上述“修改配置重启”的问题一。<br><img src="http://mmbiz.qpic.cn/mmbiz_png/YrezxckhYOzDcHEhdKSZ6qp2Hdld7Nqdcp913vBfueK7H2HGuXxaicVHWwaZoDwAo7kkCR6ePtncyWjKsmSAU9g/640?wx_fmt=png&amp;tp=webp&amp;wxfrom=5&amp;wx_lazy=1" alt=""></p>
+<p>“全局配置”法：<br>对于通用的服务，建立全局配置文件，消除配置私藏：<br>1）<strong>运维层面制定规范</strong>，新建全局配置文件，例如/opt/globalconf/global.conf，如果配置较多，注意做好配置的垂直拆分<br>2）<strong>对于服务方</strong>，如果是通用的服务，集群信息配置在global.conf里<br>3）<strong>对于调用方</strong>，调用方禁止配置私藏，必须从global.conf里读取通用下游配置</p>
+<p>这么做的好处：<br>1）如果下游容量变化，只需要修改一处配置global.conf，而不需要各个上游修改<br>2）调用方下一次重启的时候，自动迁移到扩容后的集群上来了<br>3）修改成本非常小，读取配置文件目录变了</p>
+<p>不足：<br>如果调用方一直不重启，就没有办法将流量迁移到新集群上去了</p>
+<p><strong>有没有方面实现自动流量迁移呢？</strong></p>
+<p><img src="http://mmbiz.qpic.cn/mmbiz_png/YrezxckhYOzDcHEhdKSZ6qp2Hdld7NqdfxvlMrpEPqXvlTFtX6ceib0zg9fwjDCfjdKMrY6rJ6K5D6y52OnLQJg/640?wx_fmt=png&amp;tp=webp&amp;wxfrom=5&amp;wx_lazy=1" alt=""></p>
+<p>答案是肯定的，只需要实现两个并不复杂的组件，就能实现调用方的流量自动迁移：<br><strong>1）文件监控组件FileMonitor  </strong><br>作用是监控文件的变化，起一个timer，定期监控文件的ModifyTime或者md5就能轻松实现，当文件变化后，实施回调。<br><strong>2）动态连接池组件DynamicConnectionPool</strong><br>l<strong>“连接池组件”是RPC-client中的一个子组件l</strong>，用来维护与多个RPC-server节点之间的连接。所谓“动态连接池”，是指连<font color="orange">接池中的连接可以动态增加和减少</font>（用锁来互斥或者线程安全的数据结构很容易实现）。</p>
+<p>这两个组件完成后：<br>1）一旦全局配置文件变化，文件监控组件实施回调<br>2）如果动态连接池组件发现配置中减少了一些节点，就动态的将对应连接销毁，如果增加了一些节点，就动态建立连接，自动完成下游节点的增容与缩容。</p>
+<h2 id="四、配置中心"><a href="#四、配置中心" class="headerlink" title="四、配置中心"></a>四、配置中心</h2><p>全局配置文件是一个能够快速落地的，解决“修改配置重启”问题的方案，但它仍然解决不了，<strong>服务提供方“不知道有多少个上游调用了自己”</strong>这个问题。</p>
+<p>如果不知道多少上游调用了自己，“按照调用方限流”,“绘制全局架构依赖图”等需求便难以实现，怎么办，可以采用“配置中心”来解决。</p>
+<p><img src="http://mmbiz.qpic.cn/mmbiz_png/YrezxckhYOzDcHEhdKSZ6qp2Hdld7NqdAAx9ys3aUpQ8rlSX0BO00tciar7uJ8VLVYB1Up2R4MNgO6JIKiabCLjQ/640?wx_fmt=png&amp;tp=webp&amp;wxfrom=5&amp;wx_lazy=1" alt=""></p>
+<p>对比“全局配置”与“配置中心”的架构图，会发现配置由静态的文件 升级为 <strong>动态的服务</strong>：<br>1）整个<strong>配置中心子系统</strong>由zk、conf-center服务，DB配置存储与，conf-web配置后台组成<br>2）所有<strong>下游服务的配置</strong>，通过后台设置在配置中心里<br>3）所有上游需要拉取配置，需要去配置中心注册，拉取下游服务配置信息（ip1/ip2/ip3）</p>
+<p><img src="http://mmbiz.qpic.cn/mmbiz_png/YrezxckhYOzDcHEhdKSZ6qp2Hdld7Nqd8B8msCcRUo7HECJUZvINliahLYfmoBSuxIYKsrbplTmjlvPiaTGGeT1g/640?wx_fmt=png&amp;tp=webp&amp;wxfrom=5&amp;wx_lazy=1" alt=""></p>
+<p>当下游服务需要扩容缩容时：<br>4）conf-web配置后台进行设置，新增ip4/ip5，减少ip1<br>5）conf-center服务将变更的配置推送给已经注册关注相关配置的调用方<br>6）结合动态连接池组件，完成<strong>自动的扩容与缩容</strong></p>
+<p>配置中心的好处：<br>1）调用方不需要再重启<br>2）服务方从配置中心中很清楚的知道上游依赖关系，从而实施按照调用方限流<br>3）很容易从配置中心得到全局架构依赖关系<br>痛点一、痛点二同时解决。</p>
+<p>不足：系统复杂度相对较高，<font color="orange">对配置中心的可靠性要求较高，一处挂全局挂</font>。</p>
+<h2 id="五、总结"><a href="#五、总结" class="headerlink" title="五、总结"></a>五、总结</h2><p><strong>解决什么问题？</strong><br>配置导致系统耦合，架构反向依赖。</p>
+<p><strong>什么痛点？</strong><br>上游痛：扩容的是下游，改配置重启的是上游<br>下游痛：不知道谁依赖于自己</p>
+<p><strong>配置架构如何演进？</strong><br>一、配置私藏<br>二、全局配置文件<br>三、配置中心</p>
+
+      
+    </div>
+
+    
+      
+
+
+    
+
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/架构师之路/" rel="tag"># 架构师之路</a>
+          
+            <a href="/tags/高并发/" rel="tag"># 高并发</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2016/12/15/2016-12-15-linkedhashmap/" rel="next" title="LinkedHashMap分析(Java8)">
+                <i class="fa fa-chevron-left"></i> LinkedHashMap分析(Java8)
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2017/01/11/2017-05-07-architecture/" rel="prev" title="TCP接入层的负载均衡、高可用、扩展性架构">
+                TCP接入层的负载均衡、高可用、扩展性架构 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+  
+    <div class="comments" id="comments">
+      <div id="lv-container" data-id="city" data-uid="MTAyMC8zNDA5NS8xMDYzMw=="></div>
+    </div>
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image"
+                src="/images/logo.jpg"
+                alt="Govern" />
+            
+              <p class="site-author-name" itemprop="name">Govern</p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          
+            <nav class="site-state motion-element">
+              
+                <div class="site-state-item site-state-posts">
+                
+                  <a href="/archives/">
+                
+                    <span class="site-state-item-count">98</span>
+                    <span class="site-state-item-name">日志</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-categories">
+                  <a href="/categories/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">20</span>
+                    <span class="site-state-item-name">分类</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-tags">
+                  <a href="/tags/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">39</span>
+                    <span class="site-state-item-name">标签</span>
+                  </a>
+                </div>
+              
+            </nav>
+          
+
+          
+
+          
+
+          
+          
+
+          
+          
+
+          
+            
+          
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#一、缘起"><span class="nav-number">1.</span> <span class="nav-text">一、缘起</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#二、配置私藏"><span class="nav-number">2.</span> <span class="nav-text">二、配置私藏</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#三、全局配置"><span class="nav-number">3.</span> <span class="nav-text">三、全局配置</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#四、配置中心"><span class="nav-number">4.</span> <span class="nav-text">四、配置中心</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#五、总结"><span class="nav-number">5.</span> <span class="nav-text">五、总结</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+        <div class="back-to-top">
+          <i class="fa fa-arrow-up"></i>
+          
+            <span id="scrollpercent"><span>0</span>%</span>
+          
+        </div>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; 2012 &mdash; <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Govern</span>
+
+  
+
+  
+</div>
+
+
+  
+
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" rel="external nofollow" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" rel="external nofollow" href="https://github.com/theme-next/hexo-theme-next">NexT.Gemini</a> v6.0.3</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=6.0.3"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=6.0.3"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=6.0.3"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=6.0.3"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=6.0.3"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=6.0.3"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=6.0.3"></script>
+
+
+
+  
+
+
+
+
+
+
+
+  
+    <script type="text/javascript">
+      (function(d, s) {
+        var j, e = d.getElementsByTagName(s)[0];
+        if (typeof LivereTower === 'function') { return; }
+        j = d.createElement(s);
+        j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+        j.async = true;
+        e.parentNode.insertBefore(j, e);
+      })(document, 'script');
+    </script>
+  
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+  
+  
+  
+  <link rel="stylesheet" href="/lib/algolia-instant-search/instantsearch.min.css">
+
+  
+  
+  <script src="/lib/algolia-instant-search/instantsearch.min.js"></script>
+  
+
+  <script src="/js/src/algolia-search.js?v=6.0.3"></script>
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+  
+  
+  
+  <script src="/lib/bookmark/bookmark.min.js?v=1.0"></script>
+  <script type="text/javascript">
+  
+    bookmark.scrollToMark('auto', "#more");
+  
+  </script>
+
+
+</body>
+</html>

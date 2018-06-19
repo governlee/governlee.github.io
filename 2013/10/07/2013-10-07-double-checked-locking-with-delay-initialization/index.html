@@ -1,0 +1,1222 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next gemini use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=6.0.3" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=6.0.3">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/lights-32x32.png?v=6.0.3">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/lights-16x16.png?v=6.0.3">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=6.0.3" color="#222">
+
+
+
+
+
+
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Gemini',
+    version: '6.0.3',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":true,"scrollpercent":true,"onmobile":false},
+    fancybox: false,
+    fastclick: false,
+    lazyload: false,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    algolia: {
+      applicationID: '41NC33JUJG',
+      apiKey: '7362b84fed21bc83930f198a0927bb82',
+      indexName: 'blog',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+  
+
+
+
+
+  
+  <meta name="keywords" content="java语言,延迟加载," />
+
+
+<meta name="description" content="原文链接: http://www.infoq.com/cn/articles/double-checked-locking-with-delay-initialization 在java程序中，有时候可能需要推迟一些高开销的对象初始化操作，并且只有在使用这些对象时才进行初始化。此时程序员可能会采用延迟初始化。但要正确实现线程安全的延迟初始化需要一些技巧，否则很容易出现问题。比如，下面是非线程安全的">
+<meta name="keywords" content="java语言,延迟加载">
+<meta property="og:type" content="article">
+<meta property="og:title" content="双重检查锁定与延迟初始化">
+<meta property="og:url" content="http://governlee.github.io/2013/10/07/2013-10-07-double-checked-locking-with-delay-initialization/index.html">
+<meta property="og:site_name" content="Govern x Lab">
+<meta property="og:description" content="原文链接: http://www.infoq.com/cn/articles/double-checked-locking-with-delay-initialization 在java程序中，有时候可能需要推迟一些高开销的对象初始化操作，并且只有在使用这些对象时才进行初始化。此时程序员可能会采用延迟初始化。但要正确实现线程安全的延迟初始化需要一些技巧，否则很容易出现问题。比如，下面是非线程安全的">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="https://res.infoq.com/articles/double-checked-locking-with-delay-initialization/zh/resources/1008100.png">
+<meta property="og:image" content="https://res.infoq.com/articles/double-checked-locking-with-delay-initialization/zh/resources/1008101.png">
+<meta property="og:image" content="https://res.infoq.com/articles/double-checked-locking-with-delay-initialization/zh/resources/1008102.png">
+<meta property="og:image" content="https://res.infoq.com/articles/double-checked-locking-with-delay-initialization/zh/resources/1008103.png">
+<meta property="og:image" content="https://res.infoq.com/articles/double-checked-locking-with-delay-initialization/zh/resources/1008104.png">
+<meta property="og:image" content="https://res.infoq.com/articles/double-checked-locking-with-delay-initialization/zh/resources/1008105.png">
+<meta property="og:image" content="https://res.infoq.com/articles/double-checked-locking-with-delay-initialization/zh/resources/1008106.png">
+<meta property="og:image" content="https://res.infoq.com/articles/double-checked-locking-with-delay-initialization/zh/resources/1008107.png">
+<meta property="og:image" content="https://res.infoq.com/articles/double-checked-locking-with-delay-initialization/zh/resources/1008108.png">
+<meta property="og:image" content="https://res.infoq.com/articles/double-checked-locking-with-delay-initialization/zh/resources/1008109.png">
+<meta property="og:image" content="https://res.infoq.com/articles/double-checked-locking-with-delay-initialization/zh/resources/1008110.png">
+<meta property="og:updated_time" content="2018-04-26T13:48:18.469Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="双重检查锁定与延迟初始化">
+<meta name="twitter:description" content="原文链接: http://www.infoq.com/cn/articles/double-checked-locking-with-delay-initialization 在java程序中，有时候可能需要推迟一些高开销的对象初始化操作，并且只有在使用这些对象时才进行初始化。此时程序员可能会采用延迟初始化。但要正确实现线程安全的延迟初始化需要一些技巧，否则很容易出现问题。比如，下面是非线程安全的">
+<meta name="twitter:image" content="https://res.infoq.com/articles/double-checked-locking-with-delay-initialization/zh/resources/1008100.png">
+
+
+
+
+
+
+  <link rel="canonical" href="http://governlee.github.io/2013/10/07/2013-10-07-double-checked-locking-with-delay-initialization/"/>
+
+
+
+<script type="text/javascript" id="page.configurations">
+  CONFIG.page = {
+    sidebar: "",
+  };
+</script>
+  <title>双重检查锁定与延迟初始化 | Govern x Lab</title>
+  
+
+
+
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?f6804645172803d5efc7161f04df1d76";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+  <noscript>
+  <style type="text/css">
+    .use-motion .motion-element,
+    .use-motion .brand,
+    .use-motion .menu-item,
+    .sidebar-inner,
+    .use-motion .post-block,
+    .use-motion .pagination,
+    .use-motion .comments,
+    .use-motion .post-header,
+    .use-motion .post-body,
+    .use-motion .collection-title { opacity: initial; }
+
+    .use-motion .logo,
+    .use-motion .site-title,
+    .use-motion .site-subtitle {
+      opacity: initial;
+      top: initial;
+    }
+
+    .use-motion {
+      .logo-line-before i { left: initial; }
+      .logo-line-after i { right: initial; }
+    }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"> <div class="site-brand-wrapper">
+  <div class="site-meta custom-logo">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Govern x Lab</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <h1 class="site-subtitle" itemprop="description">I'm not the only one</h1>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-home"></i> <br />首页</a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-user"></i> <br />关于</a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />标签</a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-th"></i> <br />分类</a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />归档</a>
+        </li>
+      
+
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />搜索</a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  
+  <div class="algolia-popup popup search-popup">
+    <div class="algolia-search">
+      <div class="algolia-search-input-icon">
+        <i class="fa fa-search"></i>
+      </div>
+      <div class="algolia-search-input" id="algolia-search-input"></div>
+    </div>
+
+    <div class="algolia-results">
+      <div id="algolia-stats"></div>
+      <div id="algolia-hits"></div>
+      <div id="algolia-pagination" class="algolia-pagination"></div>
+    </div>
+
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+  </div>
+
+
+
+
+    </div>
+  
+</nav>
+
+
+  
+
+
+
+ </div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://governlee.github.io/2013/10/07/2013-10-07-double-checked-locking-with-delay-initialization/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Govern">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/logo.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Govern x Lab">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">双重检查锁定与延迟初始化</h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2013-10-07T08:00:00+08:00">2013-10-07</time>
+            
+
+            
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/设计模式/" itemprop="url" rel="index"><span itemprop="name">设计模式</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>原文链接: <a href="http://www.infoq.com/cn/articles/double-checked-locking-with-delay-initialization" target="_blank" rel="noopener">http://www.infoq.com/cn/articles/double-checked-locking-with-delay-initialization</a></p>
+<p>在java程序中，有时候可能需要推迟一些高开销的对象初始化操作，并且只有在使用这些对象时才进行初始化。此时程序员可能会采用延迟初始化。但要正确实现线程安全的延迟初始化需要一些技巧，否则很容易出现问题。比如，下面是非线程安全的延迟初始化对象的示例代码：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">UnsafeLazyInitialization</span> </span>&#123;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">static</span> Instance instance;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> Instance <span class="title">getInstance</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="keyword">if</span> (instance == <span class="keyword">null</span>) <span class="comment">//1：A线程执行</span></span><br><span class="line">            instance = <span class="keyword">new</span> Instance(); <span class="comment">//2：B线程执行</span></span><br><span class="line">            <span class="keyword">return</span> instance;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>在UnsafeLazyInitialization中，假设A线程执行代码1的同时，B线程执行代码2。此时，线程A可能会看到instance引用的对象还没有完成初始化（出现这种情况的原因见后文的“问题的根源”）。</p>
+<p>对于UnsafeLazyInitialization，我们可以对getInstance()做同步处理来实现线程安全的延迟初始化。示例代码如下：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">SafeLazyInitialization</span> </span>&#123;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">static</span> Instance instance;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">synchronized</span> <span class="keyword">static</span> Instance <span class="title">getInstance</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="keyword">if</span> (instance == <span class="keyword">null</span>)</span><br><span class="line">            instance = <span class="keyword">new</span> Instance();</span><br><span class="line">        <span class="keyword">return</span> instance;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>由于对getInstance()做了同步处理，synchronized将导致性能开销。如果getInstance()被多个线程频繁的调用，将会导致程序执行性能的下降。反之，如果getInstance()不会被多个线程频繁的调用，那么这个延迟初始化方案将能提供令人满意的性能。</p>
+<p>在早期的JVM中，synchronized（甚至是无竞争的synchronized）存在这巨大的性能开销。因此，人们想出了一个“聪明”的技巧：双重检查锁定（double-checked locking）。人们想通过双重检查锁定来降低同步的开销。下面是使用双重检查锁定来实现延迟初始化的示例代码：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">DoubleCheckedLocking</span> </span>&#123;                     <span class="comment">//1</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">static</span> Instance instance;                    <span class="comment">//2</span></span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> Instance <span class="title">getInstance</span><span class="params">()</span> </span>&#123;               <span class="comment">//3</span></span><br><span class="line">        <span class="keyword">if</span> (instance == <span class="keyword">null</span>) &#123;                          <span class="comment">//4:第一次检查</span></span><br><span class="line">            <span class="keyword">synchronized</span> (DoubleCheckedLocking.class) &#123;  <span class="comment">//5:加锁</span></span><br><span class="line">                <span class="keyword">if</span> (instance == <span class="keyword">null</span>)                    <span class="comment">//6:第二次检查</span></span><br><span class="line">                    instance = <span class="keyword">new</span> Instance();           <span class="comment">//7:问题的根源出在这里</span></span><br><span class="line">            &#125;                                            <span class="comment">//8</span></span><br><span class="line">        &#125;                                                <span class="comment">//9</span></span><br><span class="line">        <span class="keyword">return</span> instance;                                 <span class="comment">//10</span></span><br><span class="line">    &#125;                                                    <span class="comment">//11</span></span><br><span class="line">&#125;                                                        <span class="comment">//12</span></span><br></pre></td></tr></table></figure></p>
+<p>如上面代码所示，如果第一次检查instance不为null，那么就不需要执行下面的加锁和初始化操作。因此可以大幅降低synchronized带来的性能开销。上面代码表面上看起来，似乎两全其美：</p>
+<ul>
+<li>在多个线程试图在同一时间创建对象时，会通过加锁来保证只有一个线程能创建对象。</li>
+<li>在对象创建好之后，执行getInstance()将不需要获取锁，直接返回已创建好的对象。</li>
+</ul>
+<p>双重检查锁定看起来似乎很完美，但这是一个错误的优化！在线程执行到第4行代码读取到instance不为null时，instance引用的对象有可能还没有完成初始化。</p>
+<h3 id="问题的根源"><a href="#问题的根源" class="headerlink" title="问题的根源"></a>问题的根源</h3><p>前面的双重检查锁定示例代码的第7行（instance = new Singleton();）创建一个对象。这一行代码可以分解为如下的三行伪代码：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">memory = allocate();   //1：分配对象的内存空间</span><br><span class="line">ctorInstance(memory);  //2：初始化对象</span><br><span class="line">instance = memory;     //3：设置instance指向刚分配的内存地址</span><br></pre></td></tr></table></figure></p>
+<p>上面三行伪代码中的2和3之间，可能会被重排序（在一些JIT编译器上，这种重排序是真实发生的，详情见参考文献1的“Out-of-order writes”部分）。2和3之间重排序之后的执行时序如下：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">memory = allocate();   //1：分配对象的内存空间</span><br><span class="line">instance = memory;     //3：设置instance指向刚分配的内存地址</span><br><span class="line">                       //注意，此时对象还没有被初始化！</span><br><span class="line">ctorInstance(memory);  //2：初始化对象</span><br></pre></td></tr></table></figure></p>
+<p>根据《The Java Language Specification, Java SE 7 Edition》（后文简称为java语言规范），所有线程在执行java程序时必须要遵守intra-thread semantics。intra-thread semantics保证重排序不会改变单线程内的程序执行结果。换句话来说，intra-thread semantics允许那些在单线程内，不会改变单线程程序执行结果的重排序。上面三行伪代码的2和3之间虽然被重排序了，但这个重排序并不会违反intra-thread semantics。这个重排序在没有改变单线程程序的执行结果的前提下，可以提高程序的执行性能。</p>
+<p>为了更好的理解intra-thread semantics，请看下面的示意图（假设一个线程A在构造对象后，立即访问这个对象）：<br><img src="https://res.infoq.com/articles/double-checked-locking-with-delay-initialization/zh/resources/1008100.png" alt=""><br>如上图所示，只要保证2排在4的前面，即使2和3之间重排序了，也不会违反intra-thread semantics。</p>
+<p>下面，再让我们看看多线程并发执行的时候的情况。请看下面的示意图：<br><img src="https://res.infoq.com/articles/double-checked-locking-with-delay-initialization/zh/resources/1008101.png" alt=""></p>
+<p>由于单线程内要遵守intra-thread semantics，从而能保证A线程的程序执行结果不会被改变。但是当线程A和B按上图的时序执行时，B线程将看到一个还没有被初始化的对象。</p>
+<p>回到本文的主题，DoubleCheckedLocking示例代码的第7行（instance = new Singleton();）如果发生重排序，另一个并发执行的线程B就有可能在第4行判断instance不为null。线程B接下来将访问instance所引用的对象，但此时这个对象可能还没有被A线程初始化！下面是这个场景的具体执行时序：</p>
+<table>
+<thead>
+<tr>
+<th>时间</th>
+<th style="text-align:center">线程A</th>
+<th style="text-align:center">线程B</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>t1</td>
+<td style="text-align:center">A1：分配对象的内存空间</td>
+<td style="text-align:center"></td>
+</tr>
+<tr>
+<td>t2</td>
+<td style="text-align:center">A3：设置instance指向内存空间</td>
+<td style="text-align:center"></td>
+</tr>
+<tr>
+<td>t3</td>
+<td style="text-align:center"></td>
+<td style="text-align:center">B1：判断instance是否为空</td>
+</tr>
+<tr>
+<td>t4</td>
+<td style="text-align:center"></td>
+<td style="text-align:center">B2：由于instance不为null，线程B将访问instance引用的对象</td>
+</tr>
+<tr>
+<td>t5</td>
+<td style="text-align:center">A2：初始化对象</td>
+<td style="text-align:center"></td>
+</tr>
+<tr>
+<td>t6</td>
+<td style="text-align:center">A4：访问instance引用的对象</td>
+<td style="text-align:center"></td>
+</tr>
+</tbody>
+</table>
+<p>这里A2和A3虽然重排序了，但java内存模型的intra-thread semantics将确保A2一定会排在A4前面执行。因此线程A的intra-thread semantics没有改变。但A2和A3的重排序，将导致线程B在B1处判断出instance不为空，线程B接下来将访问instance引用的对象。此时，线程B将会访问到一个还未初始化的对象。</p>
+<p> 在知晓了问题发生的根源之后，我们可以想出两个办法来实现线程安全的延迟初始化：</p>
+<ol>
+<li>不允许2和3重排序；</li>
+<li>允许2和3重排序，但不允许其他线程“看到”这个重排序。</li>
+</ol>
+<p>后文介绍的两个解决方案，分别对应于上面这两点。</p>
+<h3 id="基于volatile的双重检查锁定的解决方案"><a href="#基于volatile的双重检查锁定的解决方案" class="headerlink" title="基于volatile的双重检查锁定的解决方案"></a>基于volatile的双重检查锁定的解决方案</h3><p>对于前面的基于双重检查锁定来实现延迟初始化的方案（指DoubleCheckedLocking示例代码），我们只需要做一点小的修改（把instance声明为volatile型），就可以实现线程安全的延迟初始化。请看下面的示例代码：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">SafeDoubleCheckedLocking</span> </span>&#123;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">volatile</span> <span class="keyword">static</span> Instance instance;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> Instance <span class="title">getInstance</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="keyword">if</span> (instance == <span class="keyword">null</span>) &#123;</span><br><span class="line">            <span class="keyword">synchronized</span> (SafeDoubleCheckedLocking.class) &#123;</span><br><span class="line">                <span class="keyword">if</span> (instance == <span class="keyword">null</span>)</span><br><span class="line">                    instance = <span class="keyword">new</span> Instance();<span class="comment">//instance为volatile，现在没问题了</span></span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> instance;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>注意，这个解决方案需要JDK5或更高版本（因为从JDK5开始使用新的JSR-133内存模型规范，这个规范增强了volatile的语义）。</p>
+<p>当声明对象的引用为volatile后，“问题的根源”的三行伪代码中的2和3之间的重排序，在多线程环境中将会被禁止。上面示例代码将按如下的时序执行：<br><img src="https://res.infoq.com/articles/double-checked-locking-with-delay-initialization/zh/resources/1008102.png" alt=""></p>
+<p>这个方案本质上是通过禁止上图中的2和3之间的重排序，来保证线程安全的延迟初始化。</p>
+<h3 id="基于类初始化的解决方案"><a href="#基于类初始化的解决方案" class="headerlink" title="基于类初始化的解决方案"></a>基于类初始化的解决方案</h3><p>JVM在类的初始化阶段（即在Class被加载后，且被线程使用之前），会执行类的初始化。在执行类的初始化期间，JVM会去获取一个锁。这个锁可以同步多个线程对同一个类的初始化。</p>
+<p>基于这个特性，可以实现另一种线程安全的延迟初始化方案（这个方案被称之为Initialization On Demand Holder idiom）：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">InstanceFactory</span> </span>&#123;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">static</span> <span class="class"><span class="keyword">class</span> <span class="title">InstanceHolder</span> </span>&#123;</span><br><span class="line">        <span class="keyword">public</span> <span class="keyword">static</span> Instance instance = <span class="keyword">new</span> Instance();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> Instance <span class="title">getInstance</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> InstanceHolder.instance ;  <span class="comment">//这里将导致InstanceHolder类被初始化</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>假设两个线程并发执行getInstance()，下面是执行的示意图：<br><img src="https://res.infoq.com/articles/double-checked-locking-with-delay-initialization/zh/resources/1008103.png" alt=""></p>
+<p>这个方案的实质是：允许“问题的根源”的三行伪代码中的2和3重排序，但不允许非构造线程（这里指线程B）“看到”这个重排序。</p>
+<h2 id="Mark-重点！！！"><a href="#Mark-重点！！！" class="headerlink" title="Mark: 重点！！！"></a><font color="red">Mark: 重点！！！</font></h2><p>初始化一个类，包括执行这个<strong>类的静态初始化和初始化在这个类中声明的静态字段</strong>。根据java语言规范，在首次发生下列任意一种情况时，一个类或接口类型T将被立即初始化：</p>
+<ul>
+<li>T是一个类，而且一个T类型的实例被创建；</li>
+<li>T是一个类，且T中声明的一个静态方法被调用；</li>
+<li>T中声明的一个静态字段被赋值；</li>
+<li>T中声明的一个静态字段被使用，而且这个字段不是一个常量字段；</li>
+<li>T是一个顶级类（top level class，见java语言规范的§7.6），而且一个断言语句嵌套在T内部被执行。</li>
+</ul>
+<p>在InstanceFactory示例代码中，首次执行getInstance()的线程将导致InstanceHolder类被初始化（符合情况4）。</p>
+<p>由于java语言是多线程的，多个线程可能在同一时间尝试去初始化同一个类或接口（比如这里多个线程可能在同一时刻调用getInstance()来初始化InstanceHolder类）。因此在java中初始化一个类或者接口时，需要做细致的同步处理。</p>
+<p>Java语言规范规定，<strong>对于每一个类或接口C，都有一个唯一的初始化锁LC与之对应</strong>。从C到LC的映射，由JVM的具体实现去自由实现。JVM在类初始化期间会获取这个初始化锁，并且每个线程至少获取一次锁来确保这个类已经被初始化过了（事实上，java语言规范允许JVM的具体实现在这里做一些优化，见后文的说明）。</p>
+<p>对于类或接口的初始化，java语言规范制定了精巧而复杂的类初始化处理过程。java初始化一个类或接口的处理过程如下（这里对类初始化处理过程的说明，省略了与本文无关的部分；同时为了更好的说明类初始化过程中的同步处理机制，笔者人为的把类初始化的处理过程分为了五个阶段）：</p>
+<p>第一阶段：通过在Class对象上同步（即获取Class对象的初始化锁），来控制类或接口的初始化。这个获取锁的线程会一直等待，直到当前线程能够获取到这个初始化锁。</p>
+<p>假设Class对象当前还没有被初始化（初始化状态state此时被标记为state = noInitialization），且有两个线程A和B试图同时初始化这个Class对象。下面是对应的示意图：</p>
+<p><img src="https://res.infoq.com/articles/double-checked-locking-with-delay-initialization/zh/resources/1008104.png" alt=""></p>
+<p>下面是这个示意图的说明：</p>
+<table>
+<thead>
+<tr>
+<th>时间</th>
+<th style="text-align:center">线程A</th>
+<th style="text-align:center">线程B</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>t1</td>
+<td style="text-align:center">A1:尝试获取Class对象的初始化锁。这里假设线程A获取到了初始化锁</td>
+<td style="text-align:center">B1:尝试获取Class对象的初始化锁，由于线程A获取到了锁，线程B将一直等待获取初始化锁</td>
+</tr>
+<tr>
+<td>t2</td>
+<td style="text-align:center">A2：线程A看到线程还未被初始化（因为读取到state == noInitialization），线程设置state = initializing</td>
+<td style="text-align:center"></td>
+</tr>
+<tr>
+<td>t3</td>
+<td style="text-align:center">A3：线程A释放初始化锁</td>
+<td style="text-align:center"></td>
+</tr>
+</tbody>
+</table>
+<p>第二阶段：线程A执行类的初始化，同时线程B在初始化锁对应的condition上等待：<br><img src="https://res.infoq.com/articles/double-checked-locking-with-delay-initialization/zh/resources/1008105.png" alt=""></p>
+<p>下面是这个示意图的说明：</p>
+<table>
+<thead>
+<tr>
+<th>时间</th>
+<th style="text-align:center">线程A</th>
+<th style="text-align:center">线程B</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>t1</td>
+<td style="text-align:center">A1:执行类的静态初始化和初始化类中声明的静态字段</td>
+<td style="text-align:center">B1：获取到初始化锁</td>
+</tr>
+<tr>
+<td>t2</td>
+<td style="text-align:center"></td>
+<td style="text-align:center">B2：读取到state == initializing</td>
+</tr>
+<tr>
+<td>t3</td>
+<td style="text-align:center"></td>
+<td style="text-align:center">B3：释放初始化锁</td>
+</tr>
+<tr>
+<td>t4</td>
+<td style="text-align:center"></td>
+<td style="text-align:center">B4：在初始化锁的condition中等待</td>
+</tr>
+</tbody>
+</table>
+<p>第三阶段：线程A设置state = initialized，然后唤醒在condition中等待的所有线程：<br><img src="https://res.infoq.com/articles/double-checked-locking-with-delay-initialization/zh/resources/1008106.png" alt=""></p>
+<p>下面是这个示意图的说明：</p>
+<table>
+<thead>
+<tr>
+<th>时间</th>
+<th style="text-align:center">线程A</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>t1</td>
+<td style="text-align:center">A1：获取初始化锁</td>
+</tr>
+<tr>
+<td>t2</td>
+<td style="text-align:center">A2：设置state = initialized</td>
+</tr>
+<tr>
+<td>t3</td>
+<td style="text-align:center">A3：唤醒在condition中等待的所有线程</td>
+</tr>
+<tr>
+<td>t4</td>
+<td style="text-align:center">A4：释放初始化锁</td>
+</tr>
+<tr>
+<td>t5</td>
+<td style="text-align:center">A5：线程A的初始化处理过程完成</td>
+</tr>
+</tbody>
+</table>
+<p>第四阶段：线程B结束类的初始化处理：<br><img src="https://res.infoq.com/articles/double-checked-locking-with-delay-initialization/zh/resources/1008107.png" alt=""></p>
+<p>下面是这个示意图的说明：</p>
+<table>
+<thead>
+<tr>
+<th>时间</th>
+<th style="text-align:center">线程B</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>t1</td>
+<td style="text-align:center">B1：获取初始化锁</td>
+</tr>
+<tr>
+<td>t2</td>
+<td style="text-align:center">B2：读取到state == initialized</td>
+</tr>
+<tr>
+<td>t3</td>
+<td style="text-align:center">B3：释放初始化锁</td>
+</tr>
+<tr>
+<td>t4</td>
+<td style="text-align:center">B4：线程B的类初始化处理过程完成</td>
+</tr>
+</tbody>
+</table>
+<p>线程A在第二阶段的A1执行类的初始化，并在第三阶段的A4释放初始化锁；线程B在第四阶段的B1获取同一个初始化锁，并在第四阶段的B4之后才开始访问这个类。根据java内存模型规范的锁规则，这里将存在如下的happens-before关系：</p>
+<p><img src="https://res.infoq.com/articles/double-checked-locking-with-delay-initialization/zh/resources/1008108.png" alt=""></p>
+<p>个happens-before关系将保证：线程A执行类的初始化时的写入操作（执行类的静态初始化和初始化类中声明的静态字段），线程B一定能看到。</p>
+<p>第五阶段：线程C执行类的初始化的处理：<br><img src="https://res.infoq.com/articles/double-checked-locking-with-delay-initialization/zh/resources/1008109.png" alt=""><br>下面是这个示意图的说明：</p>
+<table>
+<thead>
+<tr>
+<th>时间</th>
+<th style="text-align:center">线程C</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>t1</td>
+<td style="text-align:center">C1：获取初始化锁</td>
+</tr>
+<tr>
+<td>t2</td>
+<td style="text-align:center">C2：读取到state == initialized</td>
+</tr>
+<tr>
+<td>t3</td>
+<td style="text-align:center">C3：释放初始化锁</td>
+</tr>
+<tr>
+<td>t4</td>
+<td style="text-align:center">C4：线程C的类初始化处理过程完成</td>
+</tr>
+</tbody>
+</table>
+<p>在第三阶段之后，类已经完成了初始化。因此线程C在第五阶段的类初始化处理过程相对简单一些（前面的线程A和B的类初始化处理过程都经历了两次锁获取-锁释放，而线程C的类初始化处理只需要经历一次锁获取-锁释放）。</p>
+<p>线程A在第二阶段的A1执行类的初始化，并在第三阶段的A4释放锁；线程C在第五阶段的C1获取同一个锁，并在在第五阶段的C4之后才开始访问这个类。根据java内存模型规范的锁规则，这里将存在如下的happens-before关系：</p>
+<p><img src="https://res.infoq.com/articles/double-checked-locking-with-delay-initialization/zh/resources/1008110.png" alt=""></p>
+<p>这个happens-before关系将保证：线程A执行类的初始化时的写入操作，线程C一定能看到。</p>
+<p>※ 注1：这里的condition和state标记是本文虚构出来的。Java语言规范并没有硬性规定一定要使用condition和state标记。JVM的具体实现只要实现类似功能即可。</p>
+<p>※ 注2：Java语言规范允许Java的具体实现，优化类的初始化处理过程（对这里的第五阶段做优化），具体细节参见java语言规范的12.4.2章。</p>
+<p>通过对比基于volatile的双重检查锁定的方案和基于类初始化的方案，我们会发现基于类初始化的方案的实现代码更简洁。但基于volatile的双重检查锁定的方案有一个额外的优势：除了可以对静态字段实现延迟初始化外，还可以对实例字段实现延迟初始化。</p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>延迟初始化降低了初始化类或创建实例的开销，但增加了访问被延迟初始化的字段的开销。<strong>在大多数时候，正常的初始化要优于延迟初始化。如果确实需要对实例字段使用线程安全的延迟初始化，请使用上面介绍的基于volatile的延迟初始化的方案；如果确实需要对静态字段使用线程安全的延迟初始化，请使用上面介绍的基于类初始化的方案</strong>。</p>
+
+      
+    </div>
+
+    
+      
+
+
+    
+
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/java语言/" rel="tag"># java语言</a>
+          
+            <a href="/tags/延迟加载/" rel="tag"># 延迟加载</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2013/03/28/2013-03-28-index/" rel="next" title="MySQL索引背后的数据结构及算法原理">
+                <i class="fa fa-chevron-left"></i> MySQL索引背后的数据结构及算法原理
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2014/06/09/2014-06-09-string-learning/" rel="prev" title="探秘Java中的String、StringBuilder以及StringBuffer">
+                探秘Java中的String、StringBuilder以及StringBuffer <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+  
+    <div class="comments" id="comments">
+      <div id="lv-container" data-id="city" data-uid="MTAyMC8zNDA5NS8xMDYzMw=="></div>
+    </div>
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image"
+                src="/images/logo.jpg"
+                alt="Govern" />
+            
+              <p class="site-author-name" itemprop="name">Govern</p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          
+            <nav class="site-state motion-element">
+              
+                <div class="site-state-item site-state-posts">
+                
+                  <a href="/archives/">
+                
+                    <span class="site-state-item-count">98</span>
+                    <span class="site-state-item-name">日志</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-categories">
+                  <a href="/categories/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">20</span>
+                    <span class="site-state-item-name">分类</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-tags">
+                  <a href="/tags/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">39</span>
+                    <span class="site-state-item-name">标签</span>
+                  </a>
+                </div>
+              
+            </nav>
+          
+
+          
+
+          
+
+          
+          
+
+          
+          
+
+          
+            
+          
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#问题的根源"><span class="nav-number">1.</span> <span class="nav-text">问题的根源</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#基于volatile的双重检查锁定的解决方案"><span class="nav-number">2.</span> <span class="nav-text">基于volatile的双重检查锁定的解决方案</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#基于类初始化的解决方案"><span class="nav-number">3.</span> <span class="nav-text">基于类初始化的解决方案</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Mark-重点！！！"><span class="nav-number"></span> <span class="nav-text">Mark: 重点！！！</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#总结"><span class="nav-number"></span> <span class="nav-text">总结</span></a></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+        <div class="back-to-top">
+          <i class="fa fa-arrow-up"></i>
+          
+            <span id="scrollpercent"><span>0</span>%</span>
+          
+        </div>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; 2012 &mdash; <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Govern</span>
+
+  
+
+  
+</div>
+
+
+  
+
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" rel="external nofollow" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" rel="external nofollow" href="https://github.com/theme-next/hexo-theme-next">NexT.Gemini</a> v6.0.3</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=6.0.3"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=6.0.3"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=6.0.3"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=6.0.3"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=6.0.3"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=6.0.3"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=6.0.3"></script>
+
+
+
+  
+
+
+
+
+
+
+
+  
+    <script type="text/javascript">
+      (function(d, s) {
+        var j, e = d.getElementsByTagName(s)[0];
+        if (typeof LivereTower === 'function') { return; }
+        j = d.createElement(s);
+        j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+        j.async = true;
+        e.parentNode.insertBefore(j, e);
+      })(document, 'script');
+    </script>
+  
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+  
+  
+  
+  <link rel="stylesheet" href="/lib/algolia-instant-search/instantsearch.min.css">
+
+  
+  
+  <script src="/lib/algolia-instant-search/instantsearch.min.js"></script>
+  
+
+  <script src="/js/src/algolia-search.js?v=6.0.3"></script>
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+  
+  
+  
+  <script src="/lib/bookmark/bookmark.min.js?v=1.0"></script>
+  <script type="text/javascript">
+  
+    bookmark.scrollToMark('auto', "#more");
+  
+  </script>
+
+
+</body>
+</html>

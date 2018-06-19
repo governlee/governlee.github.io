@@ -1,0 +1,1052 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next gemini use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=6.0.3" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=6.0.3">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/lights-32x32.png?v=6.0.3">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/lights-16x16.png?v=6.0.3">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=6.0.3" color="#222">
+
+
+
+
+
+
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Gemini',
+    version: '6.0.3',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":true,"scrollpercent":true,"onmobile":false},
+    fancybox: false,
+    fastclick: false,
+    lazyload: false,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    algolia: {
+      applicationID: '41NC33JUJG',
+      apiKey: '7362b84fed21bc83930f198a0927bb82',
+      indexName: 'blog',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+  
+
+
+
+
+  
+  <meta name="keywords" content="java语言,gc," />
+
+
+<meta name="description" content="原文链接:http://www.importnew.com/3151.html 这是“成为Java GC专家系列文章”的第四篇。 在第一篇文章 成为JavaGC专家Part I — 深入浅出Java垃圾回收机制 中我们学习了不同GC算法的执行过程，GC如何工作，新生代及老年代的基本概念，在JDK7中你应该了解的5种GC类型以及他们的性能如何。 在第二篇文章 成为JavaGC专家Part II —">
+<meta name="keywords" content="java语言,gc">
+<meta property="og:type" content="article">
+<meta property="og:title" content="成为Java GC专家（4）—Apache的MaxClients参数详解及其在Tomcat执行FullGC时的影响">
+<meta property="og:url" content="http://governlee.github.io/2013/03/04/2013-03-04.gc-4/index.html">
+<meta property="og:site_name" content="Govern x Lab">
+<meta property="og:description" content="原文链接:http://www.importnew.com/3151.html 这是“成为Java GC专家系列文章”的第四篇。 在第一篇文章 成为JavaGC专家Part I — 深入浅出Java垃圾回收机制 中我们学习了不同GC算法的执行过程，GC如何工作，新生代及老年代的基本概念，在JDK7中你应该了解的5种GC类型以及他们的性能如何。 在第二篇文章 成为JavaGC专家Part II —">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="http://www.importnew.com/wp-content/uploads/2013/02/1.png">
+<meta property="og:image" content="http://www.importnew.com/wp-content/uploads/2013/02/21.png">
+<meta property="og:image" content="http://www.importnew.com/wp-content/uploads/2013/02/21.png">
+<meta property="og:updated_time" content="2018-05-11T11:30:59.329Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="成为Java GC专家（4）—Apache的MaxClients参数详解及其在Tomcat执行FullGC时的影响">
+<meta name="twitter:description" content="原文链接:http://www.importnew.com/3151.html 这是“成为Java GC专家系列文章”的第四篇。 在第一篇文章 成为JavaGC专家Part I — 深入浅出Java垃圾回收机制 中我们学习了不同GC算法的执行过程，GC如何工作，新生代及老年代的基本概念，在JDK7中你应该了解的5种GC类型以及他们的性能如何。 在第二篇文章 成为JavaGC专家Part II —">
+<meta name="twitter:image" content="http://www.importnew.com/wp-content/uploads/2013/02/1.png">
+
+
+
+
+
+
+  <link rel="canonical" href="http://governlee.github.io/2013/03/04/2013-03-04.gc-4/"/>
+
+
+
+<script type="text/javascript" id="page.configurations">
+  CONFIG.page = {
+    sidebar: "",
+  };
+</script>
+  <title>成为Java GC专家（4）—Apache的MaxClients参数详解及其在Tomcat执行FullGC时的影响 | Govern x Lab</title>
+  
+
+
+
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?f6804645172803d5efc7161f04df1d76";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+  <noscript>
+  <style type="text/css">
+    .use-motion .motion-element,
+    .use-motion .brand,
+    .use-motion .menu-item,
+    .sidebar-inner,
+    .use-motion .post-block,
+    .use-motion .pagination,
+    .use-motion .comments,
+    .use-motion .post-header,
+    .use-motion .post-body,
+    .use-motion .collection-title { opacity: initial; }
+
+    .use-motion .logo,
+    .use-motion .site-title,
+    .use-motion .site-subtitle {
+      opacity: initial;
+      top: initial;
+    }
+
+    .use-motion {
+      .logo-line-before i { left: initial; }
+      .logo-line-after i { right: initial; }
+    }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"> <div class="site-brand-wrapper">
+  <div class="site-meta custom-logo">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Govern x Lab</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <h1 class="site-subtitle" itemprop="description">I'm not the only one</h1>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-home"></i> <br />首页</a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-user"></i> <br />关于</a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />标签</a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-th"></i> <br />分类</a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />归档</a>
+        </li>
+      
+
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />搜索</a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  
+  <div class="algolia-popup popup search-popup">
+    <div class="algolia-search">
+      <div class="algolia-search-input-icon">
+        <i class="fa fa-search"></i>
+      </div>
+      <div class="algolia-search-input" id="algolia-search-input"></div>
+    </div>
+
+    <div class="algolia-results">
+      <div id="algolia-stats"></div>
+      <div id="algolia-hits"></div>
+      <div id="algolia-pagination" class="algolia-pagination"></div>
+    </div>
+
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+  </div>
+
+
+
+
+    </div>
+  
+</nav>
+
+
+  
+
+
+
+ </div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://governlee.github.io/2013/03/04/2013-03-04.gc-4/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Govern">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/logo.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Govern x Lab">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">成为Java GC专家（4）—Apache的MaxClients参数详解及其在Tomcat执行FullGC时的影响</h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2013-03-04T08:00:00+08:00">2013-03-04</time>
+            
+
+            
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/JDK/" itemprop="url" rel="index"><span itemprop="name">JDK</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p><strong>原文链接</strong>:<a href="http://www.importnew.com/3151.html" target="_blank" rel="noopener">http://www.importnew.com/3151.html</a></p>
+<p>这是“成为Java GC专家系列文章”的第四篇。</p>
+<p>在第一篇文章 成为JavaGC专家Part I — 深入浅出Java垃圾回收机制 中我们学习了不同GC算法的执行过程，GC如何工作，新生代及老年代的基本概念，在JDK7中你应该了解的5种GC类型以及他们的性能如何。</p>
+<p>在第二篇文章 成为JavaGC专家Part II — 如何监控Java垃圾回收机制 中我们学到了JVM到底是如何执行垃圾回收，我们如何监控GC，以及那些工具可以使得监控过程更高效。</p>
+<p>在第三篇文章 成为Java GC专家系列Part III–如何优化Java垃圾回收机制中我们通过实际的例子学到了一些可以优化GC的参数。同时我们讲解了如何减少对象被转移到老年代空间，如何缩短Full GC时间，以及如何设置GC类型及内存空间。</p>
+<p>在第四篇文章中，我们将阐述Apache中MaxClients 参数的重要性，以及他如何在GC发生时，显著地影响整个系统的性能。我将提供几个例子以方便你理解MaxClients 导致的问题。同时我还会说明如何根据系统的内存情况，设置最佳的MaxClients参数值。</p>
+<h2 id="MaxClients对于系统的影响"><a href="#MaxClients对于系统的影响" class="headerlink" title="MaxClients对于系统的影响"></a>MaxClients对于系统的影响</h2><p>NHN (译者注：NHN是作者工作的公司)服务的执行环境中存在一组Throttle valve-type参数（译者注：节流阀参数，用于控制系统负载）。这些参数对于系统来说十分重要。下面我们看一下Apache的 MaxClients 参数在Full GC 发生时是如何影响系统的。</p>
+<p>大部分开发人员都知道在由于GC发生而导致的”停止世界现象(STW) “（详细请参见Understanding Java Garbage Collection）。尤其是，NHN的Java开发人员经常会遇到由于GC原因导致的Tomcat报错。由于Java 虚拟机 (JVM)管理着内存，以Java为基础的程序无法摆脱GC导致的STW现象。假如在某一个时间，当你正在操作你开发的应用时，GC开始执行。即使TTS错误没有发生，你的服务也会给客户展现未预期的503错误。</p>
+<h3 id="服务执行环境"><a href="#服务执行环境" class="headerlink" title="服务执行环境"></a>服务执行环境</h3><p>由于架构本身的特点，相比较而言纵向扩展，Web服务更适合横向扩展（译者注:增加服务器的数量，而不是提高件配置）。因此，总体来讲，物理设备会根据性能要求被配置成1台Apache+n台Tomcat。但是本文假设我们的环境是1台Apache+一台Tomcat同时安装在一台主机行，如下图所示。</p>
+<p><img src="http://www.importnew.com/wp-content/uploads/2013/02/1.png" alt=""></p>
+<p><strong>图1：本文假设的服务执行环境</strong></p>
+<p>仅供参考，本文描述的参数基于Apache 2.2.21 (prefork MPM)，Tomcat 6.0.35，CentOS 4.72 (32-bit)，jdk 1.6.0_24。</p>
+<p>系统可用内存2GB，垃圾收集器使用ParallelOldGC，AdaptiveSizePolicy采用默认的设置true，堆内存空间600M</p>
+<h3 id="STW-和HTTP-503"><a href="#STW-和HTTP-503" class="headerlink" title="STW 和HTTP 503"></a>STW 和HTTP 503</h3><p>让我们假设访问Apache的请求为 200 req/s且有10个httpd进程在运行，另外我们暂时不考虑每个请求的响应时间。在这种前提下，我们假设由于full GC导致的暂停时间为1秒。<strong>当Full GC发生的时候Tomcat会怎样？</strong></p>
+<p>第一件进入你脑海的事情应该是Tomcat会因为full GC而停止响应任何请求。在这种情况下，<strong>当Tomcat暂停相应请求时Apache会发生什么？</strong></p>
+<p>当Tomcat暂停时，请求会以200 req/s的速度不断的涌入Apache。一般来说，在Full GC发生之前，请求的响应可以快速地被10个或更多的httpd进程处理掉。但是，因为Tomcat暂停了，httpd进程会被不停地创建以相应新进请求。直到超过<strong>httpd.conf </strong>文件中定义 MaxClients 为止。由于默认值为256，Apache不会在乎请求以200 req/s的速度涌入。</p>
+<p>这时，新创建的httpd线程将如何呢？</p>
+<p>Httpd进程通过<strong>mod_jk</strong> 模块所管理的空闲的AJP连接，将请求转发给Tomcat。如果没有空闲连接，他会申请创建新的连接。但是，因为Tomcat暂停了，创建新连接的请求会被拒绝。因此这些请求会被存储在backlog队列中，数量的多少取决于<strong>server.xml</strong>中关于AJP Connector的设置。一旦请求数量超过backlog队列的空间限制。Apache就会返回拒绝连接错误。并且返回<strong>HTTP 503 错误</strong>给用户。</p>
+<p>在这种假设条件下，默认的backlog队列空间是100，而请求到达速度是200 req/s。因此，full GC导致的一秒钟的暂停会使得超过100个请求返回503错误。</p>
+<p>这样，当Full GC结束后，backlog队列中存储的内容会被Tomcat接受并在通过工作线程处理，线程的最大数量取决于MaxThreads的值（默认200）。</p>
+<h3 id="MaxClients-与backlog"><a href="#MaxClients-与backlog" class="headerlink" title="MaxClients 与backlog"></a>MaxClients 与backlog</h3><p>在这种情况下，<strong>设定哪个参数可以避免返回给用户503错误呢？</strong></p>
+<p>首先，我们应该知道backlog的值要够大，以至于能够容纳所有因为Full GC导致暂停期间涌入的请求。换句话说太应该不小于200。</p>
+<p>那么，<strong>这么设置之后会不会产生新的问题呢？</strong></p>
+<p>让我们假设将backlog设置为200后再重复一下上面的过程。得到的结果比之前更加严重。系统内存使用量一般情况下为50%，但是，在发生Full GC时快速增加到100%，同时导致交换内存空间快速增加，更为严重的是导致Full GC的暂停时间从1秒变成了4秒甚至更多，系统在此期间完全宕机，不能响应任何请求。</p>
+<p>在第一种情况下，只有100或更多的请求返回503错误。但是，当我们把backlog调整到200后，超过500个请求会挂起3秒甚至更多地时间无法得到应答</p>
+<p>上面这个例子可以很好的说明当你没有完全理解<strong>各个设置之间的内在关系时</strong>（例如，对于系统的影响），盲目修改系统会导致什么后果。</p>
+<p>那么，为什么会产生这个现象呢？</p>
+<p>问题的根源在于 MaxClients 参数的特性。</p>
+<p>将MaxClients 设置为一个很大的值本身没有问题，但最重要的是在设定MaxClients 参数时，你要确保即使等同于MaxClients 数量的httpd进程被同时创建，<strong>内存使用量也不会超过80%</strong>。</p>
+<p>系统的<strong>内存交换参数一般被设定为60（默认）</strong>。因此，当内存使用量超过80%时，就会进行内存交换。</p>
+<p>让我们再来看一下为什么这个特性会导致上面那个严重的问题。当请求以200 req/s的速度涌向Tomcat时，Tomcat由于full GC暂停了。此时backlog被设置为200。Apache大约创建100个httpd进程。在这种情况下，一旦内存使用量超过80%，操作系统会激活<strong>交换内存区域</strong>，并且由于系统认为JVM的老年代中的对象在很长一段时间内未被使用，而将他们移动到交换区域。</p>
+<p>最终的结果是，GC使用了内存交换空间，暂停时间剧增。因此httpd进程数进一步增加。从而导致上面描述的内存使用量达到100%的情况。</p>
+<p>这两个场合的唯一区别就是backlog的值：100 vs.200。为什么只在200的情况下发生？</p>
+<p>两者不同的原因在于创建的httpd进程的数量。当backlog设置为100时并且Full GC发生时，会创建100个请求的连接并保存在backlog队列中。其他请求得到拒绝连接错误信息并发挥503错误。因此，总的httpd 进程数量仅仅会略高于100。而当backlog被设置为200时，200个请求会创建连接，因此。总的httpd进程数会多于200。这样超过阀值，从而导致内存交换的发生。紧接着，不考虑内存使用量而的设定 MaxClients参数，Full GC导致httpd进程数量暴增，引发内存交换，降低系统性能。</p>
+<h3 id="MaxClients参数的计算公式"><a href="#MaxClients参数的计算公式" class="headerlink" title="MaxClients参数的计算公式"></a>MaxClients参数的计算公式</h3><p>如果系统的内存使2GB，MaxClients 的值在任何情况下都不应该超过内存的80%（1.6GB），以避免由于内存交换导致的性能下降。换句话说。1.6GB的内存应该共享和分配给Apache，Tomcat以及那些默认被安装的代理程序。</p>
+<p>让我们假设代理程序被默认安装在系统，并占用了200m内存，对于Tomcat堆内存的-Xmx 被设定为 600m。因此根据top命令的结果，Tomcat会一直占用725m（Perm Gen + Native Heap Area）。最终Apache可以使用700m内存空间。如下所示。</p>
+<p><img src="http://www.importnew.com/wp-content/uploads/2013/02/21.png" alt=""></p>
+<p><strong>图2：测试系统的top截屏</strong></p>
+<p>如上所述，我们将内存设为700m后MaxClients 应该是多少呢？</p>
+<p>这要取决于加载模块的数量，对于NHN Web服务来说。Apache只是个简单的代理转发，每个httpd线程4m内存（根据top命令的结果）足以（参见图2）。因此。700m内存对应的 MaxClients应该是175。</p>
+<p>ImportNew<br>首页所有文章资讯Web架构基础技术书籍教程Java小组工具资源<br>成为Java GC专家（4）—Apache的MaxClients参数详解及其在Tomcat执行FullGC时的影响<br>2013/03/04 | 分类： 基础技术, 教程 | 5 条评论 | 标签： GC, JAVAGC专家<br>分享到：<br>本文作者： ImportNew - 王晓杰 未经许可，禁止转载！<br>这是“成为Java GC专家系列文章”的第四篇。</p>
+<p>在第一篇文章 成为JavaGC专家Part I — 深入浅出Java垃圾回收机制 中我们学习了不同GC算法的执行过程，GC如何工作，新生代及老年代的基本概念，在JDK7中你应该了解的5种GC类型以及他们的性能如何。</p>
+<p>在第二篇文章 成为JavaGC专家Part II — 如何监控Java垃圾回收机制 中我们学到了JVM到底是如何执行垃圾回收，我们如何监控GC，以及那些工具可以使得监控过程更高效。</p>
+<p>在第三篇文章 成为Java GC专家系列Part III–如何优化Java垃圾回收机制中我们通过实际的例子学到了一些可以优化GC的参数。同时我们讲解了如何减少对象被转移到老年代空间，如何缩短Full GC时间，以及如何设置GC类型及内存空间。</p>
+<p>在第四篇文章中，我们将阐述Apache中MaxClients 参数的重要性，以及他如何在GC发生时，显著地影响整个系统的性能。我将提供几个例子以方便你理解MaxClients 导致的问题。同时我还会说明如何根据系统的内存情况，设置最佳的MaxClients参数值。</p>
+<p>MaxClients对于系统的影响</p>
+<p>NHN (译者注：NHN是作者工作的公司)服务的执行环境中存在一组Throttle valve-type参数（译者注：节流阀参数，用于控制系统负载）。这些参数对于系统来说十分重要。下面我们看一下Apache的 MaxClients 参数在Full GC 发生时是如何影响系统的。</p>
+<p>大部分开发人员都知道在由于GC发生而导致的”停止世界现象(STW) “（详细请参见Understanding Java Garbage Collection）。尤其是，NHN的Java开发人员经常会遇到由于GC原因导致的Tomcat报错。由于Java 虚拟机 (JVM)管理着内存，以Java为基础的程序无法摆脱GC导致的STW现象。假如在某一个时间，当你正在操作你开发的应用时，GC开始执行。即使TTS错误没有发生，你的服务也会给客户展现未预期的503错误。</p>
+<p>服务执行环境</p>
+<p>由于架构本身的特点，相比较而言纵向扩展，Web服务更适合横向扩展（译者注:增加服务器的数量，而不是提高件配置）。因此，总体来讲，物理设备会根据性能要求被配置成1台Apache+n台Tomcat。但是本文假设我们的环境是1台Apache+一台Tomcat同时安装在一台主机行，如下图所示。</p>
+<p>图1：本文假射的服务执行环境</p>
+<p>仅供参考，本文描述的参数基于Apache 2.2.21 (prefork MPM)，Tomcat 6.0.35，CentOS 4.72 (32-bit)，jdk 1.6.0_24。</p>
+<p>系统可用内存2GB，垃圾收集器使用ParallelOldGC，AdaptiveSizePolicy采用默认的设置true，堆内存空间600M</p>
+<p>STW 和HTTP 503</p>
+<p>让我们假设访问Apache的请求为 200 req/s且有10个httpd进程在运行，另外我们暂时不考虑每个请求的响应时间。在这种前提下，我们假设由于full GC导致的暂停时间为1秒。当Full GC发生的时候Tomcat会怎样？</p>
+<p>第一件进入你脑海的事情应该是Tomcat会因为full GC而停止响应任何请求。在这种情况下，当Tomcat暂停相应请求时Apache会发生什么？</p>
+<p>当Tomcat暂停时，请求会以200 req/s的速度不断的涌入Apache。一般来说，在Full GC发生之前，请求的响应可以快速地被10个或更多的httpd进程处理掉。但是，因为Tomcat暂停了，httpd进程会被不停地创建以相应新进请求。直到超过httpd.conf 文件中定义 MaxClients 为止。由于默认值为256，Apache不会在乎请求以200 req/s的速度涌入。</p>
+<p>这时，新创建的httpd线程将如何呢？</p>
+<p>Httpd进程通过mod_jk 模块所管理的空闲的AJP连接，将请求转发给Tomcat。如果没有空闲连接，他会申请创建新的连接。但是，因为Tomcat暂停了，创建新连接的请求会被拒绝。因此这些请求会被存储在backlog队列中，数量的多少取决于server.xml中关于AJP Connector的设置。一旦请求数量超过backlog队列的空间限制。Apache就会返回拒绝连接错误。并且返回HTTP 503 错误给用户。</p>
+<p>在这种假设条件下，默认的backlog队列空间是100，而请求到达速度是200 req/s。因此，full GC导致的一秒钟的暂停会使得超过100个请求返回503错误。</p>
+<p>这样，当Full GC结束后，backlog队列中存储的内容会被Tomcat接受并在通过工作线程处理，线程的最大数量取决于MaxThreads的值（默认200）。</p>
+<p>MaxClients 与backlog</p>
+<p>在这种情况下，设定哪个参数可以避免返回给用户503错误呢？</p>
+<p>首先，我们应该知道backlog的值要够大，以至于能够容纳所有因为Full GC导致暂停期间涌入的请求。换句话说太应该不小于200。</p>
+<p>那么，这么设置之后会不会产生新的问题呢？</p>
+<p>让我们假设将backlog设置为200后再重复一下上面的过程。得到的结果比之前更加严重。系统内存使用量一般情况下为50%，但是，在发生Full GC时快速增加到100%，同时导致交换内存空间快速增加，更为严重的是导致Full GC的暂停时间从1秒变成了4秒甚至更多，系统在此期间完全宕机，不能响应任何请求。</p>
+<p>在第一种情况下，只有100或更多的请求返回503错误。但是，当我们把backlog调整到200后，超过500个请求会挂起3秒甚至更多地时间无法得到应答</p>
+<p>上面这个例子可以很好的说明当你没有完全理解各个设置之间的内在关系时（例如，对于系统的影响），盲目修改系统会导致什么后果。</p>
+<p>那么，为什么会产生这个现象呢？</p>
+<p>问题的根源在于 MaxClients 参数的特性。</p>
+<p>将MaxClients 设置为一个很大的值本身没有问题，但最重要的是在设定MaxClients 参数时，你要确保即使等同于MaxClients 数量的httpd进程被同时创建，内存使用量也不会超过80%。</p>
+<p>系统的内存交换参数一般被设定为60（默认）。因此，当内存使用量超过80%时，就会进行内存交换。</p>
+<p>让我们再来看一下为什么这个特性会导致上面那个严重的问题。当请求以200 req/s的速度涌向Tomcat时，Tomcat由于full GC暂停了。此时backlog被设置为200。Apache大约创建100个httpd进程。在这种情况下，一旦内存使用量超过80%，操作系统会激活交换内存区域，并且由于系统认为JVM的老年代中的对象在很长一段时间内未被使用，而将他们移动到交换区域。</p>
+<p>最终的结果是，GC使用了内存交换空间，暂停时间剧增。因此httpd进程数进一步增加。从而导致上面描述的内存使用量达到100%的情况。</p>
+<p>这两个场合的唯一区别就是backlog的值：100 vs.200。为什么只在200的情况下发生？</p>
+<p>两者不同的原因在于创建的httpd进程的数量。当backlog设置为100时并且Full GC发生时，会创建100个请求的连接并保存在backlog队列中。其他请求得到拒绝连接错误信息并发挥503错误。因此，总的httpd 进程数量仅仅会略高于100。而当backlog被设置为200时，200个请求会创建连接，因此。总的httpd进程数会多于200。这样超过阀值，从而导致内存交换的发生。紧接着，不考虑内存使用量而的设定 MaxClients参数，Full GC导致httpd进程数量暴增，引发内存交换，降低系统性能。</p>
+<p>MaxClients参数的计算公式</p>
+<p>如果系统的内存使2GB，MaxClients 的值在任何情况下都不应该超过内存的80%（1.6GB），以避免由于内存交换导致的性能下降。换句话说。1.6GB的内存应该共享和分配给Apache，Tomcat以及那些默认被安装的代理程序。</p>
+<p>让我们假设代理程序被默认安装在系统，并占用了200m内存，对于Tomcat堆内存的-Xmx 被设定为 600m。因此根据top命令的结果，Tomcat会一直占用725m（Perm Gen + Native Heap Area）。最终Apache可以使用700m内存空间。如下所示。</p>
+<p><img src="http://www.importnew.com/wp-content/uploads/2013/02/21.png" alt=""></p>
+<p><strong>图2：测试系统的top截屏</strong></p>
+<p>如上所述，我们将<strong>内存设为700m后MaxClients 应该是多少呢</strong>？</p>
+<p>这要取决于加载模块的数量，对于NHN Web服务来说。Apache只是个简单的代理转发，每个httpd线程4m内存（根据top命令的结果）足以（参见图2）。因此。700m内存对应的 MaxClients应该是175。</p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>一个健壮的服务配置至少应该能够降低在服务过载时宕机的时间，在合理的范围内成功的应答请求。针对基于Java的Web服务。你必须检查你的服务<strong>在Full GC导致的STW时间内能否稳定的响应请求</strong>。</p>
+<p>为了响应更多的用户请求和应对DDoS攻击，在没有全面考虑系统内存等因素的情况下，贸然地将 MaxClients设置为一个很大的值，那么它将失去作为阀值的功能，而导致系统出现更严重的问题。</p>
+<p>本文提到的情况只会持续3-5秒，因此绝大多数传统的监控工具都无法及时的发现。</p>
+
+      
+    </div>
+
+    
+      
+
+
+    
+
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/java语言/" rel="tag"># java语言</a>
+          
+            <a href="/tags/gc/" rel="tag"># gc</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2013/03/01/2013-03-01.gc-3/" rel="next" title="成为Java GC专家（3）—如何优化Java垃圾回收机制">
+                <i class="fa fa-chevron-left"></i> 成为Java GC专家（3）—如何优化Java垃圾回收机制
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2013/03/05/2013-03-05-java-memory-model-5/" rel="prev" title="深入理解Java内存模型（五）——锁">
+                深入理解Java内存模型（五）——锁 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+  
+    <div class="comments" id="comments">
+      <div id="lv-container" data-id="city" data-uid="MTAyMC8zNDA5NS8xMDYzMw=="></div>
+    </div>
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image"
+                src="/images/logo.jpg"
+                alt="Govern" />
+            
+              <p class="site-author-name" itemprop="name">Govern</p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          
+            <nav class="site-state motion-element">
+              
+                <div class="site-state-item site-state-posts">
+                
+                  <a href="/archives/">
+                
+                    <span class="site-state-item-count">98</span>
+                    <span class="site-state-item-name">日志</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-categories">
+                  <a href="/categories/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">20</span>
+                    <span class="site-state-item-name">分类</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-tags">
+                  <a href="/tags/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">39</span>
+                    <span class="site-state-item-name">标签</span>
+                  </a>
+                </div>
+              
+            </nav>
+          
+
+          
+
+          
+
+          
+          
+
+          
+          
+
+          
+            
+          
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#MaxClients对于系统的影响"><span class="nav-number">1.</span> <span class="nav-text">MaxClients对于系统的影响</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#服务执行环境"><span class="nav-number">1.1.</span> <span class="nav-text">服务执行环境</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#STW-和HTTP-503"><span class="nav-number">1.2.</span> <span class="nav-text">STW 和HTTP 503</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#MaxClients-与backlog"><span class="nav-number">1.3.</span> <span class="nav-text">MaxClients 与backlog</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#MaxClients参数的计算公式"><span class="nav-number">1.4.</span> <span class="nav-text">MaxClients参数的计算公式</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#总结"><span class="nav-number">2.</span> <span class="nav-text">总结</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+        <div class="back-to-top">
+          <i class="fa fa-arrow-up"></i>
+          
+            <span id="scrollpercent"><span>0</span>%</span>
+          
+        </div>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; 2012 &mdash; <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Govern</span>
+
+  
+
+  
+</div>
+
+
+  
+
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" rel="external nofollow" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" rel="external nofollow" href="https://github.com/theme-next/hexo-theme-next">NexT.Gemini</a> v6.0.3</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=6.0.3"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=6.0.3"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=6.0.3"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=6.0.3"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=6.0.3"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=6.0.3"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=6.0.3"></script>
+
+
+
+  
+
+
+
+
+
+
+
+  
+    <script type="text/javascript">
+      (function(d, s) {
+        var j, e = d.getElementsByTagName(s)[0];
+        if (typeof LivereTower === 'function') { return; }
+        j = d.createElement(s);
+        j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+        j.async = true;
+        e.parentNode.insertBefore(j, e);
+      })(document, 'script');
+    </script>
+  
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+  
+  
+  
+  <link rel="stylesheet" href="/lib/algolia-instant-search/instantsearch.min.css">
+
+  
+  
+  <script src="/lib/algolia-instant-search/instantsearch.min.js"></script>
+  
+
+  <script src="/js/src/algolia-search.js?v=6.0.3"></script>
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+  
+  
+  
+  <script src="/lib/bookmark/bookmark.min.js?v=1.0"></script>
+  <script type="text/javascript">
+  
+    bookmark.scrollToMark('auto', "#more");
+  
+  </script>
+
+
+</body>
+</html>
